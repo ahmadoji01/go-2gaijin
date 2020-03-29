@@ -4,6 +4,7 @@ import Header from './components/Header/Header';
 import ChatHistory from './components/ChatHistory/ChatHistory';
 import ChatInput from './components/ChatInput/ChatInput';
 import { connect, sendMsg } from "./api";
+import HomeBanners from "./components/HomeBanners";
 
 class App extends Component {
 
@@ -35,6 +36,7 @@ class App extends Component {
     return (
       <div className="App">
         <Header />
+        <HomeBanners />
         <ChatHistory chatHistory={this.state.chatHistory} />
         <ChatInput send={this.send} />
       </div>
