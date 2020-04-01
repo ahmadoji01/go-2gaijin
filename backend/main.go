@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,22 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gitlab.com/kitalabs/go-2gaijin/pkg/websocket"
 	"gitlab.com/kitalabs/go-2gaijin/router"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-func GetClient() *mongo.Client {
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	client, err := mongo.NewClient(clientOptions)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = client.Connect(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	return client
-}
 
 func serveWs(pool *websocket.Pool, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("WebSocket Endpoint Hit")
@@ -65,12 +49,6 @@ func homePage(c *gin.Context) {}
 func main() {
 	fmt.Println("Distributed Chat App v0.01")
 	setupWSRoutes()
-
-	//c := GetClient()
-
-	//router := gin.Default()
-	//router.GET("/", homePage)
-	//router.GET("/chatroom", chatRoom)
 
 	router := router.Router()
 

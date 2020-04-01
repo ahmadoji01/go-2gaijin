@@ -4,13 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	jwt "github.com/dgrijalva/jwt-go"
+	"gitlab.com/kitalabs/go-2gaijin/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // DB connection string
@@ -27,7 +33,7 @@ const collName = "products"
 var collection *mongo.Collection
 
 // Database instance
-var database *mongo.Database
+var db *mongo.Database
 
 // create connection with mongo db
 func init() {
@@ -51,7 +57,7 @@ func init() {
 
 	fmt.Println("Connected to MongoDB!")
 
-	database = client.Database(dbName)
+	db = client.Database(dbName)
 
 }
 
@@ -70,8 +76,145 @@ func GetAllTask(c *gin.Context) {
 	json.NewEncoder(c.Writer).Encode(payload)
 }
 
+func RegisterHandler(c *gin.Context) {
+
+	c.Writer.Header().Set("Content-Type", "application/json")
+	var user models.User
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &user)
+	var res models.ResponseResult
+	if err != nil {
+		res.Error = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	collection := db.Collection("users")
+
+	if err != nil {
+		res.Error = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	var result models.User
+	err = collection.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
+
+	if err != nil {
+		if err.Error() == "mongo: no documents in result" {
+			hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 5)
+
+			if err != nil {
+				res.Error = "Error While Hashing Password, Try Again"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+			user.Password = string(hash)
+
+			_, err = collection.InsertOne(context.TODO(), user)
+			if err != nil {
+				res.Error = "Error While Creating User, Try Again"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+			res.Result = "Registration Successful"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		res.Error = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Result = "Email already Exists!!"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func LoginHandler(c *gin.Context) {
+
+	c.Writer.Header().Set("Content-Type", "application/json")
+	var user models.User
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	collection := db.Collection("users")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	var result models.User
+	var res models.ResponseResult
+
+	err = collection.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
+
+	if err != nil {
+		res.Error = "Invalid email"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password))
+
+	if err != nil {
+		res.Error = "Invalid password"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email":      result.Email,
+		"first_name": result.FirstName,
+		"last_name":  result.LastName,
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
+
+	if err != nil {
+		res.Error = "Error while generating token, try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	result.Token = tokenString
+	result.Password = ""
+
+	json.NewEncoder(c.Writer).Encode(result)
+
+}
+
+func ProfileHandler(c *gin.Context) {
+	c.Writer.Header().Set("Content-Type", "application/json")
+	tokenString := c.Request.Header.Get("Authorization")
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return []byte(os.Getenv("MY_JWT_TOKEN")), nil
+	})
+	var result models.User
+	var res models.ResponseResult
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		result.Email = claims["email"].(string)
+		result.FirstName = claims["first_name"].(string)
+		result.LastName = claims["last_name"].(string)
+
+		json.NewEncoder(c.Writer).Encode(result)
+		return
+	} else {
+		res.Error = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+}
+
 func getHome() []primitive.M {
-	var collection = database.Collection("products")
+	var collection = db.Collection("products")
 	var options = &options.FindOptions{}
 	options.SetLimit(16)
 	options.SetSort(bson.D{{"created_at", 1}})
@@ -101,7 +244,7 @@ func getHome() []primitive.M {
 
 // get all task from the DB and return it
 func getAllTask() []primitive.M {
-	var collection = database.Collection("products")
+	var collection = db.Collection("products")
 	cur, err := collection.Find(context.Background(), bson.D{{}})
 	if err != nil {
 		log.Fatal(err)
