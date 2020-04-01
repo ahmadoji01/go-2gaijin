@@ -1,46 +1,24 @@
 import React, { Component } from "react";
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import "./App.css";
-import Header from './components/Header/Header';
-import ChatHistory from './components/ChatHistory/ChatHistory';
-import ChatInput from './components/ChatInput/ChatInput';
-import { connect, sendMsg } from "./api";
-import HomeBanners from "./components/HomeBanners";
+import Home from './components/pages/Home';
+import ChatRoom from './components/pages/ChatRoom';
+import Error from './components/pages/Error'
 
 class App extends Component {
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      chatHistory: []
-    }
-  }
-
-  send(event) {
-    if(event.keyCode === 13 && event.target.value !== "") {
-      sendMsg(event.target.value);
-      event.target.value = "";
-    }
-  }
-
-  componentDidMount() {
-    connect((msg) => {
-      console.log("New Message")
-      this.setState(prevState => ({
-        chatHistory: [...this.state.chatHistory, msg]
-      }))
-      console.log(this.state);
-    });
-  }
-
   render() {
-    return (
-      <div className="App">
-        <Header />
-        <HomeBanners />
-        <ChatHistory chatHistory={this.state.chatHistory} />
-        <ChatInput send={this.send} />
-      </div>
-    );
+    return (      
+      <BrowserRouter>
+        <div>
+          <Switch>
+            <Route path="/" component={Home} exact/>
+            <Route path="/chatroom" component={ChatRoom}/>
+          <Route component={Error}/>
+          </Switch>
+        </div> 
+      </BrowserRouter>
+   );
   }
 
 }
