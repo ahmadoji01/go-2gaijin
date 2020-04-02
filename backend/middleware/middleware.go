@@ -16,6 +16,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"gitlab.com/kitalabs/go-2gaijin/models"
+	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -69,10 +70,10 @@ func GetHome(c *gin.Context) {
 }
 
 // GetAllTask get all the task route
-func GetAllTask(c *gin.Context) {
+func GetAllProducts(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-	payload := getAllTask()
+	payload := getAllProducts()
 	json.NewEncoder(c.Writer).Encode(payload)
 }
 
@@ -213,20 +214,38 @@ func ProfileHandler(c *gin.Context) {
 
 }
 
-func getHome() []primitive.M {
+func getHome() responses.HomePage {
+	var homeResponse responses.HomePage
+	var homeData responses.HomeData
+
 	var collection = db.Collection("products")
 	var options = &options.FindOptions{}
 	options.SetLimit(16)
-	options.SetSort(bson.D{{"created_at", 1}})
+	options.SetSort(bson.D{{"created_at", -1}})
 
-	cur, err := collection.Find(context.Background(), bson.D{{"status_cd", 1}}, options)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Get Recent Items
+	homeData.RecentItems = populateProducts(collection.Find(context.Background(), bson.D{{"status_cd", 1}}, options))
 
-	var results []primitive.M
+	// Get Free Items
+	homeData.FreeItems = populateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+
+	// Get Recommended Items
+	homeData.RecommendedItems = populateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+
+	// Get Featured Items
+	homeData.FeaturedItems = populateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+
+	homeResponse.Data = homeData
+	homeResponse.Status = "Success"
+	homeResponse.Message = "Homepage Data Loaded"
+
+	return homeResponse
+}
+
+func populateProducts(cur *mongo.Cursor, err error) []models.Product {
+	var results []models.Product
 	for cur.Next(context.Background()) {
-		var result bson.M
+		var result models.Product
 		e := cur.Decode(&result)
 		if e != nil {
 			log.Fatal(e)
@@ -243,7 +262,7 @@ func getHome() []primitive.M {
 }
 
 // get all task from the DB and return it
-func getAllTask() []primitive.M {
+func getAllProducts() []primitive.M {
 	var collection = db.Collection("products")
 	cur, err := collection.Find(context.Background(), bson.D{{}})
 	if err != nil {

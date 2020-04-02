@@ -13,7 +13,7 @@ func Router() *gin.Engine {
 	r.Use(gin.Recovery())
 
 	r.GET("/api/", middleware.GetHome)
-	r.GET("/api/products", middleware.GetAllTask)
+	r.GET("/api/products", middleware.GetAllProducts)
 	r.POST("/api/login", middleware.LoginHandler)
 	r.POST("/api/register", middleware.RegisterHandler)
 	r.POST("/api/profile", middleware.ProfileHandler)
