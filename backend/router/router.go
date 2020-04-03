@@ -17,6 +17,7 @@ func Router() *gin.Engine {
 	r.POST("/api/login", middleware.LoginHandler)
 	r.POST("/api/register", middleware.RegisterHandler)
 	r.POST("/api/profile", middleware.ProfileHandler)
+	r.GET("/ws", middleware.WebSocketHandler)
 
 	return r
 }

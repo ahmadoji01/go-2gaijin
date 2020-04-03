@@ -16,6 +16,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"gitlab.com/kitalabs/go-2gaijin/models"
+	"gitlab.com/kitalabs/go-2gaijin/pkg/websocket"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -60,6 +61,29 @@ func init() {
 
 	db = client.Database(dbName)
 
+}
+
+func serveWs(pool *websocket.Pool, c *gin.Context) {
+	fmt.Println("WebSocket Endpoint Hit")
+	conn, err := websocket.Upgrade(c.Writer, c.Request)
+	if err != nil {
+		fmt.Fprintf(c.Writer, "%+v\n", err)
+	}
+
+	client := &websocket.Client{
+		Conn: conn,
+		Pool: pool,
+	}
+
+	pool.Register <- client
+	client.Read()
+}
+
+func WebSocketHandler(c *gin.Context) {
+	pool := websocket.NewPool()
+	go pool.Start()
+
+	serveWs(pool, c)
 }
 
 func GetHome(c *gin.Context) {
@@ -218,12 +242,21 @@ func getHome() responses.HomePage {
 	var homeResponse responses.HomePage
 	var homeData responses.HomeData
 
-	var collection = db.Collection("products")
 	var options = &options.FindOptions{}
-	options.SetLimit(16)
-	options.SetSort(bson.D{{"created_at", -1}})
+
+	// Get Banners
+	var collection = db.Collection("banners")
+	options.SetLimit(5)
+	homeData.Banners = populateBanners(collection.Find(context.Background(), bson.D{{}}, options))
+
+	// Get Categories
+	collection = db.Collection("categories")
+	homeData.Categories = populateCategories(collection.Find(context.Background(), bson.D{{}}, options))
 
 	// Get Recent Items
+	collection = db.Collection("products")
+	options.SetLimit(16)
+	options.SetSort(bson.D{{"created_at", -1}})
 	homeData.RecentItems = populateProducts(collection.Find(context.Background(), bson.D{{"status_cd", 1}}, options))
 
 	// Get Free Items
@@ -246,6 +279,44 @@ func populateProducts(cur *mongo.Cursor, err error) []models.Product {
 	var results []models.Product
 	for cur.Next(context.Background()) {
 		var result models.Product
+		e := cur.Decode(&result)
+		if e != nil {
+			log.Fatal(e)
+		}
+		results = append(results, result)
+	}
+
+	if err := cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	cur.Close(context.Background())
+	return results
+}
+
+func populateBanners(cur *mongo.Cursor, err error) []models.Banner {
+	var results []models.Banner
+	for cur.Next(context.Background()) {
+		var result models.Banner
+		e := cur.Decode(&result)
+		if e != nil {
+			log.Fatal(e)
+		}
+		results = append(results, result)
+	}
+
+	if err := cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	cur.Close(context.Background())
+	return results
+}
+
+func populateCategories(cur *mongo.Cursor, err error) []models.Category {
+	var results []models.Category
+	for cur.Next(context.Background()) {
+		var result models.Category
 		e := cur.Decode(&result)
 		if e != nil {
 			log.Fatal(e)
