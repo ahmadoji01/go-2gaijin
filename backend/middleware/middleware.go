@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -239,34 +240,71 @@ func ProfileHandler(c *gin.Context) {
 }
 
 func getHome() responses.HomePage {
+	var wg sync.WaitGroup
 	var homeResponse responses.HomePage
 	var homeData responses.HomeData
+	var collection = db.Collection("")
 
 	var options = &options.FindOptions{}
 
 	// Get Banners
-	var collection = db.Collection("banners")
-	options.SetLimit(5)
-	homeData.Banners = populateBanners(collection.Find(context.Background(), bson.D{{}}, options))
+	wg.Add(1)
+	go func() {
+		collection = db.Collection("banners")
+		options.SetLimit(5)
+		homeData.Banners = populateBanners(collection.Find(context.Background(), bson.D{{}}, options))
+		wg.Done()
+	}()
 
 	// Get Categories
-	collection = db.Collection("categories")
-	homeData.Categories = populateCategories(collection.Find(context.Background(), bson.D{{}}, options))
+	wg.Add(1)
+	go func() {
+		collection = db.Collection("categories")
+		homeData.Categories = populateCategories(collection.Find(context.Background(), bson.D{{}}, options))
+		wg.Done()
+	}()
 
 	// Get Recent Items
-	collection = db.Collection("products")
-	options.SetLimit(16)
-	options.SetSort(bson.D{{"created_at", -1}})
-	homeData.RecentItems = populateProducts(collection.Find(context.Background(), bson.D{{"status_cd", 1}}, options))
+	wg.Add(1)
+	go func() {
+		collection = db.Collection("products")
+		options.SetLimit(16)
+		options.SetSort(bson.D{{"created_at", -1}})
+		homeData.RecentItems = populateProducts(collection.Find(context.Background(), bson.D{{"status_cd", 1}}, options))
+		wg.Done()
+	}()
 
 	// Get Free Items
-	homeData.FreeItems = populateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+	wg.Add(1)
+	go func() {
+		collection = db.Collection("products")
+		options.SetLimit(16)
+		options.SetSort(bson.D{{"created_at", -1}})
+		homeData.FreeItems = populateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+		wg.Done()
+	}()
 
 	// Get Recommended Items
-	homeData.RecommendedItems = populateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+	wg.Add(1)
+	go func() {
+		collection = db.Collection("products")
+		options.SetLimit(16)
+		options.SetSort(bson.D{{"created_at", -1}})
+		homeData.RecommendedItems = populateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+		wg.Done()
+	}()
 
 	// Get Featured Items
-	homeData.FeaturedItems = populateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+	wg.Add(1)
+	go func() {
+		collection = db.Collection("products")
+		options.SetLimit(16)
+		options.SetSort(bson.D{{"created_at", -1}})
+		homeData.FeaturedItems = populateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+		wg.Done()
+	}()
+
+	wg.Wait()
 
 	homeResponse.Data = homeData
 	homeResponse.Status = "Success"

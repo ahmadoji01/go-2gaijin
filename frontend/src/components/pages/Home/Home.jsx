@@ -5,30 +5,32 @@ import ProductDisplaySection from "../../elements/ProductDisplaySection"
 import './Home.scss';
 
 class Home extends Component {
+    
     constructor(props) {
         super(props);
         this.state = {
-            chatHistory: []
+            data: []
         }
     }
 
-    componentDidMount() {
-        return fetch('http://localhost:8080/api/')
+    componentWillMount() {
+        fetch('http://localhost:8080/api/')
         .then((response) => response.json())
         .then((responseJson) => {
-            console.log(responseJson);
+            const jsonData = responseJson.data;
+            this.setState({ data: jsonData});
         })
         .catch((error) => {
             console.error(error);
         });
     }
 
-    render() {
+    render() {  
         return (
             <div className="App">
                 <Header />
                 <HomeBanners />
-                <ProductDisplaySection />
+                <ProductDisplaySection title="Featured Items" items={this.state.data.featureditems} />
             </div>
         );    
     }
