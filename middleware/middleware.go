@@ -17,7 +17,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	. "github.com/gobeam/mongo-go-pagination"
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/pkg/websocket"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
@@ -103,11 +102,32 @@ func GetSearch(c *gin.Context) {
 		asc = -1
 	}
 
+	var status = -1
+	strStatus := urlQuery.Get("status")
+	if strStatus == "sold" {
+		status = 1
+	} else if strStatus == "available" {
+		status = 0
+	} else {
+		status = -1
+	}
+
 	category := urlQuery.Get("category")
 	//asc := c.Param("asc")
 	//status := c.Param("status")
-	limit, err := strconv.ParseInt(urlQuery.Get("limit"), 10, 64)
-	page, err := strconv.ParseInt(urlQuery.Get("page"), 10, 64)
+	var limit int64
+	var page int64
+	if urlQuery.Get("limit") == "" {
+		limit = 16
+	} else {
+		limit, err = strconv.ParseInt(urlQuery.Get("limit"), 10, 64)
+	}
+
+	if urlQuery.Get("page") == "" {
+		page = 1
+	} else {
+		page, err = strconv.ParseInt(urlQuery.Get("page"), 10, 64)
+	}
 
 	var res models.ResponseResult
 	if err != nil {
@@ -116,7 +136,7 @@ func GetSearch(c *gin.Context) {
 		return
 	}
 
-	payload := getSearch(query, category, limit, page, sort, asc, 0)
+	payload := getSearch(query, category, limit, page, sort, asc, status)
 	json.NewEncoder(c.Writer).Encode(payload)
 }
 
@@ -272,23 +292,72 @@ func ProfileHandler(c *gin.Context) {
 
 }
 
-func getSearch(query string, category string, limit int64, page int64, sort string, asc int, status int64) responses.SearchPage {
+func getSearch(query string, category string, nPerPage int64, page int64, sort string, asc int, status int) responses.SearchPage {
 
-	//var collection = db.Collection("products")
-	//var pagination responses.Pagination
+	var filter bson.M
+	var collection = db.Collection("products")
+	fmt.Println(query)
+
+	filter = searchFilter(query, status)
+
+	var options = &options.FindOptions{}
+	options.SetLimit(nPerPage)
+	options.SetSort(bson.D{{sort, asc}})
+	options.SetSkip(nPerPage * (page - 1))
+
+	var pagination responses.Pagination
 	var searchData responses.SearchData
 	var searchResponse responses.SearchPage
 
-	projection := bson.D{{"name", 1}, {"price", 1}, {"created_at", 1}}
-	filter := bson.M{}
+	searchData.Items = populateProducts(collection.Find(context.Background(), filter, options))
+	count, err := collection.CountDocuments(context.Background(), filter)
 
-	searchData.Items = populateSearch(projection, filter, sort, asc, limit, page)
+	if err != nil {
+		searchResponse.Status = "Error"
+		searchResponse.Message = "Error Counting Documents. Try Again"
+		return searchResponse
+	}
+
+	pagination.CurrentPage = page
+	pagination.ItemsPerPage = nPerPage
+	pagination.TotalItems = count
+
+	if count-(nPerPage*(page+1)) >= 1 {
+		pagination.NextPage = page + 1
+	} else {
+		pagination.NextPage = 0
+	}
+
+	if page-1 >= 1 {
+		pagination.PreviousPage = page - 1
+	} else {
+		pagination.PreviousPage = 0
+	}
+
+	searchData.Pagination = pagination
 
 	searchResponse.Data = searchData
 	searchResponse.Status = "Success"
 	searchResponse.Message = "Search Page Data Loaded"
 
 	return searchResponse
+}
+
+func searchFilter(query string, status int) bson.M {
+	var filter bson.M
+
+	if query != "" && status != -1 {
+		filter = bson.M{"name": query, "status_cd": status}
+	} else if query == "" && status != -1 {
+		filter = bson.M{"status_cd": status}
+	} else if query != "" && status == -1 {
+		filter = bson.M{"name": query}
+	} else {
+		filter = bson.M{}
+	}
+
+	return filter
+
 }
 
 func getHome() responses.HomePage {
@@ -363,24 +432,6 @@ func getHome() responses.HomePage {
 	homeResponse.Message = "Homepage Data Loaded"
 
 	return homeResponse
-}
-
-func populateSearch(projection bson.D, filter bson.M, sort string, asc int, limit int64, page int64) []models.Product {
-	var collection = db.Collection("products")
-
-	paginatedData, err := New(collection).Limit(limit).Page(page).Sort(sort, asc).Select(projection).Filter(filter).Find()
-	if err != nil {
-		panic(err)
-	}
-
-	var results []models.Product
-	for _, raw := range paginatedData.Data {
-		var product *models.Product
-		if marshallErr := bson.Unmarshal(raw, &product); marshallErr == nil {
-			results = append(results, *product)
-		}
-	}
-	return results
 }
 
 func populateProducts(cur *mongo.Cursor, err error) []models.Product {
