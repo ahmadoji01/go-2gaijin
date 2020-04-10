@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -12,7 +11,6 @@ import (
 func homePage(c *gin.Context) {}
 
 func main() {
-	fmt.Println("Distributed Chat App v0.01")
 
 	router := router.Router()
 

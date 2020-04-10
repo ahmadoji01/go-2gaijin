@@ -2,6 +2,7 @@ package responses
 
 import "gitlab.com/kitalabs/go-2gaijin/models"
 
+//For Home Page
 type HomeData struct {
 	Banners          []models.Banner   `json:"banners"`
 	Categories       []models.Category `json:"categories"`
@@ -16,4 +17,26 @@ type HomePage struct {
 	Message string `json:"message"`
 
 	Data HomeData `json:"data"`
+}
+
+// For Search Page
+type Pagination struct {
+	CurrentPage  int64 `json:"current_page"`
+	NextPage     int64 `json:"next_page"`
+	PreviousPage int64 `json:"previous_page"`
+	TotalPages   int64 `json:"total_pages"`
+	ItemsPerPage int64 `json:"items_per_page"`
+	TotalItems   int64 `json:"total_items"`
+}
+
+type SearchData struct {
+	Items      []models.Product `json:"items"`
+	Pagination Pagination       `json:"pagination"`
+}
+
+type SearchPage struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+
+	Data SearchData `json:"data"`
 }

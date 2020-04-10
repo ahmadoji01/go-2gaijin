@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	. "github.com/gobeam/mongo-go-pagination"
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/pkg/websocket"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
@@ -85,6 +87,37 @@ func WebSocketHandler(c *gin.Context) {
 	go pool.Start()
 
 	serveWs(pool, c)
+}
+
+func GetSearch(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+
+	urlQuery := c.Request.URL.Query()
+
+	query := urlQuery.Get("q")
+	sort := urlQuery.Get("sortby")
+	asc, err := strconv.Atoi(urlQuery.Get("asc"))
+	if sort == "" {
+		sort = "created_at"
+		asc = -1
+	}
+
+	category := urlQuery.Get("category")
+	//asc := c.Param("asc")
+	//status := c.Param("status")
+	limit, err := strconv.ParseInt(urlQuery.Get("limit"), 10, 64)
+	page, err := strconv.ParseInt(urlQuery.Get("page"), 10, 64)
+
+	var res models.ResponseResult
+	if err != nil {
+		res.Error = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	payload := getSearch(query, category, limit, page, sort, asc, 0)
+	json.NewEncoder(c.Writer).Encode(payload)
 }
 
 func GetHome(c *gin.Context) {
@@ -239,6 +272,25 @@ func ProfileHandler(c *gin.Context) {
 
 }
 
+func getSearch(query string, category string, limit int64, page int64, sort string, asc int, status int64) responses.SearchPage {
+
+	//var collection = db.Collection("products")
+	//var pagination responses.Pagination
+	var searchData responses.SearchData
+	var searchResponse responses.SearchPage
+
+	projection := bson.D{{"name", 1}, {"price", 1}, {"created_at", 1}}
+	filter := bson.M{}
+
+	searchData.Items = populateSearch(projection, filter, sort, asc, limit, page)
+
+	searchResponse.Data = searchData
+	searchResponse.Status = "Success"
+	searchResponse.Message = "Search Page Data Loaded"
+
+	return searchResponse
+}
+
 func getHome() responses.HomePage {
 	var wg sync.WaitGroup
 	var homeResponse responses.HomePage
@@ -311,6 +363,24 @@ func getHome() responses.HomePage {
 	homeResponse.Message = "Homepage Data Loaded"
 
 	return homeResponse
+}
+
+func populateSearch(projection bson.D, filter bson.M, sort string, asc int, limit int64, page int64) []models.Product {
+	var collection = db.Collection("products")
+
+	paginatedData, err := New(collection).Limit(limit).Page(page).Sort(sort, asc).Select(projection).Filter(filter).Find()
+	if err != nil {
+		panic(err)
+	}
+
+	var results []models.Product
+	for _, raw := range paginatedData.Data {
+		var product *models.Product
+		if marshallErr := bson.Unmarshal(raw, &product); marshallErr == nil {
+			results = append(results, *product)
+		}
+	}
+	return results
 }
 
 func populateProducts(cur *mongo.Cursor, err error) []models.Product {
