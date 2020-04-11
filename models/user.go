@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/graphql-go/graphql"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -30,7 +31,7 @@ type User struct {
 	UpdatedAt   primitive.DateTime `json:"updated_at" bson:"updated_at"`
 	AvatarURL   string             `json:"avatar_url" bson:"avatar_url"`
 
-	Products []primitive.ObjectID `json:"products" bson:"products"`
+	Products []Product `json:"products" bson:"products"`
 
 	Rooms        []primitive.ObjectID `json:"rooms" bson:"rooms"`
 	RoomMessages []primitive.ObjectID `json:"room_messages" bson:"room_messages"`
@@ -55,3 +56,53 @@ type ResponseResult struct {
 	Error  string `json:"error"`
 	Result string `json:"result"`
 }
+
+var UserType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "User",
+		Fields: graphql.Fields{
+			"_id": &graphql.Field{
+				Type: graphql.String,
+			},
+			"email": &graphql.Field{
+				Type: graphql.String,
+			},
+			"first_name": &graphql.Field{
+				Type: graphql.String,
+			},
+			"last_name": &graphql.Field{
+				Type: graphql.String,
+			},
+			"date_of_birth": &graphql.Field{
+				Type: graphql.String,
+			},
+			"phone": &graphql.Field{
+				Type: graphql.String,
+			},
+			"wechat": &graphql.Field{
+				Type: graphql.String,
+			},
+			"created_at": &graphql.Field{
+				Type: graphql.String,
+			},
+			"updated_at": &graphql.Field{
+				Type: graphql.String,
+			},
+			"avatar_url": &graphql.Field{
+				Type: graphql.String,
+			},
+			"email_confirmed": &graphql.Field{
+				Type: graphql.Boolean,
+			},
+			"phone_confirmed": &graphql.Field{
+				Type: graphql.Boolean,
+			},
+			"subscribed": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"subs_expiry_date": &graphql.Field{
+				Type: graphql.String,
+			},
+		},
+	},
+)

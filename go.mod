@@ -9,6 +9,7 @@ require (
 	github.com/go-playground/validator v9.31.0+incompatible // indirect
 	github.com/gobeam/mongo-go-pagination v0.0.0-20200406035710-0bea09c4930d
 	github.com/gorilla/websocket v1.4.2
+	github.com/graphql-go/graphql v0.7.9
 	github.com/klauspost/compress v1.10.4 // indirect
 	github.com/pjebs/jsonerror v0.0.0-20190614034432-63ef9a8df848 // indirect
 	github.com/pjebs/restgate v0.0.0-20170705024428-23fa04ff258d // indirect

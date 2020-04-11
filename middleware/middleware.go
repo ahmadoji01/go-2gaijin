@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/graphql-go/graphql"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -88,6 +89,54 @@ func WebSocketHandler(c *gin.Context) {
 	serveWs(pool, c)
 }
 
+func GetTestGraphQL(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+
+	query := c.Request.URL.Query().Get("query")
+
+	// Schema
+	fields := graphql.Fields{
+		"product": &graphql.Field{
+			Type:        models.ProductType,
+			Description: "Get Product By ID",
+			Args: graphql.FieldConfigArgument{
+				"_id": &graphql.ArgumentConfig{
+					Type: graphql.String,
+				},
+			},
+			Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				// take in the ID argument
+				id, ok := p.Args["_id"].(string)
+				objectID, err := primitive.ObjectIDFromHex(id)
+				collection := db.Collection("products")
+				if ok && err == nil {
+					var product models.Product
+					err := collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&product)
+					return product, err
+				}
+				return nil, nil
+			},
+		},
+	}
+
+	rootQuery := graphql.ObjectConfig{Name: "RootQuery", Fields: fields}
+	schemaConfig := graphql.SchemaConfig{Query: graphql.NewObject(rootQuery)}
+	schema, err := graphql.NewSchema(schemaConfig)
+	if err != nil {
+		log.Fatalf("failed to create new schema, error: %v", err)
+	}
+
+	params := graphql.Params{Schema: schema, RequestString: query}
+	r := graphql.Do(params)
+	if len(r.Errors) > 0 {
+		log.Fatalf("failed to execute graphql operation, errors: %+v", r.Errors)
+	}
+	rJSON, _ := json.Marshal(r)
+	fmt.Printf("%s \n", rJSON)
+	json.NewEncoder(c.Writer).Encode(r)
+}
+
 func GetSearch(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
@@ -96,9 +145,16 @@ func GetSearch(c *gin.Context) {
 
 	query := urlQuery.Get("q")
 	sort := urlQuery.Get("sortby")
-	asc, err := strconv.Atoi(urlQuery.Get("asc"))
+
+	var asc int
+	var err error
 	if sort == "" {
 		sort = "created_at"
+		asc = -1
+	}
+	if urlQuery.Get("asc") != "" {
+		asc, err = strconv.Atoi(urlQuery.Get("asc"))
+	} else {
 		asc = -1
 	}
 
@@ -113,8 +169,6 @@ func GetSearch(c *gin.Context) {
 	}
 
 	category := urlQuery.Get("category")
-	//asc := c.Param("asc")
-	//status := c.Param("status")
 	var limit int64
 	var page int64
 	if urlQuery.Get("limit") == "" {
@@ -295,7 +349,7 @@ func ProfileHandler(c *gin.Context) {
 func getSearch(query string, category string, nPerPage int64, page int64, sort string, asc int, status int) responses.SearchPage {
 
 	var wg sync.WaitGroup
-	var filter bson.M
+	var filter bson.D
 	var collection = db.Collection("products")
 	fmt.Println(query)
 
@@ -332,21 +386,7 @@ func getSearch(query string, category string, nPerPage int64, page int64, sort s
 		return searchResponse
 	}
 
-	pagination.CurrentPage = page
-	pagination.ItemsPerPage = nPerPage
-	pagination.TotalItems = count
-
-	if count-(nPerPage*(page+1)) >= 1 {
-		pagination.NextPage = page + 1
-	} else {
-		pagination.NextPage = 0
-	}
-
-	if page-1 >= 1 {
-		pagination.PreviousPage = page - 1
-	} else {
-		pagination.PreviousPage = 0
-	}
+	pagination = getPagination(count, nPerPage, page)
 
 	searchData.Items = items
 	searchData.Pagination = pagination
@@ -358,21 +398,40 @@ func getSearch(query string, category string, nPerPage int64, page int64, sort s
 	return searchResponse
 }
 
-func searchFilter(query string, status int) bson.M {
-	var filter bson.M
+func searchFilter(query string, status int) bson.D {
+	var filter = bson.D{}
 
-	if query != "" && status != -1 {
-		filter = bson.M{"name": query, "status_cd": status}
-	} else if query == "" && status != -1 {
-		filter = bson.M{"status_cd": status}
-	} else if query != "" && status == -1 {
-		filter = bson.M{"name": query}
-	} else {
-		filter = bson.M{}
+	if query != "" {
+		filter = append(filter, bson.E{"name", query})
+	}
+	if status != -1 {
+		filter = append(filter, bson.E{"status_cd", status})
 	}
 
 	return filter
+}
 
+func getPagination(totalItems int64, nPerPage int64, currentPage int64) responses.Pagination {
+	var pagination responses.Pagination
+	pagination.CurrentPage = currentPage
+	pagination.ItemsPerPage = nPerPage
+	pagination.TotalItems = totalItems
+
+	if totalItems-(nPerPage*(currentPage+1)) >= 1 {
+		pagination.NextPage = currentPage + 1
+	} else {
+		pagination.NextPage = 0
+	}
+
+	if currentPage-1 >= 1 {
+		pagination.PreviousPage = currentPage - 1
+	} else {
+		pagination.PreviousPage = 0
+	}
+
+	pagination.TotalPages = totalItems / nPerPage
+
+	return pagination
 }
 
 func getHome() responses.HomePage {
