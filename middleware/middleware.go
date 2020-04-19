@@ -348,8 +348,12 @@ func ProfileHandler(c *gin.Context) {
 
 func getSearch(query string, category string, nPerPage int64, page int64, sort string, asc int, status int) responses.SearchPage {
 
+<<<<<<< HEAD
 	var wg sync.WaitGroup
 	var filter bson.D
+=======
+	var filter bson.M
+>>>>>>> parent of 85f020a... Added Concurrency for Counting Entries and Find
 	var collection = db.Collection("products")
 	fmt.Println(query)
 
@@ -363,22 +367,9 @@ func getSearch(query string, category string, nPerPage int64, page int64, sort s
 	var pagination responses.Pagination
 	var searchData responses.SearchData
 	var searchResponse responses.SearchPage
-	var items []models.Product
 
-	wg.Add(1)
-	go func() {
-		items = populateProducts(collection.Find(context.Background(), filter, options))
-		wg.Done()
-	}()
-
-	var count int64
-	var err error
-	wg.Add(1)
-	go func() {
-		count, err = collection.CountDocuments(context.Background(), filter)
-		wg.Done()
-	}()
-	wg.Wait()
+	searchData.Items = populateProducts(collection.Find(context.Background(), filter, options))
+	count, err := collection.CountDocuments(context.Background(), filter)
 
 	if err != nil {
 		searchResponse.Status = "Error"
@@ -388,7 +379,6 @@ func getSearch(query string, category string, nPerPage int64, page int64, sort s
 
 	pagination = getPagination(count, nPerPage, page)
 
-	searchData.Items = items
 	searchData.Pagination = pagination
 
 	searchResponse.Data = searchData
