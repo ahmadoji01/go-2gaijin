@@ -46,6 +46,7 @@ type ProductCard struct {
 	ID         primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Name       string             `json:"name" bson:"name"`
 	Price      int                `json:"price" bson:"price"`
+	User       primitive.ObjectID `bson:"user_id"`
 	SellerName string             `json:"seller_name"`
 	Loc        string             `json:"loc"`
 	ImgURL     string             `json:"img_url"`
