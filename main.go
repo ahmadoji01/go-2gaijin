@@ -78,7 +78,7 @@ func main() {
 		dataDir := "."
 		hostPolicy := func(ctx context.Context, host string) error {
 			// Note: change to your real domain
-			allowedHost := "go-2gaijin-api.chickenkiller.com"
+			allowedHost := "go.2gaijin.com"
 			if host == allowedHost {
 				return nil
 			}
