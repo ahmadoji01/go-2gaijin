@@ -14,5 +14,5 @@ func main() {
 
 	router := router.Router()
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServeTLS(":8080", "keys/cert.pem", "keys/key.pem", router))
 }
