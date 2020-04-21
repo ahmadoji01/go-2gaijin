@@ -129,6 +129,9 @@ func GetSearch(c *gin.Context) {
 		page = 1
 	} else {
 		page, err = strconv.ParseInt(urlQuery.Get("page"), 10, 64)
+		if page <= 0 {
+			page = 1
+		}
 	}
 
 	var res models.ResponseResult
@@ -307,20 +310,23 @@ func getSearch(query string, category string, nPerPage int64, page int64, sort s
 	options.SetSort(bson.D{{sort, asc}})
 	options.SetSkip(nPerPage * (page - 1))
 
-	var pagination responses.Pagination
 	var searchData responses.SearchData
 	var searchResponse responses.SearchPage
-	var items []models.Product
+	var count int64
+	var err error
 
 	wg.Add(1)
 	go func() {
-		items = populateProducts(collection.Find(context.Background(), filter, options))
-		fmt.Println(filter)
+		searchData.Items = populateProducts(collection.Find(context.Background(), filter))
 		wg.Done()
 	}()
 
-	searchData.Items = populateProducts(collection.Find(context.Background(), filter, options))
-	count, err := collection.CountDocuments(context.Background(), filter)
+	wg.Add(1)
+	go func() {
+		count, err = collection.CountDocuments(context.Background(), filter)
+		wg.Done()
+	}()
+	wg.Wait()
 
 	if err != nil {
 		searchResponse.Status = "Error"
@@ -328,9 +334,7 @@ func getSearch(query string, category string, nPerPage int64, page int64, sort s
 		return searchResponse
 	}
 
-	pagination = getPagination(count, nPerPage, page)
-
-	searchData.Pagination = pagination
+	searchData.Pagination = getPagination(count, nPerPage, page)
 
 	searchResponse.Data = searchData
 	searchResponse.Status = "Success"
@@ -397,7 +401,7 @@ func getHome() responses.HomePage {
 	wg.Add(1)
 	go func() {
 		collection = db.Collection("categories")
-		homeData.Categories = populateCategories(collection.Find(context.Background(), bson.D{{}}, options))
+		homeData.Categories = populateCategories(collection.Find(context.Background(), options))
 		wg.Done()
 	}()
 
