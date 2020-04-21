@@ -10,5 +10,5 @@ import (
 func main() {
 
 	router := router.Router()
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":80", router))
 }
