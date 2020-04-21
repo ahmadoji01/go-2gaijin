@@ -10,5 +10,8 @@ import (
 func main() {
 
 	router := router.Router()
-	log.Fatal(http.ListenAndServe(":8080", router))
+	err := http.ListenAndServeTLS(":443", "server.crt", "server.key", router)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 }
