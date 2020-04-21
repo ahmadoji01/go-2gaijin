@@ -17,25 +17,31 @@ func (ps ProductStatus) String() string {
 }
 
 type Product struct {
-	ID          primitive.ObjectID   `json:"_id,omitempty" bson:"_id,omitempty"`
-	Name        string               `json:"name" bson:"name"`
-	Price       int                  `json:"price" bson:"price"`
-	Description string               `json:"description" bson:"description"`
-	Categories  []primitive.ObjectID `json:"category_ids" bson:"category_ids"`
+	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Name        string             `json:"name" bson:"name"`
+	Price       int                `json:"price" bson:"price"`
+	Description string             `json:"description" bson:"description"`
+	Category    Category           `json:"category" bson:"category"`
 
 	DateCreated primitive.DateTime `json:"created_at" bson:"created_at"`
 	DateUpdated primitive.DateTime `json:"updated_at" bson:"updated_at"`
 
-	UserID         primitive.ObjectID   `json:"user_id" bson:"user_id"`
+	ProductImages []primitive.ObjectID `json:"product_images" bson:"product_images"`
+
+	User primitive.ObjectID `json:"user" bson:"user"`
+
 	Comments       []primitive.ObjectID `json:"comment_ids" bson:"comment_ids"`
 	ProductDetails primitive.ObjectID   `json:"product_details_id" bson:"product_details_id"`
-	Keywords       []string             `json:"_keywords" bson:"_keywords"`
-	Followers      []primitive.ObjectID `json:"follower_ids" bson:"follower_ids"`
-	Orders         []primitive.ObjectID `json:"order_ids" bson:"order_ids"`
-	Appointments   []primitive.ObjectID `json:"appointment_ids" bson:"appointment_ids"`
+
+	Keywords  []string             `json:"_keywords" bson:"_keywords"`
+	Followers []primitive.ObjectID `json:"followers" bson:"followers"`
+
+	Orders       []primitive.ObjectID `json:"order_ids" bson:"order_ids"`
+	Appointments []primitive.ObjectID `json:"appointment_ids" bson:"appointment_ids"`
 
 	Latitude  string `json:"latitude"`
 	Longitude string `json:"longitude"`
+	Location  string `json:"location" bson:"location"`
 
 	PageViews int `json:"page_views"`
 
@@ -43,6 +49,7 @@ type Product struct {
 }
 
 type ProductCard struct {
+<<<<<<< HEAD
 	ID         primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Name       string             `json:"name" bson:"name"`
 	Price      int                `json:"price" bson:"price"`
@@ -50,4 +57,12 @@ type ProductCard struct {
 	SellerName string             `json:"seller_name"`
 	Loc        string             `json:"loc"`
 	ImgURL     string             `json:"img_url"`
+=======
+	ID     primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Name   string             `json:"name" bson:"name"`
+	Price  int                `json:"price" bson:"price"`
+	Seller primitive.ObjectID `json:"seller"`
+	Loc    string             `json:"loc"`
+	ImgURL string             `json:"img_url"`
+>>>>>>> e10ff07859da3910aac63f62881a19eef017ca99
 }

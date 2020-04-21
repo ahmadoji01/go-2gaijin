@@ -18,6 +18,7 @@ func Router() *gin.Engine {
 	r.POST("/api/register", middleware.RegisterHandler)
 	r.POST("/api/profile", middleware.ProfileHandler)
 	r.GET("/api/search", middleware.GetSearch)
+	r.GET("/api/graphql", middleware.GetTestGraphQL)
 	r.GET("/ws", middleware.WebSocketHandler)
 
 	return r
