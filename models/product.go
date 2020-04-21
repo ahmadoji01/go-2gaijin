@@ -49,7 +49,6 @@ type Product struct {
 }
 
 type ProductCard struct {
-<<<<<<< HEAD
 	ID         primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Name       string             `json:"name" bson:"name"`
 	Price      int                `json:"price" bson:"price"`
@@ -57,12 +56,4 @@ type ProductCard struct {
 	SellerName string             `json:"seller_name"`
 	Loc        string             `json:"loc"`
 	ImgURL     string             `json:"img_url"`
-=======
-	ID     primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Name   string             `json:"name" bson:"name"`
-	Price  int                `json:"price" bson:"price"`
-	Seller primitive.ObjectID `json:"seller"`
-	Loc    string             `json:"loc"`
-	ImgURL string             `json:"img_url"`
->>>>>>> e10ff07859da3910aac63f62881a19eef017ca99
 }

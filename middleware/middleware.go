@@ -296,12 +296,8 @@ func ProfileHandler(c *gin.Context) {
 
 func getSearch(query string, category string, nPerPage int64, page int64, sort string, asc int, status int) responses.SearchPage {
 
-<<<<<<< HEAD
 	var wg sync.WaitGroup
 	var filter bson.D
-=======
-	var filter bson.M
->>>>>>> e10ff07859da3910aac63f62881a19eef017ca99
 	var collection = db.Collection("products")
 
 	filter = searchFilter(query, status)
@@ -314,7 +310,6 @@ func getSearch(query string, category string, nPerPage int64, page int64, sort s
 	var pagination responses.Pagination
 	var searchData responses.SearchData
 	var searchResponse responses.SearchPage
-<<<<<<< HEAD
 	var items []models.Product
 
 	wg.Add(1)
@@ -323,8 +318,6 @@ func getSearch(query string, category string, nPerPage int64, page int64, sort s
 		fmt.Println(filter)
 		wg.Done()
 	}()
-=======
->>>>>>> e10ff07859da3910aac63f62881a19eef017ca99
 
 	searchData.Items = populateProducts(collection.Find(context.Background(), filter, options))
 	count, err := collection.CountDocuments(context.Background(), filter)
