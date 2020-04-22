@@ -1,15 +1,13 @@
 package responses
 
-import "gitlab.com/kitalabs/go-2gaijin/models"
-
 //For Home Page
 type HomeData struct {
-	Banners          []models.Banner   `json:"banners"`
-	Categories       []models.Category `json:"categories"`
-	FeaturedItems    []models.Product  `json:"featureditems"`
-	RecentItems      []models.Product  `json:"recentitems"`
-	RecommendedItems []models.Product  `json:"recommendeditems"`
-	FreeItems        []models.Product  `json:"freeitems"`
+	Banners          interface{} `json:"banners"`
+	Categories       interface{} `json:"categories"`
+	FeaturedItems    interface{} `json:"featureditems"`
+	RecentItems      interface{} `json:"recentitems"`
+	RecommendedItems interface{} `json:"recommendeditems"`
+	FreeItems        interface{} `json:"freeitems"`
 }
 
 type HomePage struct {

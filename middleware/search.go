@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"sync"
 
@@ -67,7 +66,6 @@ func GetSearch(c *gin.Context) {
 	}
 
 	payload := getSearch(query, category, limit, page, sort, asc, status)
-	fmt.Println(payload)
 	json.NewEncoder(c.Writer).Encode(payload)
 }
 

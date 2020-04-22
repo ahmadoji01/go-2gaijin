@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"gitlab.com/kitalabs/go-2gaijin/models"
@@ -43,7 +42,6 @@ func PopulateProducts(cur *mongo.Cursor, err error) []models.Product {
 	var results []models.Product
 	for cur.Next(context.Background()) {
 		var result models.Product
-		fmt.Println(cur)
 		e := cur.Decode(&result)
 		if e != nil {
 			log.Fatal(e)
