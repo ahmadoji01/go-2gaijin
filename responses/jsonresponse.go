@@ -30,8 +30,8 @@ type Pagination struct {
 }
 
 type SearchData struct {
-	Items      []models.Product `json:"items"`
-	Pagination Pagination       `json:"pagination"`
+	Items      interface{} `json:"items"`
+	Pagination Pagination  `json:"pagination"`
 }
 
 type SearchPage struct {
