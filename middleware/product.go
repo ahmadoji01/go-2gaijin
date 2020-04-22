@@ -75,9 +75,7 @@ func getHome() responses.HomePage {
 	wg.Add(1)
 	go func() {
 		collection = DB.Collection("products")
-		options.SetLimit(16)
-		options.SetSort(bson.D{{"created_at", -1}})
-		homeData.RecentItems = PopulateProducts(collection.Find(context.Background(), bson.D{{"status_cd", 1}}, options))
+		homeData.RecentItems = AggregateProductUser(bson.D{}, 16, 0, bson.D{{"created_at", -1}})
 		wg.Done()
 	}()
 
@@ -85,9 +83,7 @@ func getHome() responses.HomePage {
 	wg.Add(1)
 	go func() {
 		collection = DB.Collection("products")
-		options.SetLimit(16)
-		options.SetSort(bson.D{{"created_at", -1}})
-		homeData.FreeItems = PopulateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+		homeData.FreeItems = AggregateProductUser(bson.D{{"price", 0}}, 16, 0, bson.D{{"created_at", -1}})
 		wg.Done()
 	}()
 
@@ -95,9 +91,7 @@ func getHome() responses.HomePage {
 	wg.Add(1)
 	go func() {
 		collection = DB.Collection("products")
-		options.SetLimit(16)
-		options.SetSort(bson.D{{"created_at", -1}})
-		homeData.RecommendedItems = PopulateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+		homeData.RecommendedItems = AggregateProductUser(bson.D{{"price", 0}}, 16, 0, bson.D{{"created_at", -1}})
 		wg.Done()
 	}()
 
@@ -105,9 +99,7 @@ func getHome() responses.HomePage {
 	wg.Add(1)
 	go func() {
 		collection = DB.Collection("products")
-		options.SetLimit(16)
-		options.SetSort(bson.D{{"created_at", -1}})
-		homeData.FeaturedItems = PopulateProducts(collection.Find(context.Background(), bson.D{{"price", 0}}, options))
+		homeData.FeaturedItems = AggregateProductUser(bson.D{{"price", 0}}, 16, 0, bson.D{{"created_at", -1}})
 		wg.Done()
 	}()
 
