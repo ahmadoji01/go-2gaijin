@@ -21,12 +21,10 @@ type Product struct {
 	Name        string               `json:"name" bson:"name"`
 	Price       int                  `json:"price" bson:"price"`
 	Description string               `json:"description" bson:"description"`
-	Category    []primitive.ObjectID `json:"category_id" bson:"category_id"`
+	Category    []primitive.ObjectID `json:"category_ids" bson:"category_ids"`
 
 	DateCreated primitive.DateTime `json:"created_at" bson:"created_at"`
 	DateUpdated primitive.DateTime `json:"updated_at" bson:"updated_at"`
-
-	ProductImages []primitive.ObjectID `json:"product_images" bson:"product_images"`
 
 	User primitive.ObjectID `json:"user_id" bson:"user_id"`
 

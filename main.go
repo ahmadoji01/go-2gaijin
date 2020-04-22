@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	domainName = "go.2gaijin.com"
+	domainName   = "go.2gaijin.com"
+	isProduction = false
 )
 
 func redirectTLS(w http.ResponseWriter, r *http.Request) {
@@ -18,10 +19,15 @@ func redirectTLS(w http.ResponseWriter, r *http.Request) {
 func main() {
 
 	router := router.Router()
-	go func() {
-		if err := http.ListenAndServe(":80", http.HandlerFunc(redirectTLS)); err != nil {
-			log.Fatalf("ListenAndServe error: %v", err)
-		}
-	}()
-	log.Fatal(http.ListenAndServeTLS(":443", "keys/cert.pem", "keys/key.pem", router))
+
+	if isProduction {
+		go func() {
+			if err := http.ListenAndServe(":80", http.HandlerFunc(redirectTLS)); err != nil {
+				log.Fatalf("ListenAndServe error: %v", err)
+			}
+		}()
+		log.Fatal(http.ListenAndServeTLS(":443", "keys/cert.pem", "keys/key.pem", router))
+	} else {
+		log.Fatal(http.ListenAndServe(":8080", router))
+	}
 }
