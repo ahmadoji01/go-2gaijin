@@ -12,12 +12,12 @@ func Router() *gin.Engine {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
-	r.GET("/api/", middleware.GetHome)
-	r.GET("/api/productdetail/:id", middleware.GetProductDetail)
-	r.POST("/api/login", middleware.LoginHandler)
-	r.POST("/api/register", middleware.RegisterHandler)
-	r.POST("/api/profile", middleware.ProfileHandler)
-	r.GET("/api/search", middleware.GetSearch)
+	r.GET("/", middleware.GetHome)
+	r.GET("/products/:id", middleware.GetProductDetail)
+	r.POST("/sign_in", middleware.LoginHandler)
+	r.POST("/sign_up", middleware.RegisterHandler)
+	r.POST("/profile", middleware.ProfileHandler)
+	r.GET("/search", middleware.GetSearch)
 	r.GET("/ws", middleware.WebSocketHandler)
 
 	return r
