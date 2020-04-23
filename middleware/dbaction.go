@@ -7,6 +7,7 @@ import (
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func AggregateProductUser(filter bson.D, nPerPage int64, skip int64, sort bson.D) []bson.M {
@@ -33,6 +34,21 @@ func AggregateProductUser(filter bson.D, nPerPage int64, skip int64, sort bson.D
 	}
 	var showsLoaded []bson.M
 	if err = showLoadedCursor.All(context.Background(), &showsLoaded); err != nil {
+		panic(err)
+	}
+	return showsLoaded
+}
+
+func SearchProducts(filter bson.D, options *options.FindOptions) []bson.M {
+	var collection = DB.Collection("products")
+
+	cur, err := collection.Find(context.Background(), filter, options)
+	if err != nil {
+		panic(err)
+	}
+
+	var showsLoaded []bson.M
+	if err = cur.All(context.Background(), &showsLoaded); err != nil {
 		panic(err)
 	}
 	return showsLoaded
