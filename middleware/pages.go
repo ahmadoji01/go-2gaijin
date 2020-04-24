@@ -51,7 +51,7 @@ func GetHome(c *gin.Context) {
 		options.SetSort(sort)
 		options.SetLimit(16)
 
-		homeData.RecentItems = SearchProducts(bson.D{}, options)
+		homeData.RecentItems = PopulateProductsWithAnImage(bson.D{}, options)
 		wg.Done()
 	}()
 
@@ -65,7 +65,7 @@ func GetHome(c *gin.Context) {
 		options.SetSort(sort)
 		options.SetLimit(16)
 
-		homeData.FreeItems = SearchProducts(bson.D{{"price", 0}}, options)
+		homeData.FreeItems = PopulateProductsWithAnImage(bson.D{{"price", 0}}, options)
 		wg.Done()
 	}()
 
@@ -79,7 +79,7 @@ func GetHome(c *gin.Context) {
 		options.SetSort(sort)
 		options.SetLimit(16)
 
-		homeData.RecommendedItems = SearchProducts(bson.D{{"price", 0}}, options)
+		homeData.RecommendedItems = PopulateProductsWithAnImage(bson.D{{"price", 0}}, options)
 		wg.Done()
 	}()
 
@@ -93,7 +93,7 @@ func GetHome(c *gin.Context) {
 		options.SetSort(sort)
 		options.SetLimit(16)
 
-		homeData.FeaturedItems = SearchProducts(bson.D{{"price", 0}}, options)
+		homeData.FeaturedItems = PopulateProductsWithAnImage(bson.D{{"price", 0}}, options)
 		wg.Done()
 	}()
 

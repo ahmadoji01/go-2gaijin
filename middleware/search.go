@@ -10,6 +10,7 @@ import (
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func GetSearch(c *gin.Context) {
@@ -21,7 +22,7 @@ func GetSearch(c *gin.Context) {
 	query := urlQuery.Get("q")
 	sort := urlQuery.Get("sortby")
 	if sort == "" {
-		sort = "created_at"
+		sort = "relevance"
 	}
 
 	var err error
@@ -72,10 +73,22 @@ func GetSearch(c *gin.Context) {
 func getSearch(query string, category string, nPerPage int64, page int64, sort string, asc int, status int) responses.SearchPage {
 
 	var wg sync.WaitGroup
-	var filter bson.D
+	//var filter bson.D
 	var collection = DB.Collection("products")
 
-	filter = searchFilter(query, status)
+	//filter = searchFilter(query, status)
+	filter := bson.M{"$text": bson.M{"$search": query}}
+	findOptions := options.Find()
+	findOptions.SetLimit(nPerPage)
+	findOptions.SetSkip(nPerPage * (page - 1))
+	findOptions.SetProjection(bson.M{
+		"_id":         1,
+		"name":        1,
+		"price":       1,
+		"description": 1,
+		"relevance":   bson.M{"$meta": "textScore"},
+	})
+	findOptions.SetSort(bson.M{"relevance": bson.M{"$meta": "textScore"}})
 
 	var searchData responses.SearchData
 	var searchResponse responses.SearchPage
@@ -84,12 +97,13 @@ func getSearch(query string, category string, nPerPage int64, page int64, sort s
 
 	wg.Add(1)
 	go func() {
-		data := AggregateProductUser(filter, nPerPage, nPerPage*(page-1), bson.D{{sort, asc}})
-		searchData.Items = data
+		dataLoaded := PopulateProductsWithAnImage(filter, findOptions)
 		if err != nil {
 			searchResponse.Status = "Error"
 			searchResponse.Message = err.Error()
+			return
 		}
+		searchData.Items = dataLoaded
 		wg.Done()
 	}()
 
@@ -137,7 +151,7 @@ func getPagination(totalItems int64, nPerPage int64, currentPage int64) response
 	pagination.ItemsPerPage = nPerPage
 	pagination.TotalItems = totalItems
 
-	if totalItems-(nPerPage*(currentPage+1)) >= 1 {
+	if totalItems-(nPerPage*currentPage) >= 1 {
 		pagination.NextPage = currentPage + 1
 	} else {
 		pagination.NextPage = 0
