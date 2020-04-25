@@ -92,10 +92,12 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 	}
 
 	result := struct {
-		ID     primitive.ObjectID `json:"_id" bson:"_id"`
-		Name   string             `json:"name"`
-		Price  int                `json:"price"`
-		ImgURL string             `json:"img_url"`
+		ID         primitive.ObjectID `json:"_id" bson:"_id"`
+		Name       string             `json:"name"`
+		Price      int                `json:"price"`
+		UserID     primitive.ObjectID `json:"user_id" bson:"user_id"`
+		SellerName string             `json:"seller_name"`
+		ImgURL     string             `json:"img_url"`
 	}{}
 
 	var results []interface{}
@@ -104,7 +106,8 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		if e != nil {
 			log.Fatal(e)
 		}
-		result.ImgURL = ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + FindAProductImage(result.ID)
+		result.ImgURL = FindAProductImage(result.ID)
+		result.SellerName = FindUserName(result.UserID)
 		results = append(results, result)
 	}
 	if err := cur.Err(); err != nil {
@@ -115,9 +118,26 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 	return results
 }
 
-func FindAProductImage(id primitive.ObjectID) string {
+func FindUserName(id primitive.ObjectID) string {
 	result := struct {
-		Image string
+		FirstName string `json:"first_name" bson:"first_name"`
+		LastName  string `json:"last_name" bson:"last_name"`
+	}{}
+
+	coll := DB.Collection("users")
+	err := coll.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&result)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return result.FirstName
+}
+
+func FindAProductImage(id primitive.ObjectID) string {
+
+	result := struct {
+		ID    primitive.ObjectID `json:"_id" bson:"_id"`
+		Image string             `json:"image" bson:"image"`
 	}{}
 
 	coll := DB.Collection("product_images")
@@ -126,7 +146,7 @@ func FindAProductImage(id primitive.ObjectID) string {
 		log.Fatal(err)
 	}
 
-	return result.Image
+	return ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + result.Image
 }
 
 func FindProductImages(id string) []bson.M {

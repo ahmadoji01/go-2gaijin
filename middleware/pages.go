@@ -44,7 +44,7 @@ func GetHome(c *gin.Context) {
 	// Get Recent Items
 	wg.Add(1)
 	go func() {
-		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}}
+		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}}
 		sort := bson.D{{"created_at", -1}}
 
 		options.SetProjection(projection)
@@ -58,7 +58,7 @@ func GetHome(c *gin.Context) {
 	// Get Free Items
 	wg.Add(1)
 	go func() {
-		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}}
+		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}}
 		sort := bson.D{{"created_at", -1}}
 
 		options.SetProjection(projection)
@@ -72,7 +72,7 @@ func GetHome(c *gin.Context) {
 	// Get Recommended Items
 	wg.Add(1)
 	go func() {
-		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}}
+		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}}
 		sort := bson.D{{"created_at", -1}}
 
 		options.SetProjection(projection)
@@ -86,7 +86,7 @@ func GetHome(c *gin.Context) {
 	// Get Featured Items
 	wg.Add(1)
 	go func() {
-		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}}
+		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}}
 		sort := bson.D{{"created_at", -1}}
 
 		options.SetProjection(projection)
