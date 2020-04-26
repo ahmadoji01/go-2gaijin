@@ -1,10 +1,8 @@
 package middleware
 
 import (
-	"context"
 	"encoding/json"
 	"strconv"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 	"gitlab.com/kitalabs/go-2gaijin/models"
@@ -42,20 +40,20 @@ func GetSearch(c *gin.Context) {
 	}
 
 	category := urlQuery.Get("category")
+	var start int64
 	var limit int64
-	var page int64
-	if urlQuery.Get("limit") == "" {
-		limit = 16
+	if urlQuery.Get("start") == "" {
+		start = 0
 	} else {
-		limit, err = strconv.ParseInt(urlQuery.Get("limit"), 10, 64)
+		start, err = strconv.ParseInt(urlQuery.Get("start"), 10, 64)
 	}
 
-	if urlQuery.Get("page") == "" {
-		page = 1
+	if urlQuery.Get("limit") == "" {
+		limit = 8
 	} else {
-		page, err = strconv.ParseInt(urlQuery.Get("page"), 10, 64)
-		if page <= 0 {
-			page = 1
+		limit, err = strconv.ParseInt(urlQuery.Get("limit"), 10, 64)
+		if limit <= 0 {
+			limit = 8
 		}
 	}
 
@@ -66,21 +64,17 @@ func GetSearch(c *gin.Context) {
 		return
 	}
 
-	payload := getSearch(query, category, limit, page, sort, asc, status)
+	payload := getSearch(query, category, start, limit, sort, asc, status)
 	json.NewEncoder(c.Writer).Encode(payload)
 }
 
-func getSearch(query string, category string, nPerPage int64, page int64, sort string, asc int, status int) responses.SearchPage {
-
-	var wg sync.WaitGroup
-	//var filter bson.D
-	var collection = DB.Collection("products")
+func getSearch(query string, category string, start int64, limit int64, sort string, asc int, status int) interface{} {
 
 	//filter = searchFilter(query, status)
 	filter := bson.M{"$text": bson.M{"$search": query}}
 	findOptions := options.Find()
-	findOptions.SetLimit(nPerPage)
-	findOptions.SetSkip(nPerPage * (page - 1))
+	findOptions.SetLimit(limit - start)
+	findOptions.SetSkip(start)
 	findOptions.SetProjection(bson.M{
 		"_id":         1,
 		"name":        1,
@@ -91,45 +85,7 @@ func getSearch(query string, category string, nPerPage int64, page int64, sort s
 	})
 	findOptions.SetSort(bson.M{"relevance": bson.M{"$meta": "textScore"}})
 
-	var searchData responses.SearchData
-	var searchResponse responses.SearchPage
-	var count int64
-	var err error
-
-	wg.Add(1)
-	go func() {
-		dataLoaded := PopulateProductsWithAnImage(filter, findOptions)
-		if err != nil {
-			searchResponse.Status = "Error"
-			searchResponse.Message = err.Error()
-			return
-		}
-		searchData.Items = dataLoaded
-		wg.Done()
-	}()
-
-	wg.Add(1)
-	go func() {
-		count, err = collection.CountDocuments(context.Background(), filter)
-		if err != nil {
-			searchResponse.Status = "Error"
-			searchResponse.Message = err.Error()
-		}
-		wg.Done()
-	}()
-	wg.Wait()
-
-	if err != nil {
-		return searchResponse
-	}
-
-	searchData.Pagination = getPagination(count, nPerPage, page)
-
-	searchResponse.Data = searchData
-	searchResponse.Status = "Success"
-	searchResponse.Message = "Search Page Data Loaded"
-
-	return searchResponse
+	return PopulateProductsWithAnImage(filter, findOptions)
 }
 
 func searchFilter(query string, status int) bson.D {

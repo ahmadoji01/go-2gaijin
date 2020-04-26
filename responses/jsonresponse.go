@@ -38,3 +38,7 @@ type SearchPage struct {
 
 	Data SearchData `json:"data"`
 }
+
+type ProductsData struct {
+	Products interface{}
+}
