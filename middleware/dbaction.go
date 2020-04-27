@@ -98,6 +98,7 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		UserID     primitive.ObjectID `json:"user_id" bson:"user_id"`
 		SellerName string             `json:"seller_name"`
 		ImgURL     string             `json:"img_url"`
+		Location   []float64          `json:"location" bson:"location"`
 	}{}
 
 	var results []interface{}

@@ -81,6 +81,7 @@ func getSearch(query string, category string, start int64, limit int64, sort str
 		"price":       1,
 		"description": 1,
 		"user_id":     1,
+		"location":    1,
 		"relevance":   bson.M{"$meta": "textScore"},
 	})
 	findOptions.SetSort(bson.M{"relevance": bson.M{"$meta": "textScore"}})
