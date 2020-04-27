@@ -123,9 +123,11 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"_id":        result.ID,
 		"email":      result.Email,
 		"first_name": result.FirstName,
 		"last_name":  result.LastName,
+		"avatar":     result.Avatar,
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
@@ -153,13 +155,23 @@ func ProfileHandler(c *gin.Context) {
 		}
 		return []byte(os.Getenv("MY_JWT_TOKEN")), nil
 	})
-	var result models.User
+	var result = struct {
+		ID        string `json:"_id" bson:"_id"`
+		FirstName string `json:"first_name" bson:"first_name"`
+		LastName  string `json:"last_name" bson:"last_name"`
+		Email     string `json:"email" bson:"email"`
+		Avatar    string `json:"avatar" bson:"avatar"`
+	}{}
 	var res models.ResponseResult
+
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		result.ID = claims["_id"].(string)
 		result.Email = claims["email"].(string)
 		result.FirstName = claims["first_name"].(string)
 		result.LastName = claims["last_name"].(string)
+		result.Avatar = claims["avatar"].(string)
 
+		fmt.Println(claims)
 		json.NewEncoder(c.Writer).Encode(result)
 		return
 	} else {
