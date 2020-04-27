@@ -113,6 +113,11 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		result.SellerName = FindUserName(result.UserID)
 		result.UserID = primitive.NilObjectID
 
+		if len(result.Location) == 0 {
+			result.Location = append(result.Location, 0.0)
+			result.Location = append(result.Location, 0.0)
+		}
+
 		if result.StatusEnum == 1 {
 			result.Status = "available"
 		} else if result.StatusEnum == 2 {

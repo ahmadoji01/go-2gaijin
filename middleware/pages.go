@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -40,7 +39,6 @@ func GetHome(c *gin.Context) {
 	go func() {
 		locale := "en"
 		homeData.Categories = PopulateCategories(locale)
-		fmt.Println(homeData.Categories)
 		wg.Done()
 	}()
 
