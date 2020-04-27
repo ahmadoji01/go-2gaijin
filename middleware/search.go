@@ -29,12 +29,7 @@ func GetSearch(c *gin.Context) {
 		asc, err = strconv.Atoi(urlQuery.Get("asc"))
 	}
 
-	var status = -1
-	if urlQuery.Get("status") == "" {
-		status = -1
-	} else {
-		status, err = strconv.Atoi(urlQuery.Get("status"))
-	}
+	var status = urlQuery.Get("status")
 
 	category := urlQuery.Get("category")
 	var start int64
@@ -79,13 +74,10 @@ func GetSearch(c *gin.Context) {
 	json.NewEncoder(c.Writer).Encode(payload)
 }
 
-func getSearch(query string, category string, start int64, limit int64, priceMin int64, priceMax int64, sort string, asc int, status int) interface{} {
+func getSearch(query string, category string, start int64, limit int64, priceMin int64, priceMax int64, sort string, asc int, status string) interface{} {
 
-	//filter := bson.D{bson.E{"$text", bson.M{"$search": query}}}
 	filter := searchFilter(query, status, priceMin, priceMax)
-	findOptions := options.Find()
-	findOptions.SetLimit(limit - start)
-	findOptions.SetSkip(start)
+	findOptions := searchOptions(start, limit, sort)
 	findOptions.SetProjection(bson.M{
 		"_id":         1,
 		"name":        1,
@@ -96,12 +88,11 @@ func getSearch(query string, category string, start int64, limit int64, priceMin
 		"status_cd":   1,
 		"relevance":   bson.M{"$meta": "textScore"},
 	})
-	findOptions.SetSort(bson.M{"relevance": bson.M{"$meta": "textScore"}})
 
 	return PopulateProductsWithAnImage(filter, findOptions)
 }
 
-func searchFilter(query string, status int, priceMin int64, priceMax int64) bson.D {
+func searchFilter(query string, status string, priceMin int64, priceMax int64) bson.D {
 
 	var filter bson.D
 	if priceMax != -1 && priceMin != -1 {
@@ -115,12 +106,35 @@ func searchFilter(query string, status int, priceMin int64, priceMax int64) bson
 	if query != "" {
 		filter = append(filter, bson.E{"$text", bson.M{"$search": query}})
 	}
-	if status != -1 {
-		filter = append(filter, bson.E{"status_cd", status})
+
+	if status == "sold" {
+		filter = append(filter, bson.E{"status_cd", 2})
+	} else if status == "available" {
+		filter = append(filter, bson.E{"status_cd", 1})
 	}
 
 	return filter
+}
 
+func searchOptions(start int64, limit int64, sort string) *options.FindOptions {
+	findOptions := options.Find()
+
+	findOptions.SetSkip(start)
+	findOptions.SetLimit(limit - start)
+
+	if sort == "relevance" {
+		findOptions.SetSort(bson.M{"relevance": bson.M{"$meta": "textScore"}})
+	} else if sort == "newest" {
+		findOptions.SetSort(bson.D{{"created_at", 1}})
+	} else if sort == "oldest" {
+		findOptions.SetSort(bson.D{{"created_at", -1}})
+	} else if sort == "highestprice" {
+		findOptions.SetSort(bson.D{{"price", -1}})
+	} else if sort == "lowestprice" {
+		findOptions.SetSort(bson.D{{"price", 1}})
+	}
+
+	return findOptions
 }
 
 func getPagination(totalItems int64, nPerPage int64, currentPage int64) responses.Pagination {
