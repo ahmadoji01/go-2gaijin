@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -16,6 +17,7 @@ import (
 func GetHome(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var wg sync.WaitGroup
 	var homeResponse responses.HomePage
@@ -36,8 +38,9 @@ func GetHome(c *gin.Context) {
 	// Get Categories
 	wg.Add(1)
 	go func() {
-		collection = DB.Collection("categories")
-		homeData.Categories = PopulateCategories(collection.Find(context.Background(), options))
+		locale := "en"
+		homeData.Categories = PopulateCategories(locale)
+		fmt.Println(homeData.Categories)
 		wg.Done()
 	}()
 
@@ -109,8 +112,10 @@ func GetHome(c *gin.Context) {
 func GetProductDetail(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var collection = DB.Collection("products")
+	var locale = "en"
 
 	productID, err := primitive.ObjectIDFromHex(c.Param("id"))
 
@@ -121,8 +126,10 @@ func GetProductDetail(c *gin.Context) {
 		return
 	}
 
-	var payload models.Product
+	var payload responses.ProductDetailPage
 	err = collection.FindOne(context.Background(), bson.M{"_id": productID}).Decode(&payload)
+	payload.Category = FindACategoryFromProductID(productID, locale)
+
 	if err != nil {
 		res.Error = "Error while searching for product, try again"
 		json.NewEncoder(c.Writer).Encode(res)

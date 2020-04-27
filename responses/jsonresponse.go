@@ -1,5 +1,7 @@
 package responses
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 //For Home Page
 type HomeData struct {
 	Banners          interface{} `json:"banners"`
@@ -48,4 +50,25 @@ type LoginPage struct {
 	Message string `json:"message"`
 
 	Data UserData `json:"data"`
+}
+
+type ProductDetailPage struct {
+	ID          primitive.ObjectID `json:"_id" bson:"_id"`
+	Name        string             `json:"name" bson:"name"`
+	Description string             `json:"description"`
+	Price       int                `json:"price"`
+	Category    interface{}        `json:"category"`
+
+	DateCreated primitive.DateTime `json:"created_at" bson:"created_at"`
+	DateUpdated primitive.DateTime `json:"updated_at" bson:"updated_at"`
+
+	User primitive.ObjectID `json:"user_id" bson:"user_id"`
+
+	Comments       []interface{}      `json:"comment_ids" bson:"comment_ids"`
+	ProductDetails primitive.ObjectID `json:"product_details_id" bson:"product_details_id"`
+
+	Location  []float64 `json:"location" bson:"location"`
+	PageViews int       `json:"page_views"`
+
+	Status int `json:"status_enum" bson:"status_cd"`
 }

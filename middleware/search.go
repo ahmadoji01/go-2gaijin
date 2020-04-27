@@ -14,6 +14,7 @@ import (
 func GetSearch(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Content-Type", "application/json")
 
 	urlQuery := c.Request.URL.Query()
 

@@ -225,21 +225,85 @@ func PopulateBanners(cur *mongo.Cursor, err error) []models.Banner {
 	return results
 }
 
-func PopulateCategories(cur *mongo.Cursor, err error) []models.Category {
-	var results []models.Category
+func PopulateCategories(locale string) []interface{} {
+
+	collection := DB.Collection("categories")
+	cur, err := collection.Find(context.Background(), bson.D{{}})
+
+	var results []interface{}
+
+	appResult := struct {
+		ID      primitive.ObjectID `json:"_id" bson:"_id"`
+		Name    string             `json:"name" bson:"name"`
+		IconURL string             `json:"icon_url" bson:"icon_url"`
+	}{}
+
 	for cur.Next(context.Background()) {
 		var result models.Category
 		e := cur.Decode(&result)
 		if e != nil {
 			log.Fatal(e)
 		}
-		results = append(results, result)
+
+		appResult.ID = result.ID
+		appResult.Name = result.Name.Map()[locale].(string)
+		appResult.IconURL = result.IconURL
+
+		results = append(results, appResult)
 	}
 
-	if err := cur.Err(); err != nil {
+	if err = cur.Err(); err != nil {
 		log.Fatal(err)
 	}
 
 	cur.Close(context.Background())
 	return results
+}
+
+func PopulateACategory(id primitive.ObjectID, locale string) interface{} {
+
+	var result models.Category
+
+	collection := DB.Collection("categories")
+	err := collection.FindOne(context.Background(), bson.D{{"_id", id}}).Decode(&result)
+
+	appResult := struct {
+		ID      primitive.ObjectID `json:"_id" bson:"_id"`
+		Name    string             `json:"name" bson:"name"`
+		IconURL string             `json:"icon_url" bson:"icon_url"`
+	}{}
+
+	appResult.ID = result.ID
+	appResult.Name = result.Name.Map()[locale].(string)
+	appResult.IconURL = result.IconURL
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return appResult
+}
+
+func FindACategoryFromProductID(id primitive.ObjectID, locale string) interface{} {
+	var query = bson.M{"product_ids": bson.M{"$elemMatch": bson.M{"$eq": id}}}
+	var result models.Category
+
+	collection := DB.Collection("categories")
+	err := collection.FindOne(context.Background(), query).Decode(&result)
+
+	appResult := struct {
+		ID      primitive.ObjectID `json:"_id" bson:"_id"`
+		Name    string             `json:"name" bson:"name"`
+		IconURL string             `json:"icon_url" bson:"icon_url"`
+	}{}
+
+	appResult.ID = result.ID
+	appResult.Name = result.Name.Map()[locale].(string)
+	appResult.IconURL = result.IconURL
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return appResult
 }
