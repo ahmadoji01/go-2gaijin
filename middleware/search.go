@@ -119,8 +119,13 @@ func searchFilter(query string, status string, priceMin int64, priceMax int64) b
 func searchOptions(start int64, limit int64, sort string) *options.FindOptions {
 	findOptions := options.Find()
 
+	limit = limit - start
+	if limit > 16 {
+		limit = 16
+	}
+
 	findOptions.SetSkip(start)
-	findOptions.SetLimit(limit - start)
+	findOptions.SetLimit(limit)
 
 	if sort == "relevance" {
 		findOptions.SetSort(bson.M{"relevance": bson.M{"$meta": "textScore"}})
