@@ -108,6 +108,7 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		}
 		result.ImgURL = FindAProductImage(result.ID)
 		result.SellerName = FindUserName(result.UserID)
+		result.UserID = primitive.NilObjectID
 		results = append(results, result)
 	}
 	if err := cur.Err(); err != nil {

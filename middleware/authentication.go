@@ -12,6 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -85,8 +87,24 @@ func LoginHandler(c *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var result models.User
+	var result = struct {
+		ID        primitive.ObjectID `json:"_id" bson:"_id"`
+		Email     string             `json:"email" bson:"email"`
+		FirstName string             `json:"first_name" bson:"first_name"`
+		LastName  string             `json:"last_name" bson:"last_name"`
+		Avatar    string             `json:"avatar" bson:"avatar"`
+		Token     string             `json:"authentication_token" bson:"token"`
+		Password  string             `json:"password" bson:"password"`
+	}{}
 	var res models.ResponseResult
+	var options = &options.FindOptions{}
+	options.SetProjection(bson.M{
+		"_id":        1,
+		"first_name": 1,
+		"last_name":  1,
+		"avatar":     1,
+		"token":      1,
+	})
 
 	err = collection.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
 

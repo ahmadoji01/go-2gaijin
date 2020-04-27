@@ -22,7 +22,7 @@ type User struct {
 	FirstName   string             `json:"first_name" bson:"first_name"`
 	LastName    string             `json:"last_name" bson:"last_name"`
 	Password    string             `json:"password" bson:"password"`
-	Token       string             `json:"token" bson:"token"`
+	Token       string             `json:"authentication_token" bson:"token"`
 	DateOfBirth primitive.DateTime `json:"date_of_birth" bson:"date_of_birth"`
 	Phone       string             `json:"phone" bson:"phone"`
 	WeChat      string             `json:"wechat" bson:"wechat"`

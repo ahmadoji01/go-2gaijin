@@ -39,6 +39,13 @@ type SearchPage struct {
 	Data SearchData `json:"data"`
 }
 
-type ProductsData struct {
-	Products interface{}
+type UserData struct {
+	User interface{} `json:"user"`
+}
+
+type LoginPage struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+
+	Data UserData `json:"data"`
 }
