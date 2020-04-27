@@ -70,5 +70,6 @@ type ProductDetailPage struct {
 	Location  []float64 `json:"location" bson:"location"`
 	PageViews int       `json:"page_views"`
 
-	Status int `json:"status_enum" bson:"status_cd"`
+	StatusEnum int    `json:"status_enum" bson:"status_cd"`
+	Status     string `json:"status"`
 }

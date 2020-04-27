@@ -118,13 +118,7 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 			result.Location = append(result.Location, 0.0)
 		}
 
-		if result.StatusEnum == 1 {
-			result.Status = "available"
-		} else if result.StatusEnum == 2 {
-			result.Status = "sold"
-		} else {
-			result.Status = "unavailable"
-		}
+		result.Status = ProductStatusEnum(result.StatusEnum)
 
 		results = append(results, result)
 	}

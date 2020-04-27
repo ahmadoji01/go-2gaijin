@@ -127,6 +127,7 @@ func GetProductDetail(c *gin.Context) {
 	var payload responses.ProductDetailPage
 	err = collection.FindOne(context.Background(), bson.M{"_id": productID}).Decode(&payload)
 	payload.Category = FindACategoryFromProductID(productID, locale)
+	payload.Status = ProductStatusEnum(payload.StatusEnum)
 
 	if err != nil {
 		res.Error = "Error while searching for product, try again"
