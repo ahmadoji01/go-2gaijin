@@ -99,6 +99,8 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		SellerName string             `json:"seller_name"`
 		ImgURL     string             `json:"img_url"`
 		Location   []float64          `json:"location" bson:"location"`
+		StatusEnum int                `json:"status_enum" bson:"status_cd"`
+		Status     string             `json:"status" bson:"status"`
 	}{}
 
 	var results []interface{}
@@ -110,6 +112,15 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		result.ImgURL = FindAProductImage(result.ID)
 		result.SellerName = FindUserName(result.UserID)
 		result.UserID = primitive.NilObjectID
+
+		if result.StatusEnum == 1 {
+			result.Status = "available"
+		} else if result.StatusEnum == 2 {
+			result.Status = "sold"
+		} else {
+			result.Status = "unavailable"
+		}
+
 		results = append(results, result)
 	}
 	if err := cur.Err(); err != nil {

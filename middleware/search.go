@@ -30,13 +30,10 @@ func GetSearch(c *gin.Context) {
 	}
 
 	var status = -1
-	strStatus := urlQuery.Get("status")
-	if strStatus == "sold" {
-		status = 1
-	} else if strStatus == "available" {
-		status = 0
-	} else {
+	if urlQuery.Get("status") == "" {
 		status = -1
+	} else {
+		status, err = strconv.Atoi(urlQuery.Get("status"))
 	}
 
 	category := urlQuery.Get("category")
@@ -57,6 +54,20 @@ func GetSearch(c *gin.Context) {
 		}
 	}
 
+	var priceMin int64
+	var priceMax int64
+
+	if urlQuery.Get("pricemin") == "" {
+		priceMin = -1
+	} else {
+		priceMin, err = strconv.ParseInt(urlQuery.Get("pricemin"), 10, 64)
+	}
+	if urlQuery.Get("pricemax") == "" {
+		priceMax = -1
+	} else {
+		priceMax, err = strconv.ParseInt(urlQuery.Get("pricemax"), 10, 64)
+	}
+
 	var res models.ResponseResult
 	if err != nil {
 		res.Error = err.Error()
@@ -64,14 +75,14 @@ func GetSearch(c *gin.Context) {
 		return
 	}
 
-	payload := getSearch(query, category, start, limit, sort, asc, status)
+	payload := getSearch(query, category, start, limit, priceMin, priceMax, sort, asc, status)
 	json.NewEncoder(c.Writer).Encode(payload)
 }
 
-func getSearch(query string, category string, start int64, limit int64, sort string, asc int, status int) interface{} {
+func getSearch(query string, category string, start int64, limit int64, priceMin int64, priceMax int64, sort string, asc int, status int) interface{} {
 
-	//filter = searchFilter(query, status)
-	filter := bson.M{"$text": bson.M{"$search": query}}
+	//filter := bson.D{bson.E{"$text", bson.M{"$search": query}}}
+	filter := searchFilter(query, status, priceMin, priceMax)
 	findOptions := options.Find()
 	findOptions.SetLimit(limit - start)
 	findOptions.SetSkip(start)
@@ -82,6 +93,7 @@ func getSearch(query string, category string, start int64, limit int64, sort str
 		"description": 1,
 		"user_id":     1,
 		"location":    1,
+		"status_cd":   1,
 		"relevance":   bson.M{"$meta": "textScore"},
 	})
 	findOptions.SetSort(bson.M{"relevance": bson.M{"$meta": "textScore"}})
@@ -89,11 +101,19 @@ func getSearch(query string, category string, start int64, limit int64, sort str
 	return PopulateProductsWithAnImage(filter, findOptions)
 }
 
-func searchFilter(query string, status int) bson.D {
-	var filter = bson.D{}
+func searchFilter(query string, status int, priceMin int64, priceMax int64) bson.D {
+
+	var filter bson.D
+	if priceMax != -1 && priceMin != -1 {
+		filter = append(filter, bson.E{"price", bson.M{"$lte": priceMax, "$gte": priceMin}})
+	} else if priceMin != -1 && priceMax == -1 {
+		filter = append(filter, bson.E{"price", bson.M{"$gte": priceMin}})
+	} else if priceMax != -1 && priceMin == -1 {
+		filter = append(filter, bson.E{"price", bson.M{"$lte": priceMax}})
+	}
 
 	if query != "" {
-		filter = append(filter, bson.E{"name", query})
+		filter = append(filter, bson.E{"$text", bson.M{"$search": query}})
 	}
 	if status != -1 {
 		filter = append(filter, bson.E{"status_cd", status})
