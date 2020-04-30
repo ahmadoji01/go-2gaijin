@@ -8,6 +8,7 @@ import (
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -77,7 +78,7 @@ func GetSearch(c *gin.Context) {
 
 func getSearch(query string, category string, start int64, limit int64, priceMin int64, priceMax int64, sort string, asc int, status string) interface{} {
 
-	filter := searchFilter(query, status, priceMin, priceMax)
+	filter := searchFilter(query, status, priceMin, priceMax, category)
 	findOptions := searchOptions(start, limit, sort)
 	findOptions.SetProjection(bson.M{
 		"_id":         1,
@@ -85,6 +86,8 @@ func getSearch(query string, category string, start int64, limit int64, priceMin
 		"price":       1,
 		"description": 1,
 		"user_id":     1,
+		"latitude":    1,
+		"longitude":   1,
 		"location":    1,
 		"status_cd":   1,
 		"relevance":   bson.M{"$meta": "textScore"},
@@ -93,7 +96,7 @@ func getSearch(query string, category string, start int64, limit int64, priceMin
 	return PopulateProductsWithAnImage(filter, findOptions)
 }
 
-func searchFilter(query string, status string, priceMin int64, priceMax int64) bson.D {
+func searchFilter(query string, status string, priceMin int64, priceMax int64, category string) bson.D {
 
 	var filter bson.D
 	if priceMax != -1 && priceMin != -1 {
@@ -112,6 +115,13 @@ func searchFilter(query string, status string, priceMin int64, priceMax int64) b
 		filter = append(filter, bson.E{"status_cd", 2})
 	} else if status == "available" {
 		filter = append(filter, bson.E{"status_cd", 1})
+	}
+
+	if category != "" {
+		cat := GetCategoryIDFromName(category, "en")
+		if cat != primitive.NilObjectID {
+			filter = append(filter, bson.E{"category_ids", cat})
+		}
 	}
 
 	return filter

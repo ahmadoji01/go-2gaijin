@@ -171,7 +171,6 @@ func ProfileHandler(c *gin.Context) {
 		result.LastName = claims["last_name"].(string)
 		result.Avatar = claims["avatar"].(string)
 
-		fmt.Println(claims)
 		json.NewEncoder(c.Writer).Encode(result)
 		return
 	} else {
@@ -180,4 +179,37 @@ func ProfileHandler(c *gin.Context) {
 		return
 	}
 
+}
+
+func LoggedInUser(tokenString string) (models.User, bool) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return []byte(os.Getenv("MY_JWT_TOKEN")), nil
+	})
+
+	var result models.User
+
+	if err != nil {
+		return result, false
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		id, err := primitive.ObjectIDFromHex(claims["_id"].(string))
+		if err != nil {
+			return result, false
+		}
+
+		result.ID = id
+		result.Email = claims["email"].(string)
+		result.FirstName = claims["first_name"].(string)
+		result.LastName = claims["last_name"].(string)
+		result.AvatarURL = claims["avatar"].(string)
+	} else {
+		return result, false
+	}
+
+	return result, true
 }

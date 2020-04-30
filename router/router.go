@@ -17,6 +17,7 @@ func Router() *gin.Engine {
 	r.POST("/sign_in", middleware.LoginHandler)
 	r.POST("/sign_up", middleware.RegisterHandler)
 	r.POST("/profile", middleware.ProfileHandler)
+	r.POST("/chat_lobby", middleware.GetChatLobby)
 	r.GET("/search", middleware.GetSearch)
 	r.GET("/ws", middleware.WebSocketHandler)
 

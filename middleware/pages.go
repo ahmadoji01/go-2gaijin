@@ -137,3 +137,19 @@ func GetProductDetail(c *gin.Context) {
 
 	json.NewEncoder(c.Writer).Encode(payload)
 }
+
+func GetChatLobby(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var roomsData []models.Room
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		roomsData = PopulateRoomsFromUserID(userData.ID)
+		json.NewEncoder(c.Writer).Encode(roomsData)
+		return
+	}
+}

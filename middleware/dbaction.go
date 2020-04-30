@@ -95,7 +95,7 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		ID         primitive.ObjectID `json:"_id" bson:"_id"`
 		Name       string             `json:"name"`
 		Price      int                `json:"price"`
-		UserID     primitive.ObjectID `json:"user_id" bson:"user_id"`
+		UserID     primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
 		SellerName string             `json:"seller_name"`
 		ImgURL     string             `json:"img_url"`
 		Location   []float64          `json:"location" bson:"location"`
@@ -105,6 +105,7 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 
 	var results []interface{}
 	for cur.Next(context.Background()) {
+		result.Location = nil
 		e := cur.Decode(&result)
 		if e != nil {
 			log.Fatal(e)
@@ -305,4 +306,42 @@ func FindACategoryFromProductID(id primitive.ObjectID, locale string) interface{
 	}
 
 	return appResult
+}
+
+func GetCategoryIDFromName(categoryName string, locale string) primitive.ObjectID {
+	columnToSearch := "name." + locale
+	query := bson.M{columnToSearch: categoryName}
+
+	collection := DB.Collection("categories")
+	result := struct {
+		ID primitive.ObjectID `json:"_id" bson:"_id"`
+	}{}
+
+	err := collection.FindOne(context.Background(), query).Decode(&result)
+	if err != nil {
+		return primitive.NilObjectID
+	}
+	return result.ID
+}
+
+func PopulateRoomsFromUserID(id primitive.ObjectID) []models.Room {
+	var query = bson.M{"user_ids": bson.M{"$elemMatch": bson.M{"$eq": id}}}
+
+	collection := DB.Collection("rooms")
+	cur, err := collection.Find(context.Background(), query)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var results []models.Room
+	for cur.Next(context.Background()) {
+		var result models.Room
+		e := cur.Decode(&result)
+		if e != nil {
+			log.Fatal(e)
+		}
+		results = append(results, result)
+	}
+
+	return results
 }
