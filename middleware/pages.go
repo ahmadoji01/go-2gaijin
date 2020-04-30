@@ -149,7 +149,9 @@ func GetChatLobby(c *gin.Context) {
 	userData, isLoggedIn := LoggedInUser(tokenString)
 	if isLoggedIn {
 		roomsData = PopulateRoomsFromUserID(userData.ID)
-		json.NewEncoder(c.Writer).Encode(roomsData)
+		if roomsData != nil {
+			json.NewEncoder(c.Writer).Encode(roomsData)
+		}
 		return
 	}
 }
