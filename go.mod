@@ -7,7 +7,10 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.6.2
 	github.com/go-playground/validator v9.31.0+incompatible // indirect
+	github.com/go-redis/redis v6.15.7+incompatible
+	github.com/go-redis/redis/v7 v7.2.0
 	github.com/gobeam/mongo-go-pagination v0.0.0-20200406035710-0bea09c4930d
+	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/graphql-go/graphql v0.7.9
 	github.com/klauspost/compress v1.10.4 // indirect

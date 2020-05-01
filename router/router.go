@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"gitlab.com/kitalabs/go-2gaijin/channels"
 	"gitlab.com/kitalabs/go-2gaijin/middleware"
 )
 
@@ -19,7 +20,7 @@ func Router() *gin.Engine {
 	r.POST("/profile", middleware.ProfileHandler)
 	r.POST("/chat_lobby", middleware.GetChatLobby)
 	r.GET("/search", middleware.GetSearch)
-	r.GET("/ws", middleware.WebSocketHandler)
+	r.GET("/ws", channels.ServeChat)
 
 	return r
 }
