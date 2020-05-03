@@ -17,8 +17,26 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func RegisterHandler(c *gin.Context) {
+func generateNewToken(user models.User) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"_id":        user.ID,
+		"email":      user.Email,
+		"first_name": user.FirstName,
+		"last_name":  user.LastName,
+		"avatar":     user.AvatarURL,
+	})
 
+	tokenString, err := token.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
+
+	if err != nil {
+		return "Error while generating token, try again", err
+	}
+
+	return tokenString, err
+}
+
+func RegisterHandler(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 	var user models.User
 	body, _ := ioutil.ReadAll(c.Request.Body)
@@ -57,8 +75,25 @@ func RegisterHandler(c *gin.Context) {
 				json.NewEncoder(c.Writer).Encode(res)
 				return
 			}
-			res.Result = "Registration Successful"
-			json.NewEncoder(c.Writer).Encode(res)
+
+			tokenString, err := generateNewToken(user)
+			if err != nil {
+				res.Error = "Error while generating token, try again"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+
+			user.Token = tokenString
+			user.Password = ""
+
+			var result = struct {
+				Message  string      `json:"message" bson:"message"`
+				UserData models.User `json:"data"`
+			}{}
+
+			result.Message = "Registration Successful"
+
+			json.NewEncoder(c.Writer).Encode(result)
 			return
 		}
 
@@ -73,7 +108,6 @@ func RegisterHandler(c *gin.Context) {
 }
 
 func LoginHandler(c *gin.Context) {
-
 	c.Writer.Header().Set("Content-Type", "application/json")
 	var user models.User
 	body, _ := ioutil.ReadAll(c.Request.Body)
@@ -87,15 +121,7 @@ func LoginHandler(c *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var result = struct {
-		ID        primitive.ObjectID `json:"_id" bson:"_id"`
-		Email     string             `json:"email" bson:"email"`
-		FirstName string             `json:"first_name" bson:"first_name"`
-		LastName  string             `json:"last_name" bson:"last_name"`
-		Avatar    string             `json:"avatar" bson:"avatar"`
-		Token     string             `json:"authentication_token" bson:"token"`
-		Password  string             `json:"password" bson:"password"`
-	}{}
+	var result models.User
 	var res models.ResponseResult
 	var options = &options.FindOptions{}
 	options.SetProjection(bson.M{
@@ -122,15 +148,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"_id":        result.ID,
-		"email":      result.Email,
-		"first_name": result.FirstName,
-		"last_name":  result.LastName,
-		"avatar":     result.Avatar,
-	})
-
-	tokenString, err := token.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
+	tokenString, err := generateNewToken(result)
 
 	if err != nil {
 		res.Error = "Error while generating token, try again"

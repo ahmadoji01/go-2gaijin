@@ -27,6 +27,10 @@ var ImgURLPrefix string = "https://storage.googleapis.com/rails-2gaijin-storage/
 
 var Pool *websocket.Pool
 
+var CORS string
+
+var IsProduction = false
+
 // create connection with mongo DB
 func init() {
 
@@ -46,6 +50,12 @@ func init() {
 
 	fmt.Println("Connected to MongoDB!")
 	DB = client.Database(dbName)
+
+	if !IsProduction {
+		CORS = "*"
+	} else {
+		CORS = ""
+	}
 
 	// Index product
 	productIndex()

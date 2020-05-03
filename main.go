@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-gonic/contrib/cors"
 	"gitlab.com/kitalabs/go-2gaijin/router"
 )
 
@@ -14,6 +15,14 @@ const (
 
 func redirectTLS(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "https://"+domainName+":443"+r.RequestURI, http.StatusMovedPermanently)
+}
+
+func setupCORS() cors.Config {
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AllowedMethods = []string{"POST", "GET", "PUT", "PATCH", "DELETE"}
+	config.AllowedHeaders = []string{"*"}
+	return config
 }
 
 func main() {
