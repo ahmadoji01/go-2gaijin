@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -65,15 +64,22 @@ func GetSearch(c *gin.Context) {
 		priceMax, err = strconv.ParseInt(urlQuery.Get("pricemax"), 10, 64)
 	}
 
-	var res models.ResponseResult
+	var res responses.ResponseMessage
 	if err != nil {
-		res.Error = err.Error()
+		res.Status = "Error"
+		res.Message = err.Error()
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
 
 	payload := getSearch(query, category, start, limit, priceMin, priceMax, sort, asc, status)
-	json.NewEncoder(c.Writer).Encode(payload)
+
+	var searchPage responses.SearchPage
+	searchPage.Status = "Success"
+	searchPage.Message = "Products Successfully Searched"
+	searchPage.Data = payload
+
+	json.NewEncoder(c.Writer).Encode(searchPage)
 }
 
 func getSearch(query string, category string, start int64, limit int64, priceMin int64, priceMax int64, sort string, asc int, status string) interface{} {

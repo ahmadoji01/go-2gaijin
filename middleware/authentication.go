@@ -11,6 +11,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"gitlab.com/kitalabs/go-2gaijin/models"
+	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -122,7 +123,7 @@ func LoginHandler(c *gin.Context) {
 		log.Fatal(err)
 	}
 	var result models.User
-	var res models.ResponseResult
+	var res responses.ResponseMessage
 	var options = &options.FindOptions{}
 	options.SetProjection(bson.M{
 		"_id":        1,
@@ -135,7 +136,8 @@ func LoginHandler(c *gin.Context) {
 	err = collection.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
 
 	if err != nil {
-		res.Error = "Invalid email"
+		res.Status = "Error"
+		res.Message = "Invalid email"
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -143,7 +145,8 @@ func LoginHandler(c *gin.Context) {
 	err = bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password))
 
 	if err != nil {
-		res.Error = "Invalid password"
+		res.Status = "Error"
+		res.Message = "Invalid password"
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -151,7 +154,8 @@ func LoginHandler(c *gin.Context) {
 	tokenString, err := generateNewToken(result)
 
 	if err != nil {
-		res.Error = "Error while generating token, try again"
+		res.Status = "Error"
+		res.Message = "Error while generating token, try again"
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -159,8 +163,16 @@ func LoginHandler(c *gin.Context) {
 	result.Token = tokenString
 	result.Password = ""
 
-	json.NewEncoder(c.Writer).Encode(result)
+	var results = struct {
+		Status   string      `json:"status" bson:"message"`
+		Message  string      `json:"message" bson:"message"`
+		UserData models.User `json:"data"`
+	}{}
+	results.Status = "Success"
+	results.Message = "Login Success"
+	results.UserData = result
 
+	json.NewEncoder(c.Writer).Encode(results)
 }
 
 func ProfileHandler(c *gin.Context) {
@@ -173,26 +185,39 @@ func ProfileHandler(c *gin.Context) {
 		}
 		return []byte(os.Getenv("MY_JWT_TOKEN")), nil
 	})
-	var result = struct {
-		ID        string `json:"_id" bson:"_id"`
-		FirstName string `json:"first_name" bson:"first_name"`
-		LastName  string `json:"last_name" bson:"last_name"`
-		Email     string `json:"email" bson:"email"`
-		Avatar    string `json:"avatar" bson:"avatar"`
-	}{}
-	var res models.ResponseResult
+	var result models.User
+	var res responses.ResponseMessage
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		result.ID = claims["_id"].(string)
+		id, err := primitive.ObjectIDFromHex(claims["_id"].(string))
+
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something went wrong. Please try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		result.ID = id
 		result.Email = claims["email"].(string)
 		result.FirstName = claims["first_name"].(string)
 		result.LastName = claims["last_name"].(string)
-		result.Avatar = claims["avatar"].(string)
+		result.AvatarURL = claims["avatar"].(string)
 
-		json.NewEncoder(c.Writer).Encode(result)
+		var resp = struct {
+			Status   string      `json:"status" bson:"message"`
+			Message  string      `json:"message" bson:"message"`
+			UserData models.User `json:"data"`
+		}{}
+		resp.Status = "Success"
+		resp.Message = "Profile Successfully Retrieved"
+		resp.UserData = result
+
+		json.NewEncoder(c.Writer).Encode(resp)
 		return
 	} else {
-		res.Error = err.Error()
+		res.Status = "Error"
+		res.Message = err.Error()
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}

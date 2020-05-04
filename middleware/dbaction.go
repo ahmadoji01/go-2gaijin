@@ -3,8 +3,10 @@ package middleware
 import (
 	"context"
 	"log"
+	"strconv"
 
 	"gitlab.com/kitalabs/go-2gaijin/models"
+	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -98,9 +100,16 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		UserID     primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
 		SellerName string             `json:"seller_name"`
 		ImgURL     string             `json:"img_url"`
-		Location   []float64          `json:"location" bson:"location"`
+		Latitude   string             `json:"latitude,omitempty" bson:"latitude,omitempty"`
+		Longitude  string             `json:"longitude,omitempty" bson:"longitude,omitempty"`
+		Location   interface{}        `json:"location"`
 		StatusEnum int                `json:"status_enum" bson:"status_cd"`
 		Status     string             `json:"status" bson:"status"`
+	}{}
+
+	var location = struct {
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
 	}{}
 
 	var results []interface{}
@@ -114,10 +123,15 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		result.SellerName = FindUserName(result.UserID)
 		result.UserID = primitive.NilObjectID
 
-		if len(result.Location) == 0 {
-			result.Location = append(result.Location, 0.0)
-			result.Location = append(result.Location, 0.0)
-		}
+		latitude, e := strconv.ParseFloat(result.Latitude, 64)
+		longitude, e := strconv.ParseFloat(result.Longitude, 64)
+
+		location.Latitude = latitude
+		location.Longitude = longitude
+		result.Location = location
+
+		result.Latitude = ""
+		result.Longitude = ""
 
 		result.Status = ProductStatusEnum(result.StatusEnum)
 
@@ -162,13 +176,8 @@ func FindAProductImage(id primitive.ObjectID) string {
 	return ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + result.Image
 }
 
-func FindProductImages(id string) []bson.M {
-	var results []bson.M
-
-	productID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		log.Fatal(err)
-	}
+func FindProductImages(productID primitive.ObjectID) []interface{} {
+	var results []interface{}
 
 	coll := DB.Collection("product_images")
 	cur, err := coll.Find(context.Background(), bson.D{{"product_id", productID}})
@@ -176,12 +185,18 @@ func FindProductImages(id string) []bson.M {
 		log.Fatal(err)
 	}
 
+	var result = struct {
+		ID    primitive.ObjectID `json:"_id" bson:"_id"`
+		Image string             `json:"img_url" bson:"image"`
+	}{}
+
 	for cur.Next(context.Background()) {
-		var result bson.M
 		e := cur.Decode(&result)
 		if e != nil {
 			log.Fatal(e)
 		}
+		result.Image = ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + result.Image
+
 		results = append(results, result)
 	}
 	return results
@@ -284,18 +299,14 @@ func PopulateACategory(id primitive.ObjectID, locale string) interface{} {
 	return appResult
 }
 
-func FindACategoryFromProductID(id primitive.ObjectID, locale string) interface{} {
+func FindACategoryFromProductID(id primitive.ObjectID, locale string) responses.ProductCategory {
 	var query = bson.M{"product_ids": bson.M{"$elemMatch": bson.M{"$eq": id}}}
 	var result models.Category
 
 	collection := DB.Collection("categories")
 	err := collection.FindOne(context.Background(), query).Decode(&result)
 
-	appResult := struct {
-		ID      primitive.ObjectID `json:"_id" bson:"_id"`
-		Name    string             `json:"name" bson:"name"`
-		IconURL string             `json:"icon_url" bson:"icon_url"`
-	}{}
+	var appResult responses.ProductCategory
 
 	appResult.ID = result.ID
 	appResult.Name = result.Name.Map()[locale].(string)

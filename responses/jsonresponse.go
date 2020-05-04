@@ -1,6 +1,8 @@
 package responses
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 //For Home Page
 type HomeData struct {
@@ -38,7 +40,7 @@ type SearchPage struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 
-	Data SearchData `json:"data"`
+	Data interface{} `json:"data"`
 }
 
 type UserData struct {
@@ -52,24 +54,48 @@ type LoginPage struct {
 	Data UserData `json:"data"`
 }
 
-type ProductDetailPage struct {
+type ResponseMessage struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+type ProductCategory struct {
+	ID      primitive.ObjectID `json:"_id" bson:"_id"`
+	Name    string             `json:"name" bson:"name"`
+	IconURL string             `json:"icon_url" bson:"icon_url"`
+}
+
+type ProductDetailItem struct {
 	ID          primitive.ObjectID `json:"_id" bson:"_id"`
 	Name        string             `json:"name" bson:"name"`
-	Description string             `json:"description"`
-	Price       int                `json:"price"`
-	Category    interface{}        `json:"category"`
+	Description string             `json:"description" bson:"description"`
+	Price       int                `json:"price" bson:"price"`
+	Category    ProductCategory    `json:"category"`
+
+	Images []interface{} `json:"images"`
 
 	DateCreated primitive.DateTime `json:"created_at" bson:"created_at"`
 	DateUpdated primitive.DateTime `json:"updated_at" bson:"updated_at"`
 
 	User primitive.ObjectID `json:"user_id" bson:"user_id"`
 
-	Comments       []interface{}      `json:"comment_ids" bson:"comment_ids"`
-	ProductDetails primitive.ObjectID `json:"product_details_id" bson:"product_details_id"`
+	Latitude  string      `json:"latitude,omitempty" bson:"latitude,omitempty"`
+	Longitude string      `json:"longitude,omitempty" bson:"longitude,omitempty"`
+	Location  interface{} `json:"location"`
 
-	Location  []float64 `json:"location" bson:"location"`
-	PageViews int       `json:"page_views"`
+	Comments   []interface{} `json:"comment_ids" bson:"comment_ids"`
+	StatusEnum int           `json:"status_enum" bson:"status_cd"`
+	Status     string        `json:"status"`
+}
 
-	StatusEnum int    `json:"status_enum" bson:"status_cd"`
-	Status     string `json:"status"`
+type ProductDetails struct {
+	Item         ProductDetailItem `json:"item"`
+	RelatedItems []interface{}     `json:"relateditems"`
+	SellerItems  []interface{}     `json:"selleritems"`
+}
+
+type ProductDetailPage struct {
+	Status  string      `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
 }
