@@ -65,6 +65,8 @@ func RegisterHandler(c *gin.Context) {
 			}
 
 			tokenString, err := generateNewToken(user)
+			update := bson.M{"$set": bson.M{"token": tokenString}}
+			_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)
 			if err != nil {
 				res.Status = "Error"
 				res.Message = "Error while generating token, try again"
@@ -76,11 +78,14 @@ func RegisterHandler(c *gin.Context) {
 			user.Password = ""
 
 			var result = struct {
-				Message  string      `json:"message" bson:"message"`
+				Status   string      `json:"status"`
+				Message  string      `json:"message" `
 				UserData models.User `json:"data"`
 			}{}
 
+			result.Status = "Success"
 			result.Message = "Registration Successful"
+			result.UserData = user
 
 			json.NewEncoder(c.Writer).Encode(result)
 			return
@@ -142,7 +147,8 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	tokenString, err := generateNewToken(result)
-
+	update := bson.M{"$set": bson.M{"token": tokenString}}
+	_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)
 	if err != nil {
 		res.Status = "Error"
 		res.Message = "Error while generating token, try again"
@@ -378,13 +384,199 @@ func UpdatePasswordHandler(c *gin.Context) {
 	}
 }
 
+func EmailConfirmation(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var res responses.ResponseMessage
+	var err error
+
+	email := c.Request.URL.Query().Get("email")
+	token := c.Request.URL.Query().Get("confirm_token")
+
+	var collection = DB.Collection("users")
+
+	var result models.User
+	err = collection.FindOne(context.Background(), bson.D{{"email", email}}).Decode(&result)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	if result.ConfirmToken != "" && token != "" {
+		if result.ConfirmToken == token {
+			expiryTime := result.ConfirmTokenExpiry.Time()
+
+			if time.Now().Before(expiryTime) {
+				update := bson.M{"$set": bson.M{"email_confirmed": true, "confirm_token": "", "confirm_token_expiry": primitive.NewDateTimeFromTime(time.Now())}}
+				_, err = collection.UpdateOne(context.Background(), bson.D{{"email", email}}, update)
+				if err != nil {
+					res.Status = "Error"
+					res.Message = err.Error()
+					json.NewEncoder(c.Writer).Encode(res)
+					return
+				}
+
+				res.Status = "Success"
+				res.Message = "Email has successfully been confirmed"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			} else {
+				res.Status = "Error"
+				res.Message = "Session has expired. Try again"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+		} else {
+			res.Status = "Error"
+			res.Message = "Wrong credentials. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+	} else {
+		res.Status = "Error"
+		res.Message = "Wrong credentials. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+}
+
+func PhoneConfirmation(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var res responses.ResponseMessage
+	var err error
+
+	phone := c.Request.URL.Query().Get("phone")
+	token := c.Request.URL.Query().Get("confirm_token")
+
+	var collection = DB.Collection("users")
+
+	var result models.User
+	err = collection.FindOne(context.Background(), bson.D{{"phone", phone}}).Decode(&result)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	if result.ConfirmToken != "" && token != "" {
+		if result.ConfirmToken == token {
+			expiryTime := result.ConfirmTokenExpiry.Time()
+
+			if time.Now().Before(expiryTime) {
+				update := bson.M{"$set": bson.M{"phone_confirmed": true, "confirm_token": "", "confirm_token_expiry": primitive.NewDateTimeFromTime(time.Now())}}
+				_, err = collection.UpdateOne(context.Background(), bson.D{{"phone", phone}}, update)
+				if err != nil {
+					res.Status = "Error"
+					res.Message = err.Error()
+					json.NewEncoder(c.Writer).Encode(res)
+					return
+				}
+
+				res.Status = "Success"
+				res.Message = "Phone has successfully been confirmed"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			} else {
+				res.Status = "Error"
+				res.Message = "Session has expired. Try again"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+		} else {
+			res.Status = "Error"
+			res.Message = "Wrong credentials. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+	} else {
+		res.Status = "Error"
+		res.Message = "Empty credentials. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+}
+
+func GenerateConfirmToken(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	var user models.User
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &user)
+	var res responses.ResponseMessage
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	var filter bson.D
+	var message string
+	if user.Email != "" {
+		filter = append(filter, bson.E{"email", user.Email})
+		message = "Confirmation has been sent to your email"
+	}
+	if user.Phone != "" {
+		filter = append(filter, bson.E{"phone", user.Phone})
+		message = "Confirmation has been sent to your email"
+	}
+
+	var result models.User
+	var collection = DB.Collection("users")
+	err = collection.FindOne(context.Background(), filter).Decode(&result)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"_id":                  user.ID,
+		"email":                user.Email,
+		"first_name":           user.FirstName,
+		"last_name":            user.LastName,
+		"avatar":               user.AvatarURL,
+		"confirm_token_expiry": primitive.NewDateTimeFromTime(time.Now().Add(time.Hour * 1)),
+	})
+	tokenString, err := token.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
+
+	update := bson.M{"$set": bson.M{"confirm_token": tokenString, "confirm_token_expiry": primitive.NewDateTimeFromTime(time.Now().Add(time.Hour * 1))}}
+	_, err = collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	if user.Email != "" {
+		SendEmailConfirmation(tokenString, user.Email)
+	}
+	if user.Phone != "" {
+		SendPhoneConfirmation(tokenString, user.Phone)
+	}
+
+	res.Status = "Success"
+	res.Message = message
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
 func generateNewToken(user models.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"_id":        user.ID,
-		"email":      user.Email,
-		"first_name": user.FirstName,
-		"last_name":  user.LastName,
-		"avatar":     user.AvatarURL,
+		"_id":            user.ID,
+		"email":          user.Email,
+		"first_name":     user.FirstName,
+		"last_name":      user.LastName,
+		"avatar":         user.AvatarURL,
+		"last_active_at": primitive.NewDateTimeFromTime(time.Now()),
 	})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))

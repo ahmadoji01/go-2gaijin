@@ -21,14 +21,17 @@ type User struct {
 	Email       string             `json:"email" bson:"email"`
 	FirstName   string             `json:"first_name" bson:"first_name"`
 	LastName    string             `json:"last_name" bson:"last_name"`
-	Password    string             `json:"password,omitempty" bson:"password,omitempty"`
-	Token       string             `json:"authentication_token,omitempty" bson:"token,omitempty"`
 	DateOfBirth primitive.DateTime `json:"date_of_birth,omitempty" bson:"date_of_birth,omitempty"`
 	Phone       string             `json:"phone,omitempty" bson:"phone,omitempty"`
 	WeChat      string             `json:"wechat,omitempty" bson:"wechat,omitempty"`
-	CreatedAt   primitive.DateTime `json:"created_at,omitempty" bson:"created_at,omitempty"`
-	UpdatedAt   primitive.DateTime `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 	AvatarURL   string             `json:"avatar_url,omitempty" bson:"avatar,omitempty"`
+
+	Password string `json:"password,omitempty" bson:"password,omitempty"`
+	Token    string `json:"authentication_token,omitempty" bson:"token,omitempty"`
+
+	CreatedAt    primitive.DateTime `json:"created_at,omitempty" bson:"created_at,omitempty"`
+	UpdatedAt    primitive.DateTime `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
+	LastActiveAt primitive.DateTime `json:"last_active_at,omitempty" bson:"last_active_at,omitempty"`
 
 	Products []primitive.ObjectID `json:"products,omitempty" bson:"products,omitempty"`
 
@@ -37,6 +40,9 @@ type User struct {
 
 	EmailConfirmed bool `json:"email_confirmed,omitempty" bson:"email_confirmed,omitempty"`
 	PhoneConfirmed bool `json:"phone_confirmed,omitempty" bson:"phone_confirmed,omitempty"`
+
+	ConfirmToken       string             `json:"confirm_token,omitempty" bson:"confirm_token,omitempty"`
+	ConfirmTokenExpiry primitive.DateTime `json:"confirm_token_expiry,omitempty" bson:"confirm_token_expiry,omitempty"`
 
 	Subscribed     SubsType           `json:"subscribed,omitempty" bson:"subscribed,omitempty"`
 	SubsExpiryDate primitive.DateTime `json:"subs_expiry_date,omitempty" bson:"subs_expiry_date,omitempty"`
