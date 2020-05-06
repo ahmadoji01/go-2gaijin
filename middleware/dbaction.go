@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"log"
-	"strconv"
 
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
@@ -23,50 +22,6 @@ func CreateIndex(weights bson.M, keys bson.M, coll *mongo.Collection) {
 	}
 }
 
-func AggregateProductUser(filter bson.D, nPerPage int64, skip int64, sort bson.D) []bson.M {
-	matchStage := bson.D{{"$match", filter}}
-	lookupStage := bson.D{{"$lookup", bson.D{{"from", "users"}, {"localField", "user_id"}, {"foreignField", "_id"}, {"as", "user"}}}}
-	unwindStage := bson.D{{"$unwind", bson.D{{"path", "$user"}, {"preserveNullAndEmptyArrays", false}}}}
-	projectStage := bson.D{{"$project", bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"user.first_name", 1}, {"user.email", 1}}}}
-	skipStage := bson.D{{"$skip", skip}}
-	sortStage := bson.D{{"$sort", sort}}
-	limitStage := bson.D{{"$limit", nPerPage}}
-
-	var collection = DB.Collection("products")
-
-	showLoadedCursor, err := collection.Aggregate(context.Background(), mongo.Pipeline{matchStage,
-		lookupStage,
-		unwindStage,
-		projectStage,
-		skipStage,
-		sortStage,
-		limitStage,
-	})
-	if err != nil {
-		panic(err)
-	}
-	var showsLoaded []bson.M
-	if err = showLoadedCursor.All(context.Background(), &showsLoaded); err != nil {
-		panic(err)
-	}
-	return showsLoaded
-}
-
-func SearchProducts(filter bson.D, options *options.FindOptions) []bson.M {
-	var collection = DB.Collection("products")
-
-	cur, err := collection.Find(context.Background(), filter, options)
-	if err != nil {
-		panic(err)
-	}
-
-	var showsLoaded []bson.M
-	if err = cur.All(context.Background(), &showsLoaded); err != nil {
-		panic(err)
-	}
-	return showsLoaded
-}
-
 func PopulateModels(cur *mongo.Cursor, err error) []bson.M {
 	var results []bson.M
 	for cur.Next(context.Background()) {
@@ -75,66 +30,6 @@ func PopulateModels(cur *mongo.Cursor, err error) []bson.M {
 		if e != nil {
 			log.Fatal(e)
 		}
-		results = append(results, result)
-	}
-	if err := cur.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	cur.Close(context.Background())
-	return results
-}
-
-func PopulateProductsWithAnImage(filter interface{}, options *options.FindOptions) []interface{} {
-	var collection = DB.Collection("products")
-
-	cur, err := collection.Find(context.Background(), filter, options)
-	if err != nil {
-		panic(err)
-	}
-
-	result := struct {
-		ID         primitive.ObjectID `json:"_id" bson:"_id"`
-		Name       string             `json:"name"`
-		Price      int                `json:"price"`
-		UserID     primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
-		SellerName string             `json:"seller_name"`
-		ImgURL     string             `json:"img_url"`
-		Latitude   string             `json:"latitude,omitempty" bson:"latitude,omitempty"`
-		Longitude  string             `json:"longitude,omitempty" bson:"longitude,omitempty"`
-		Location   interface{}        `json:"location"`
-		StatusEnum int                `json:"status_enum" bson:"status_cd"`
-		Status     string             `json:"status" bson:"status"`
-	}{}
-
-	var location = struct {
-		Latitude  float64 `json:"latitude"`
-		Longitude float64 `json:"longitude"`
-	}{}
-
-	var results []interface{}
-	for cur.Next(context.Background()) {
-		result.Location = nil
-		e := cur.Decode(&result)
-		if e != nil {
-			log.Fatal(e)
-		}
-		result.ImgURL = FindAProductImage(result.ID)
-		result.SellerName = FindUserName(result.UserID)
-		result.UserID = primitive.NilObjectID
-
-		latitude, e := strconv.ParseFloat(result.Latitude, 64)
-		longitude, e := strconv.ParseFloat(result.Longitude, 64)
-
-		location.Latitude = latitude
-		location.Longitude = longitude
-		result.Location = location
-
-		result.Latitude = ""
-		result.Longitude = ""
-
-		result.Status = ProductStatusEnum(result.StatusEnum)
-
 		results = append(results, result)
 	}
 	if err := cur.Err(); err != nil {
@@ -158,67 +53,6 @@ func FindUserName(id primitive.ObjectID) string {
 	}
 
 	return result.FirstName
-}
-
-func FindAProductImage(id primitive.ObjectID) string {
-
-	result := struct {
-		ID    primitive.ObjectID `json:"_id" bson:"_id"`
-		Image string             `json:"image" bson:"image"`
-	}{}
-
-	coll := DB.Collection("product_images")
-	err := coll.FindOne(context.Background(), bson.D{{"product_id", id}}).Decode(&result)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + result.Image
-}
-
-func FindProductImages(productID primitive.ObjectID) []interface{} {
-	var results []interface{}
-
-	coll := DB.Collection("product_images")
-	cur, err := coll.Find(context.Background(), bson.D{{"product_id", productID}})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var result = struct {
-		ID    primitive.ObjectID `json:"_id" bson:"_id"`
-		Image string             `json:"img_url" bson:"image"`
-	}{}
-
-	for cur.Next(context.Background()) {
-		e := cur.Decode(&result)
-		if e != nil {
-			log.Fatal(e)
-		}
-		result.Image = ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + result.Image
-
-		results = append(results, result)
-	}
-	return results
-}
-
-func PopulateProducts(cur *mongo.Cursor, err error) []models.Product {
-	var results []models.Product
-	for cur.Next(context.Background()) {
-		var result models.Product
-		e := cur.Decode(&result)
-		if e != nil {
-			log.Fatal(e)
-		}
-		results = append(results, result)
-	}
-
-	if err := cur.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	cur.Close(context.Background())
-	return results
 }
 
 func PopulateBanners(cur *mongo.Cursor, err error) []models.Banner {

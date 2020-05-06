@@ -49,6 +49,9 @@ type User struct {
 	Addresses      []primitive.ObjectID `json:"address_ids,omitempty" bson:"address_ids,omitempty"`
 	PrimaryAddress primitive.ObjectID   `json:"primary_address_id,omitempty" bson:"primary_address_id,omitempty"`
 	TrustCoins     []primitive.ObjectID `json:"trust_coin_ids,omitempty" bson:"trust_coin_ids,omitempty"`
+
+	ResetPasswordToken string             `json:"reset_token,omitempty" bson:"reset_password_token,omitempty"`
+	ResetTokenExpiry   primitive.DateTime `json:"reset_token_expiry,omitempty" bson:"reset_token_expiry,omitempty"`
 }
 
 type ResponseResult struct {

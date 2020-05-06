@@ -221,3 +221,61 @@ func GetChatLobby(c *gin.Context) {
 		return
 	}
 }
+
+func GetWishlistPage(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var start int64
+	var limit int64
+	var err error
+
+	if c.Request.URL.Query().Get("start") == "" {
+		start = 0
+	} else {
+		start, err = strconv.ParseInt(c.Request.URL.Query().Get("start"), 10, 64)
+	}
+	if c.Request.URL.Query().Get("limit") == "" {
+		limit = 8
+	} else {
+		limit, err = strconv.ParseInt(c.Request.URL.Query().Get("limit"), 10, 64)
+	}
+
+	if err != nil {
+		var res responses.ResponseMessage
+		res.Status = "Error"
+		res.Message = "Error converting data. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+
+	if !isLoggedIn {
+		var res responses.ResponseMessage
+		res.Status = "Error"
+		res.Message = "You have to login to use this feature"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	} else {
+		filter := bson.D{{"user_id", userData.ID}}
+		options := &options.FindOptions{}
+		options.SetSkip(start)
+		options.SetLimit(limit)
+
+		wishlistItems := PopulateProductsWithAnImage(filter, options)
+
+		var res responses.SearchPage
+		res.Status = "Success"
+		res.Message = "Wishlist items have been successfully retrieved"
+		res.Data = wishlistItems
+		if wishlistItems == nil {
+			res.Data = make([]interface{}, 0)
+		}
+
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+}

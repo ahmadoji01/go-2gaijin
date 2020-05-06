@@ -15,10 +15,15 @@ func Router() *gin.Engine {
 
 	r.GET("/", middleware.GetHome)
 	r.GET("/products/:id", middleware.GetProductDetail)
+	r.GET("/wishlist", middleware.GetWishlistPage)
+
 	r.POST("/sign_in", middleware.LoginHandler)
 	r.POST("/sign_up", middleware.RegisterHandler)
+	r.POST("/reset_password", middleware.ResetPasswordHandler)
+	r.POST("/update_password", middleware.UpdatePasswordHandler)
 	r.POST("/profile", middleware.ProfileHandler)
 	r.POST("/chat_lobby", middleware.GetChatLobby)
+
 	r.GET("/search", middleware.GetSearch)
 	r.GET("/ws", channels.ServeChat)
 

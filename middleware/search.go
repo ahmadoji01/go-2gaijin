@@ -72,7 +72,9 @@ func GetSearch(c *gin.Context) {
 		return
 	}
 
-	payload := getSearch(query, category, start, limit, priceMin, priceMax, sort, asc, status)
+	userid := urlQuery.Get("userid")
+
+	payload := getSearch(query, category, start, limit, priceMin, priceMax, sort, asc, status, userid)
 
 	var searchPage responses.SearchPage
 	searchPage.Status = "Success"
@@ -82,9 +84,9 @@ func GetSearch(c *gin.Context) {
 	json.NewEncoder(c.Writer).Encode(searchPage)
 }
 
-func getSearch(query string, category string, start int64, limit int64, priceMin int64, priceMax int64, sort string, asc int, status string) interface{} {
+func getSearch(query string, category string, start int64, limit int64, priceMin int64, priceMax int64, sort string, asc int, status string, userid string) interface{} {
 
-	filter := searchFilter(query, status, priceMin, priceMax, category)
+	filter := searchFilter(query, status, priceMin, priceMax, category, userid)
 	findOptions := searchOptions(start, limit, sort)
 	findOptions.SetProjection(bson.M{
 		"_id":         1,
@@ -102,7 +104,7 @@ func getSearch(query string, category string, start int64, limit int64, priceMin
 	return PopulateProductsWithAnImage(filter, findOptions)
 }
 
-func searchFilter(query string, status string, priceMin int64, priceMax int64, category string) bson.D {
+func searchFilter(query string, status string, priceMin int64, priceMax int64, category string, userid string) bson.D {
 
 	var filter bson.D
 	if priceMax != -1 && priceMin != -1 {
@@ -115,6 +117,13 @@ func searchFilter(query string, status string, priceMin int64, priceMax int64, c
 
 	if query != "" {
 		filter = append(filter, bson.E{"$text", bson.M{"$search": query}})
+	}
+
+	if userid != "" {
+		id, err := primitive.ObjectIDFromHex(userid)
+		if err == nil {
+			filter = append(filter, bson.E{"user_id", id})
+		}
 	}
 
 	if status == "sold" {

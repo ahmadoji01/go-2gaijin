@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -18,33 +19,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func generateNewToken(user models.User) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"_id":        user.ID,
-		"email":      user.Email,
-		"first_name": user.FirstName,
-		"last_name":  user.LastName,
-		"avatar":     user.AvatarURL,
-	})
-
-	tokenString, err := token.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
-
-	if err != nil {
-		return "Error while generating token, try again", err
-	}
-
-	return tokenString, err
-}
-
 func RegisterHandler(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 	var user models.User
 	body, _ := ioutil.ReadAll(c.Request.Body)
 	err := json.Unmarshal(body, &user)
-	var res models.ResponseResult
+	var res responses.ResponseMessage
 	if err != nil {
-		res.Error = err.Error()
+		res.Status = "Error"
+		res.Message = err.Error()
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -52,7 +36,8 @@ func RegisterHandler(c *gin.Context) {
 	collection := DB.Collection("users")
 
 	if err != nil {
-		res.Error = err.Error()
+		res.Status = "Error"
+		res.Message = err.Error()
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -64,7 +49,8 @@ func RegisterHandler(c *gin.Context) {
 			hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 5)
 
 			if err != nil {
-				res.Error = "Error While Hashing Password, Try Again"
+				res.Status = "Error"
+				res.Message = "Error While Hashing Password, Try Again"
 				json.NewEncoder(c.Writer).Encode(res)
 				return
 			}
@@ -72,14 +58,16 @@ func RegisterHandler(c *gin.Context) {
 
 			_, err = collection.InsertOne(context.TODO(), user)
 			if err != nil {
-				res.Error = "Error While Creating User, Try Again"
+				res.Status = "Error"
+				res.Message = "Error While Creating User, Try Again"
 				json.NewEncoder(c.Writer).Encode(res)
 				return
 			}
 
 			tokenString, err := generateNewToken(user)
 			if err != nil {
-				res.Error = "Error while generating token, try again"
+				res.Status = "Error"
+				res.Message = "Error while generating token, try again"
 				json.NewEncoder(c.Writer).Encode(res)
 				return
 			}
@@ -98,12 +86,14 @@ func RegisterHandler(c *gin.Context) {
 			return
 		}
 
-		res.Error = err.Error()
+		res.Status = "Error"
+		res.Message = err.Error()
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
 
-	res.Result = "Email already Exists!!"
+	res.Status = "Error"
+	res.Message = "Email already Exists!!"
 	json.NewEncoder(c.Writer).Encode(res)
 	return
 }
@@ -255,4 +245,170 @@ func LoggedInUser(tokenString string) (models.User, bool) {
 	}
 
 	return result, true
+}
+
+func ResetPasswordHandler(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	var user models.User
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &user)
+	var res responses.ResponseMessage
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	var collection = DB.Collection("users")
+
+	var result models.User
+	err = collection.FindOne(context.Background(), bson.D{{"email", user.Email}}).Decode(&result)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	tokenString, err := generateResetToken(result)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	tokenExpiry := primitive.NewDateTimeFromTime(time.Now().Add(time.Hour * 1))
+	update := bson.M{"$set": bson.M{"reset_password_token": tokenString, "reset_token_expiry": tokenExpiry}}
+
+	_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Status = "Success"
+	res.Message = "Check your email to reset your password"
+
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func UpdatePasswordHandler(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	var user models.User
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &user)
+	var res responses.ResponseMessage
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	var collection = DB.Collection("users")
+
+	var result models.User
+	err = collection.FindOne(context.Background(), bson.D{{"email", user.Email}}).Decode(&result)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	if result.ResetPasswordToken != "" && user.ResetPasswordToken != "" {
+		if result.ResetPasswordToken == user.ResetPasswordToken {
+			expiryTime := result.ResetTokenExpiry.Time()
+
+			if time.Now().Before(expiryTime) {
+				hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 5)
+				if err != nil {
+					res.Status = "Error"
+					res.Message = "Error While Hashing Password, Try Again"
+					json.NewEncoder(c.Writer).Encode(res)
+					return
+				}
+				update := bson.M{"$set": bson.M{"password": string(hash)}}
+
+				_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)
+				if err != nil {
+					res.Status = "Error"
+					res.Message = err.Error()
+					json.NewEncoder(c.Writer).Encode(res)
+					return
+				}
+
+				update = bson.M{"$set": bson.M{"reset_password_token": "", "reset_token_expiry": primitive.NewDateTimeFromTime(time.Now())}}
+				_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)
+				if err != nil {
+					res.Status = "Error"
+					res.Message = err.Error()
+					json.NewEncoder(c.Writer).Encode(res)
+					return
+				}
+
+				res.Status = "Success"
+				res.Message = "Password Successfully Changed"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			} else {
+				res.Status = "Error"
+				res.Message = "Session has expired. Try again"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+		} else {
+			res.Status = "Error"
+			res.Message = "Wrong credentials. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+	} else {
+		res.Status = "Error"
+		res.Message = "Something went wrong. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+}
+
+func generateNewToken(user models.User) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"_id":        user.ID,
+		"email":      user.Email,
+		"first_name": user.FirstName,
+		"last_name":  user.LastName,
+		"avatar":     user.AvatarURL,
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
+
+	if err != nil {
+		return "Error while generating token, try again", err
+	}
+
+	return tokenString, err
+}
+
+func generateResetToken(user models.User) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"_id":                user.ID,
+		"email":              user.Email,
+		"first_name":         user.FirstName,
+		"reset_token_expiry": primitive.NewDateTimeFromTime(time.Now().Add(time.Hour * 1)),
+	})
+
+	tokenString, err := token.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
+
+	if err != nil {
+		return "Error while generating token, try again", err
+	}
+
+	return tokenString, err
 }
