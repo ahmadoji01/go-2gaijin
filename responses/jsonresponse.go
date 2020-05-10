@@ -95,6 +95,12 @@ type ProductDetailPage struct {
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
 }
+
+type ProfileData struct {
+	Profile     models.User `json:"profile"`
+	PostedItems interface{} `json:"posted_items"`
+}
+
 type SearchData struct {
 	Items interface{} `json:"items"`
 }
