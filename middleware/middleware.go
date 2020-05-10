@@ -22,9 +22,6 @@ const dbName = "go-2gaijin"
 // Database instance
 var DB *mongo.Database
 
-//Image URL Prefix
-var ImgURLPrefix string = "https://storage.googleapis.com/rails-2gaijin-storage/"
-
 var Pool *websocket.Pool
 
 var CORS string

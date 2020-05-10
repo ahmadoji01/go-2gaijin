@@ -202,6 +202,7 @@ func PopulateRoomsFromUserID(id primitive.ObjectID) []models.Room {
 		}
 
 		result.Name = anotherUser.FirstName + " " + anotherUser.LastName
+		result.IconURL = FindUserAvatar(anotherUser.ID, anotherUser.AvatarURL)
 
 		results = append(results, result)
 	}

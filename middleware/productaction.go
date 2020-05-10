@@ -28,32 +28,6 @@ func FindAProductImage(id primitive.ObjectID) string {
 	return ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + result.Image
 }
 
-func FindProductImages(productID primitive.ObjectID) []interface{} {
-	var results []interface{}
-
-	coll := DB.Collection("product_images")
-	cur, err := coll.Find(context.Background(), bson.D{{"product_id", productID}})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var result = struct {
-		ID    primitive.ObjectID `json:"_id" bson:"_id"`
-		Image string             `json:"img_url" bson:"image"`
-	}{}
-
-	for cur.Next(context.Background()) {
-		e := cur.Decode(&result)
-		if e != nil {
-			log.Fatal(e)
-		}
-		result.Image = ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + result.Image
-
-		results = append(results, result)
-	}
-	return results
-}
-
 func PopulateProducts(cur *mongo.Cursor, err error) []models.Product {
 	var results []models.Product
 	for cur.Next(context.Background()) {
