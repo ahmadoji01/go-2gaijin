@@ -104,5 +104,10 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 	}
 
 	cur.Close(context.Background())
+
+	if results == nil {
+		results = make([]interface{}, 0)
+	}
+
 	return results
 }
