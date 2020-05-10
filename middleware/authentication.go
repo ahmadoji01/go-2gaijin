@@ -212,6 +212,9 @@ func ProfileHandler(c *gin.Context) {
 
 		profileData.Profile = result
 		profileData.PostedItems = PopulateProductsWithAnImage(filter, options)
+		if profileData.PostedItems == nil {
+			profileData.PostedItems = make([]interface{}, 0)
+		}
 
 		var resp responses.GenericResponse
 		resp.Status = "Success"
