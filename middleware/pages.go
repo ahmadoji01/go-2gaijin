@@ -210,14 +210,22 @@ func GetChatLobby(c *gin.Context) {
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var roomsData []models.Room
+	var lobbyData responses.ChatLobbyData
+	var res responses.GeneralResponse
 
 	tokenString := c.Request.Header.Get("Authorization")
 	userData, isLoggedIn := LoggedInUser(tokenString)
 	if isLoggedIn {
 		roomsData = PopulateRoomsFromUserID(userData.ID)
-		if roomsData != nil {
-			json.NewEncoder(c.Writer).Encode(roomsData)
+		res.Message = "Chat Lobby Retrieved!"
+		res.Status = "Success"
+		if roomsData == nil {
+			roomsData = make([]models.Room, 0)
 		}
+
+		lobbyData.ChatLobby = roomsData
+		res.Data = lobbyData
+		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
 }

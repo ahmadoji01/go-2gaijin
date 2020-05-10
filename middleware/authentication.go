@@ -168,6 +168,8 @@ func LoginHandler(c *gin.Context) {
 	results.Message = "Login Success"
 	results.UserData = result
 
+	c.SetCookie("jid", tokenString, 10, "/", "localhost", false, true)
+
 	json.NewEncoder(c.Writer).Encode(results)
 }
 

@@ -181,10 +181,28 @@ func PopulateRoomsFromUserID(id primitive.ObjectID) []models.Room {
 	var results []models.Room
 	for cur.Next(context.Background()) {
 		var result models.Room
+		var anotherUser models.User
+		var filter bson.D
+
 		e := cur.Decode(&result)
 		if e != nil {
 			log.Fatal(e)
 		}
+
+		if id != result.UserIDs[0] {
+			filter = bson.D{{"_id", result.UserIDs[0]}}
+		} else {
+			filter = bson.D{{"_id", result.UserIDs[1]}}
+		}
+
+		collection = DB.Collection("users")
+		e = collection.FindOne(context.Background(), filter).Decode(&anotherUser)
+		if e != nil {
+			log.Fatal(e)
+		}
+
+		result.Name = anotherUser.FirstName + " " + anotherUser.LastName
+
 		results = append(results, result)
 	}
 

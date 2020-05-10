@@ -1,6 +1,7 @@
 package responses
 
 import (
+	"gitlab.com/kitalabs/go-2gaijin/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -95,6 +96,16 @@ type ProductDetails struct {
 }
 
 type ProductDetailPage struct {
+	Status  string      `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
+type ChatLobbyData struct {
+	ChatLobby []models.Room `json:"chat_lobby"`
+}
+
+type GeneralResponse struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
