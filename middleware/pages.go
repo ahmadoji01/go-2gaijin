@@ -211,7 +211,7 @@ func GetChatLobby(c *gin.Context) {
 
 	var roomsData []models.Room
 	var lobbyData responses.ChatLobbyData
-	var res responses.GeneralResponse
+	var res responses.GenericResponse
 
 	tokenString := c.Request.Header.Get("Authorization")
 	userData, isLoggedIn := LoggedInUser(tokenString)

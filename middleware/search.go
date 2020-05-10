@@ -76,10 +76,13 @@ func GetSearch(c *gin.Context) {
 
 	payload := getSearch(query, category, start, limit, priceMin, priceMax, sort, asc, status, userid)
 
-	var searchPage responses.SearchPage
+	var searchPage responses.GenericResponse
+	var searchData responses.SearchData
+	searchData.Items = payload
+
 	searchPage.Status = "Success"
 	searchPage.Message = "Products Successfully Searched"
-	searchPage.Data = payload
+	searchPage.Data = searchData
 
 	json.NewEncoder(c.Writer).Encode(searchPage)
 }

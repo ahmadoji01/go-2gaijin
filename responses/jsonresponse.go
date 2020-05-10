@@ -32,11 +32,6 @@ type Pagination struct {
 	TotalItems   int64 `json:"total_items"`
 }
 
-type SearchData struct {
-	Items      interface{} `json:"items"`
-	Pagination Pagination  `json:"pagination"`
-}
-
 type SearchPage struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
@@ -100,12 +95,15 @@ type ProductDetailPage struct {
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
 }
+type SearchData struct {
+	Items interface{} `json:"items"`
+}
 
 type ChatLobbyData struct {
 	ChatLobby []models.Room `json:"chat_lobby"`
 }
 
-type GeneralResponse struct {
+type GenericResponse struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
