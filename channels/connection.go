@@ -2,10 +2,12 @@ package channels
 
 import (
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"gitlab.com/kitalabs/go-2gaijin/config"
 )
 
 const (
@@ -96,6 +98,10 @@ func ServeChat(c *gin.Context) {
 	r := c.Request
 	w := c.Writer
 	roomName := r.URL.Query().Get("room")
+
+	if !config.IsProduction {
+		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	}
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {

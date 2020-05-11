@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"gitlab.com/kitalabs/go-2gaijin/channels"
+	"gitlab.com/kitalabs/go-2gaijin/config"
 	"gitlab.com/kitalabs/go-2gaijin/pkg/websocket"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -48,7 +49,7 @@ func init() {
 	fmt.Println("Connected to MongoDB!")
 	DB = client.Database(dbName)
 
-	if !IsProduction {
+	if !config.IsProduction {
 		CORS = "*"
 	} else {
 		CORS = ""

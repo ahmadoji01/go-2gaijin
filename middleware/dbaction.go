@@ -209,3 +209,31 @@ func PopulateRoomsFromUserID(id primitive.ObjectID) []models.Room {
 
 	return results
 }
+
+func PopulateRoomMsgFromRoomID(id primitive.ObjectID, start int64, limit int64) []models.RoomMessage {
+	var query = bson.M{"room_id": id}
+
+	options := options.Find()
+	options.SetSkip(start)
+	options.SetLimit(limit)
+	options.SetSort(bson.D{{"created_at", 1}})
+
+	collection := DB.Collection("room_messages")
+	cur, err := collection.Find(context.Background(), query, options)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var results []models.RoomMessage
+	for cur.Next(context.Background()) {
+		var result models.RoomMessage
+
+		e := cur.Decode(&result)
+		if e != nil {
+			log.Fatal(e)
+		}
+		results = append(results, result)
+	}
+
+	return results
+}

@@ -22,13 +22,14 @@ func Router() *gin.Engine {
 	r.POST("/reset_password", middleware.ResetPasswordHandler)
 	r.POST("/update_password", middleware.UpdatePasswordHandler)
 	r.POST("/profile", middleware.ProfileHandler)
-	r.POST("/chat_lobby", middleware.GetChatLobby)
 	r.POST("/confirm_identity", middleware.GenerateConfirmToken)
 	r.GET("/confirm_email", middleware.EmailConfirmation)
 	r.GET("/confirm_phone", middleware.PhoneConfirmation)
 
-	r.GET("/search", middleware.GetSearch)
+	r.GET("/chat_messages", middleware.GetChatRoomMsg)
 	r.GET("/ws", channels.ServeChat)
+
+	r.GET("/search", middleware.GetSearch)
 
 	return r
 }

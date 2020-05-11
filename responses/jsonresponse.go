@@ -109,8 +109,12 @@ type ChatLobbyData struct {
 	ChatLobby []models.Room `json:"chat_lobby"`
 }
 
+type ChatRoomData struct {
+	Messages []models.RoomMessage `json:"messages"`
+}
+
 type GenericResponse struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Data    interface{} `json:"data,omitempty"`
 }

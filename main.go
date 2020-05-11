@@ -5,16 +5,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/contrib/cors"
+	"gitlab.com/kitalabs/go-2gaijin/config"
 	"gitlab.com/kitalabs/go-2gaijin/router"
 )
 
-const (
-	domainName   = "go.2gaijin.com"
-	isProduction = false
-)
-
 func redirectTLS(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "https://"+domainName+":443"+r.RequestURI, http.StatusMovedPermanently)
+	http.Redirect(w, r, "https://"+config.DomainName+":443"+r.RequestURI, http.StatusMovedPermanently)
 }
 
 func setupCORS() cors.Config {
@@ -29,7 +25,7 @@ func main() {
 
 	router := router.Router()
 
-	if isProduction {
+	if config.IsProduction {
 		go func() {
 			if err := http.ListenAndServe(":80", http.HandlerFunc(redirectTLS)); err != nil {
 				log.Fatalf("ListenAndServe error: %v", err)
