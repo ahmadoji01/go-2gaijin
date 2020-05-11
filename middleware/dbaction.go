@@ -235,5 +235,8 @@ func PopulateRoomMsgFromRoomID(id primitive.ObjectID, start int64, limit int64) 
 		results = append(results, result)
 	}
 
+	if results == nil {
+		results = make([]models.RoomMessage, 0)
+	}
 	return results
 }
