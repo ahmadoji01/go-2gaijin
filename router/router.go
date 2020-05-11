@@ -26,6 +26,7 @@ func Router() *gin.Engine {
 	r.GET("/confirm_email", middleware.EmailConfirmation)
 	r.GET("/confirm_phone", middleware.PhoneConfirmation)
 
+	r.POST("/chat_lobby", middleware.GetChatLobby)
 	r.GET("/chat_messages", middleware.GetChatRoomMsg)
 	r.GET("/ws", channels.ServeChat)
 
