@@ -44,6 +44,9 @@ func GetChatRoomMsg(c *gin.Context) {
 		}
 		if urlQuery.Get("start") == "" {
 			start = limit - 8
+			if start < 1 {
+				start = 1
+			}
 		} else {
 			start, err = strconv.ParseInt(urlQuery.Get("start"), 10, 64)
 		}
