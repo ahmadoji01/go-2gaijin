@@ -28,6 +28,7 @@ func Router() *gin.Engine {
 
 	r.POST("/chat_lobby", middleware.GetChatLobby)
 	r.GET("/chat_messages", middleware.GetChatRoomMsg)
+	r.POST("/insert_message", middleware.InsertMessage)
 	r.GET("/ws", channels.ServeChat)
 
 	r.GET("/search", middleware.GetSearch)

@@ -113,6 +113,10 @@ type ChatRoomData struct {
 	Messages []models.RoomMessage `json:"messages"`
 }
 
+type RoomMsgData struct {
+	Message models.RoomMessage `json:"message"`
+}
+
 type GenericResponse struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`
