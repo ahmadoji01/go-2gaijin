@@ -88,14 +88,16 @@ func GetHome(c *gin.Context) {
 	// Get Featured Items
 	wg.Add(1)
 	go func() {
+		userID, _ := primitive.ObjectIDFromHex("5da95727697d19f3f01f62b6")
+
 		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}, {"location", 1}, {"status_cd", 1}}
 		sort := bson.D{{"created_at", -1}}
 
 		options.SetProjection(projection)
 		options.SetSort(sort)
-		options.SetLimit(16)
+		options.SetLimit(4)
 
-		homeData.FeaturedItems = PopulateProductsWithAnImage(bson.D{{"price", 0}}, options)
+		homeData.FeaturedItems = PopulateProductsWithAnImage(bson.D{{"user_id", userID}}, options)
 		wg.Done()
 	}()
 
