@@ -121,8 +121,6 @@ func searchFilter(query string, status string, priceMin int64, priceMax int64, c
 
 	if query != "" {
 		filter = append(filter, bson.E{"$text", bson.M{"$search": query}})
-	} else {
-		filter = append(filter, bson.E{})
 	}
 
 	if userid != "" {
@@ -156,6 +154,10 @@ func searchOptions(start int64, limit int64, sort string) *options.FindOptions {
 	limit = limit - start
 	if limit > 16 {
 		limit = 16
+	}
+
+	if start < 1 {
+		start = 1
 	}
 
 	findOptions.SetSkip(start - 1)
