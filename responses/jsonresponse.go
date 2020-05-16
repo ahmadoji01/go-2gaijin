@@ -110,7 +110,8 @@ type ChatLobbyData struct {
 }
 
 type ChatRoomData struct {
-	Messages []models.RoomMessage `json:"messages"`
+	TotalMessages int64                `json:"total_messages"`
+	Messages      []models.RoomMessage `json:"messages"`
 }
 
 type RoomMsgData struct {

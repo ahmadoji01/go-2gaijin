@@ -9,5 +9,6 @@ type Room struct {
 	UserIDs        []primitive.ObjectID `json:"user_ids,omitempty" bson:"user_ids,omitempty"`
 	LastActive     primitive.DateTime   `json:"last_active,omitempty" bson:"last_active,omitempty"`
 	UnreadMessages int                  `json:"unread_messages,omitempty" bson:"unread_messages,omitempty"`
+	IsRead         bool                 `json:"is_read,omitempty" bson:"is_read,omitempty"`
 	IconURL        string               `json:"icon_url"`
 }

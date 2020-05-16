@@ -169,7 +169,7 @@ func GetCategoryIDFromName(categoryName string, locale string) primitive.ObjectI
 	return result.ID
 }
 
-func PopulateRoomsFromUserID(id primitive.ObjectID) []models.Room {
+func PopulateRoomsFromUserID(id primitive.ObjectID) ([]models.Room, error) {
 	var query = bson.M{"user_ids": bson.M{"$elemMatch": bson.M{"$eq": id}}}
 
 	collection := DB.Collection("rooms")
@@ -184,10 +184,7 @@ func PopulateRoomsFromUserID(id primitive.ObjectID) []models.Room {
 		var anotherUser models.User
 		var filter bson.D
 
-		e := cur.Decode(&result)
-		if e != nil {
-			log.Fatal(e)
-		}
+		err = cur.Decode(&result)
 
 		if id != result.UserIDs[0] {
 			filter = bson.D{{"_id", result.UserIDs[0]}}
@@ -196,10 +193,7 @@ func PopulateRoomsFromUserID(id primitive.ObjectID) []models.Room {
 		}
 
 		collection = DB.Collection("users")
-		e = collection.FindOne(context.Background(), filter).Decode(&anotherUser)
-		if e != nil {
-			log.Fatal(e)
-		}
+		err = collection.FindOne(context.Background(), filter).Decode(&anotherUser)
 
 		result.Name = anotherUser.FirstName + " " + anotherUser.LastName
 		result.IconURL = FindUserAvatar(anotherUser.ID, anotherUser.AvatarURL)
@@ -207,7 +201,7 @@ func PopulateRoomsFromUserID(id primitive.ObjectID) []models.Room {
 		results = append(results, result)
 	}
 
-	return results
+	return results, err
 }
 
 func PopulateRoomMsgFromRoomID(id primitive.ObjectID, start int64, limit int64) []models.RoomMessage {

@@ -39,8 +39,10 @@ func GetChatRoomMsg(c *gin.Context) {
 			return
 		}
 
+		totalMessages, _ := collection.CountDocuments(context.Background(), bson.D{{"room_id", id}})
+
 		if urlQuery.Get("limit") == "" {
-			limit, _ = collection.CountDocuments(context.Background(), bson.D{{"room_id", id}})
+			limit = totalMessages
 		} else {
 			limit, err = strconv.ParseInt(urlQuery.Get("limit"), 10, 64)
 		}
@@ -61,6 +63,7 @@ func GetChatRoomMsg(c *gin.Context) {
 
 		msgsData = PopulateRoomMsgFromRoomID(id, start, limit)
 		roomData.Messages = msgsData
+		roomData.TotalMessages = totalMessages
 		res.Status = "Success"
 		res.Message = "Chat Messages Successfully Retrieved"
 		res.Data = roomData
@@ -106,6 +109,49 @@ func InsertMessage(c *gin.Context) {
 
 		res.Status = "Success"
 		res.Message = "Message successfully saved"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	} else {
+		res.Status = "Error"
+		res.Message = "Unauthorized"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+}
+
+func ChatUser(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var room models.Room
+	var res responses.GenericResponse
+	collection := DB.Collection("rooms")
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		receiverID, _ := primitive.ObjectIDFromHex(c.Request.URL.Query().Get("receiverid"))
+
+		query := bson.D{{"user_ids", bson.D{{"$all", bson.A{userData.ID, receiverID}}}}}
+		roomNotFound := collection.FindOne(context.Background(), query).Decode(&room)
+		if roomNotFound != nil {
+			room.LastActive = primitive.NewDateTimeFromTime(time.Now())
+			room.UserIDs = []primitive.ObjectID{userData.ID, receiverID}
+			result, err := collection.InsertOne(context.TODO(), room)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = "Something wrong happened. Try again"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+
+			room.ID = result.InsertedID.(primitive.ObjectID)
+		}
+
+		res.Status = "Success"
+		res.Message = "Chat room has been obtained"
+		res.Data = room
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	} else {

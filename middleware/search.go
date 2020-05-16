@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -120,6 +121,8 @@ func searchFilter(query string, status string, priceMin int64, priceMax int64, c
 
 	if query != "" {
 		filter = append(filter, bson.E{"$text", bson.M{"$search": query}})
+	} else {
+		filter = append(filter, bson.E{})
 	}
 
 	if userid != "" {
@@ -142,6 +145,8 @@ func searchFilter(query string, status string, priceMin int64, priceMax int64, c
 		}
 	}
 
+	fmt.Println(filter)
+
 	return filter
 }
 
@@ -153,15 +158,15 @@ func searchOptions(start int64, limit int64, sort string) *options.FindOptions {
 		limit = 16
 	}
 
-	findOptions.SetSkip(start)
-	findOptions.SetLimit(limit)
+	findOptions.SetSkip(start - 1)
+	findOptions.SetLimit(limit + 1)
 
 	if sort == "relevance" {
 		findOptions.SetSort(bson.M{"relevance": bson.M{"$meta": "textScore"}})
 	} else if sort == "newest" {
-		findOptions.SetSort(bson.D{{"created_at", 1}})
-	} else if sort == "oldest" {
 		findOptions.SetSort(bson.D{{"created_at", -1}})
+	} else if sort == "oldest" {
+		findOptions.SetSort(bson.D{{"created_at", 1}})
 	} else if sort == "highestprice" {
 		findOptions.SetSort(bson.D{{"price", -1}})
 	} else if sort == "lowestprice" {
