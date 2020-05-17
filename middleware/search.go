@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -121,6 +120,8 @@ func searchFilter(query string, status string, priceMin int64, priceMax int64, c
 
 	if query != "" {
 		filter = append(filter, bson.E{"$text", bson.M{"$search": query}})
+	} else {
+		filter = append(filter, bson.E{})
 	}
 
 	if userid != "" {
@@ -142,8 +143,6 @@ func searchFilter(query string, status string, priceMin int64, priceMax int64, c
 			filter = append(filter, bson.E{"category_ids", cat})
 		}
 	}
-
-	fmt.Println(filter)
 
 	return filter
 }
