@@ -225,7 +225,7 @@ func GetLastRoomMsg(id primitive.ObjectID) string {
 	options.SetSort(bson.D{{"created_at", -1}})
 
 	collection := DB.Collection("room_messages")
-	err := collection.FindOne(context.Background(), bson.D{{"_id", id}}, options).Decode(&roomMsg)
+	err := collection.FindOne(context.Background(), bson.D{{"room_id", id}}, options).Decode(&roomMsg)
 	if err != nil {
 		return ""
 	}
