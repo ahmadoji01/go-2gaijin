@@ -11,4 +11,5 @@ type Room struct {
 	UnreadMessages int                  `json:"unread_messages,omitempty" bson:"unread_messages,omitempty"`
 	IsRead         bool                 `json:"is_read,omitempty" bson:"is_read,omitempty"`
 	IconURL        string               `json:"icon_url"`
+	LastMessage    string               `json:"last_message"`
 }

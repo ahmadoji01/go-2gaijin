@@ -211,14 +211,41 @@ func GetChatLobby(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Writer.Header().Set("Content-Type", "application/json")
 
+	var res responses.GenericResponse
+	var err error
+
+	urlQuery := c.Request.URL.Query()
+	var start int64
+	var limit int64
+	if urlQuery.Get("start") == "" {
+		start = 0
+	} else {
+		start, err = strconv.ParseInt(urlQuery.Get("start"), 10, 64)
+	}
+
+	if urlQuery.Get("limit") == "" {
+		limit = 8
+	} else {
+		limit, err = strconv.ParseInt(urlQuery.Get("limit"), 10, 64)
+		if limit <= 0 {
+			limit = 8
+		}
+	}
+
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
 	var roomsData []models.Room
 	var lobbyData responses.ChatLobbyData
-	var res responses.GenericResponse
 
 	tokenString := c.Request.Header.Get("Authorization")
 	userData, isLoggedIn := LoggedInUser(tokenString)
 	if isLoggedIn {
-		roomsData, _ = PopulateRoomsFromUserID(userData.ID)
+		roomsData, _ = PopulateRoomsFromUserID(userData.ID, start, limit)
 		res.Message = "Chat Lobby Retrieved!"
 		res.Status = "Success"
 		if roomsData == nil {

@@ -169,11 +169,25 @@ func GetCategoryIDFromName(categoryName string, locale string) primitive.ObjectI
 	return result.ID
 }
 
-func PopulateRoomsFromUserID(id primitive.ObjectID) ([]models.Room, error) {
+func PopulateRoomsFromUserID(id primitive.ObjectID, start int64, limit int64) ([]models.Room, error) {
 	var query = bson.M{"user_ids": bson.M{"$elemMatch": bson.M{"$eq": id}}}
+	var options = &options.FindOptions{}
+	options.SetSort(bson.D{{"last_active", -1}})
+
+	limit = limit - start
+	if limit > 16 {
+		limit = 16
+	}
+
+	if start < 1 {
+		start = 1
+	}
+
+	options.SetSkip(start - 1)
+	options.SetLimit(limit + 1)
 
 	collection := DB.Collection("rooms")
-	cur, err := collection.Find(context.Background(), query)
+	cur, err := collection.Find(context.Background(), query, options)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -197,11 +211,25 @@ func PopulateRoomsFromUserID(id primitive.ObjectID) ([]models.Room, error) {
 
 		result.Name = anotherUser.FirstName + " " + anotherUser.LastName
 		result.IconURL = FindUserAvatar(anotherUser.ID, anotherUser.AvatarURL)
+		result.LastMessage = GetLastRoomMsg(result.ID)
 
 		results = append(results, result)
 	}
 
 	return results, err
+}
+
+func GetLastRoomMsg(id primitive.ObjectID) string {
+	var roomMsg models.RoomMessage
+	var options = &options.FindOneOptions{}
+	options.SetSort(bson.D{{"created_at", -1}})
+
+	collection := DB.Collection("room_messages")
+	err := collection.FindOne(context.Background(), bson.D{{"_id", id}}, options).Decode(&roomMsg)
+	if err != nil {
+		return ""
+	}
+	return roomMsg.Message
 }
 
 func PopulateRoomMsgFromRoomID(id primitive.ObjectID, start int64, limit int64) []models.RoomMessage {
