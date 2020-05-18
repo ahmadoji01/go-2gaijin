@@ -100,6 +100,8 @@ func InsertMessage(c *gin.Context) {
 	_, isLoggedIn := LoggedInUser(tokenString)
 	if isLoggedIn {
 		_, err := collection.InsertOne(context.TODO(), roomMsg)
+		_, err = collection.UpdateOne(context.Background(), bson.M{"room_id": roomMsg.RoomID}, bson.D{{"$set", bson.D{{"last_active", roomMsg.CreatedAt}}}})
+
 		if err != nil {
 			res.Status = "Error"
 			res.Message = "Something wrong happened. Try again"
