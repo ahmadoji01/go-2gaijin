@@ -262,3 +262,28 @@ func PopulateRoomMsgFromRoomID(id primitive.ObjectID, start int64, limit int64) 
 	}
 	return results
 }
+
+func PopulateAppointmentsFromUserID(id primitive.ObjectID) []models.Appointment {
+
+	var collection = DB.Collection("appointments")
+	cur, err := collection.Find(context.Background(), bson.M{"requester_id": id})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var results []models.Appointment
+	for cur.Next(context.Background()) {
+		var result models.Appointment
+
+		e := cur.Decode(&result)
+		if e != nil {
+			log.Fatal(e)
+		}
+		results = append(results, result)
+	}
+
+	if results == nil {
+		results = make([]models.Appointment, 0)
+	}
+	return results
+}

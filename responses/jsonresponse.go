@@ -105,6 +105,10 @@ type SearchData struct {
 	Items interface{} `json:"items"`
 }
 
+type AppointmentData struct {
+	Appointments interface{} `json:"appointments"`
+}
+
 type ChatLobbyData struct {
 	ChatLobby []models.Room `json:"chat_lobby"`
 }

@@ -259,6 +259,34 @@ func GetChatLobby(c *gin.Context) {
 	}
 }
 
+func GetAppointmentPage(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+
+	var res responses.GenericResponse
+	var appointments []models.Appointment
+	var appointmentData responses.AppointmentData
+
+	if isLoggedIn {
+		appointments = PopulateAppointmentsFromUserID(userData.ID)
+		appointmentData.Appointments = appointments
+
+		res.Status = "Success"
+		res.Message = "Appointments Retrieved"
+		res.Data = appointmentData
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
 func GetWishlistPage(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
