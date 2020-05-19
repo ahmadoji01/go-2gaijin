@@ -34,5 +34,9 @@ func Router() *gin.Engine {
 
 	r.GET("/search", middleware.GetSearch)
 
+	r.POST("/insert_notification", middleware.InsertNotification)
+	r.POST("/insert_appointment", middleware.InsertAppointment)
+	r.POST("/insert_trust_coin", middleware.InsertTrustCoin)
+
 	return r
 }
