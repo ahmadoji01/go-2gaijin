@@ -287,6 +287,34 @@ func GetAppointmentPage(c *gin.Context) {
 	return
 }
 
+func GetNotificationPage(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+
+	var res responses.GenericResponse
+	var notifications []models.Notification
+	var notificationData responses.NotificationData
+
+	if isLoggedIn {
+		notifications = PopulateNotificationsFromUserID(userData.ID)
+		notificationData.Notifications = notifications
+
+		res.Status = "Success"
+		res.Message = "Notifications Retrieved"
+		res.Data = notificationData
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
 func GetWishlistPage(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")

@@ -287,3 +287,28 @@ func PopulateAppointmentsFromUserID(id primitive.ObjectID) []models.Appointment 
 	}
 	return results
 }
+
+func PopulateNotificationsFromUserID(id primitive.ObjectID) []models.Notification {
+
+	var collection = DB.Collection("notifications")
+	cur, err := collection.Find(context.Background(), bson.M{"notified_id": id})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var results []models.Notification
+	for cur.Next(context.Background()) {
+		var result models.Notification
+
+		e := cur.Decode(&result)
+		if e != nil {
+			log.Fatal(e)
+		}
+		results = append(results, result)
+	}
+
+	if results == nil {
+		results = make([]models.Notification, 0)
+	}
+	return results
+}

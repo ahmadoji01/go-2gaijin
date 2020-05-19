@@ -166,6 +166,13 @@ func InsertTrustCoin(c *gin.Context) {
 	return
 }
 
+func AppointmentConfirmation(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+}
+
 func addNotification(name string, notifType string, notifIcon string, notifiedID primitive.ObjectID, notifierID primitive.ObjectID, appointmentID primitive.ObjectID) {
 	var collection = DB.Collection("notifications")
 	var notification models.Notification
