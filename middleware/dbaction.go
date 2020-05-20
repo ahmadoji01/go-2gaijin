@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"log"
+	"sync"
 
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
@@ -311,4 +312,42 @@ func PopulateNotificationsFromUserID(id primitive.ObjectID) []models.Notificatio
 		results = make([]models.Notification, 0)
 	}
 	return results
+}
+
+func GetSellerInfo(id primitive.ObjectID) interface{} {
+	var collection = DB.Collection("users")
+	var wg sync.WaitGroup
+
+	result := struct {
+		ID         primitive.ObjectID `json:"_id" bson:"_id"`
+		FirstName  string             `json:"first_name" bson:"first_name"`
+		LastName   string             `json:"last_name" bson:"last_name"`
+		GoldCoin   int64              `json:"gold_coin"`
+		SilverCoin int64              `json:"silver_coin"`
+		AvatarURL  string             `json:"avatar_url" bson:"avatar_url"`
+	}{}
+	err := collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&result)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	collection = DB.Collection("trust_coins")
+	// Search Gold Trust Coins
+	wg.Add(1)
+	go func() {
+		filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "gold"}}
+		result.GoldCoin, err = collection.CountDocuments(context.Background(), filter)
+		wg.Done()
+	}()
+
+	// Search Seller Items
+	wg.Add(1)
+	go func() {
+		filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "silver"}}
+		result.SilverCoin, err = collection.CountDocuments(context.Background(), filter)
+		wg.Done()
+	}()
+	wg.Wait()
+
+	return result
 }

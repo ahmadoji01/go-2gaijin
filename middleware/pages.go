@@ -175,6 +175,13 @@ func GetProductDetail(c *gin.Context) {
 	options.SetProjection(projection)
 	options.SetSort(sort)
 
+	// Get Seller Info
+	wg.Add(1)
+	go func() {
+		payload.Seller = GetSellerInfo(item.User)
+		wg.Done()
+	}()
+
 	// Search Related Items
 	wg.Add(1)
 	go func() {
