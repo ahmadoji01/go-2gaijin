@@ -263,6 +263,11 @@ func GetChatLobby(c *gin.Context) {
 		res.Data = lobbyData
 		json.NewEncoder(c.Writer).Encode(res)
 		return
+	} else {
+		res.Status = "Error"
+		res.Message = "Unauthorized"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
 	}
 }
 

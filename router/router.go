@@ -19,6 +19,7 @@ func Router() *gin.Engine {
 
 	r.POST("/sign_in", middleware.LoginHandler)
 	r.POST("/sign_up", middleware.RegisterHandler)
+	r.POST("/sign_out", middleware.LogoutHandler)
 	r.POST("/refresh_token", middleware.RefreshToken)
 	r.POST("/reset_password", middleware.ResetPasswordHandler)
 	r.POST("/update_password", middleware.UpdatePasswordHandler)

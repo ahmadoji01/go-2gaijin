@@ -198,6 +198,25 @@ func ProfileHandler(c *gin.Context) {
 			return
 		}
 
+		AtUUID := claims["at_uuid"].(string)
+		var collection = DB.Collection("tokens")
+		var tokenDetail models.Token
+		err = collection.FindOne(context.Background(), bson.M{"auth_token_uuid": AtUUID}).Decode(&tokenDetail)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Unauthorized"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		AtExpiry, _ := time.Parse(time.RFC3339, claims["at_expiry"].(string))
+		if time.Now().After(AtExpiry) {
+			res.Status = "Error"
+			res.Message = "Token Expired"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
 		result.ID = id
 		result.Email = claims["email"].(string)
 		result.FirstName = claims["first_name"].(string)
@@ -230,6 +249,55 @@ func ProfileHandler(c *gin.Context) {
 
 }
 
+func LogoutHandler(c *gin.Context) {
+	c.Writer.Header().Set("Content-Type", "application/json")
+	tokenString := c.Request.Header.Get("Authorization")
+	var res responses.ResponseMessage
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return []byte(os.Getenv("MY_JWT_TOKEN")), nil
+	})
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		AtExpiry, _ := time.Parse(time.RFC3339, claims["at_expiry"].(string))
+		if time.Now().After(AtExpiry) {
+			res.Status = "Error"
+			res.Message = "Unauthorized"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var AtUUID = claims["at_uuid"].(string)
+		var collection = DB.Collection("tokens")
+		collection.FindOneAndDelete(context.Background(), bson.M{"auth_token_uuid": AtUUID})
+	} else {
+		res.Status = "Error"
+		res.Message = "Unauthorized"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	res.Status = "Success"
+	res.Message = "You have been logged out successfully"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
 func LoggedInUser(tokenString string) (models.User, bool) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
@@ -247,6 +315,14 @@ func LoggedInUser(tokenString string) (models.User, bool) {
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		id, err := primitive.ObjectIDFromHex(claims["_id"].(string))
+		if err != nil {
+			return result, false
+		}
+
+		AtUUID := claims["at_uuid"].(string)
+		var collection = DB.Collection("tokens")
+		var tokenDetail models.Token
+		err = collection.FindOne(context.Background(), bson.M{"auth_token_uuid": AtUUID}).Decode(&tokenDetail)
 		if err != nil {
 			return result, false
 		}
@@ -312,7 +388,7 @@ func RefreshToken(c *gin.Context) {
 		err = collection.FindOne(context.Background(), bson.M{"refresh_token_uuid": RtUUID}).Decode(&tokenDetail)
 		if err != nil {
 			res.Status = "Error"
-			res.Message = "Something went wrong"
+			res.Message = "Unauthorized"
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
