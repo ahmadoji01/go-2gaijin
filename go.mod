@@ -18,6 +18,7 @@ require (
 	github.com/pjebs/jsonerror v0.0.0-20190614034432-63ef9a8df848 // indirect
 	github.com/pjebs/restgate v0.0.0-20170705024428-23fa04ff258d // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/twinj/uuid v1.0.0
 	github.com/yasaricli/gah v0.0.0-20200110175914-1d93173de233
 	go.mongodb.org/mongo-driver v1.3.2
 	golang.org/x/crypto v0.0.0-20200406173513-056763e48d71

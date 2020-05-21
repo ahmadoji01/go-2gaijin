@@ -11,6 +11,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/twinj/uuid"
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
@@ -65,8 +66,8 @@ func RegisterHandler(c *gin.Context) {
 			}
 
 			tokenString, err := generateNewToken(user)
-			update := bson.M{"$set": bson.M{"token": tokenString}}
-			_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)
+			/*update := bson.M{"$set": bson.M{"token": tokenString}}
+			_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)*/
 			if err != nil {
 				res.Status = "Error"
 				res.Message = "Error while generating token, try again"
@@ -74,7 +75,8 @@ func RegisterHandler(c *gin.Context) {
 				return
 			}
 
-			user.Token = tokenString
+			user.Token = tokenString.AuthToken
+			user.RefreshToken = tokenString.RefreshToken
 			user.Password = ""
 
 			var result = struct {
@@ -147,8 +149,8 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	tokenString, err := generateNewToken(result)
-	update := bson.M{"$set": bson.M{"token": tokenString}}
-	_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)
+	/*update := bson.M{"$set": bson.M{"token": tokenString}}
+	_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)*/
 	if err != nil {
 		res.Status = "Error"
 		res.Message = "Error while generating token, try again"
@@ -156,7 +158,8 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	result.Token = tokenString
+	result.Token = tokenString.AuthToken
+	result.RefreshToken = tokenString.RefreshToken
 	result.Password = ""
 
 	var results = struct {
@@ -167,8 +170,6 @@ func LoginHandler(c *gin.Context) {
 	results.Status = "Success"
 	results.Message = "Login Success"
 	results.UserData = result
-
-	c.SetCookie("jid", tokenString, 10, "/", "localhost", false, true)
 
 	json.NewEncoder(c.Writer).Encode(results)
 }
@@ -250,16 +251,106 @@ func LoggedInUser(tokenString string) (models.User, bool) {
 			return result, false
 		}
 
+		AtExpiry, _ := time.Parse(time.RFC3339, claims["at_expiry"].(string))
+		if time.Now().After(AtExpiry) {
+			return result, false
+		}
+
 		result.ID = id
 		result.Email = claims["email"].(string)
 		result.FirstName = claims["first_name"].(string)
 		result.LastName = claims["last_name"].(string)
 		result.AvatarURL = claims["avatar"].(string)
+		result.Role = claims["role"].(string)
 	} else {
 		return result, false
 	}
 
 	return result, true
+}
+
+func RefreshToken(c *gin.Context) {
+	c.Writer.Header().Set("Content-Type", "application/json")
+	tokenString := c.Request.Header.Get("Authorization")
+	var res responses.ResponseMessage
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return []byte(os.Getenv("MY_JWT_TOKEN")), nil
+	})
+
+	var tokenDetail models.Token
+
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Something went wrong. Please try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		id, err := primitive.ObjectIDFromHex(claims["_id"].(string))
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something went wrong. Please try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		RtExpiry, _ := time.Parse(time.RFC3339, claims["rt_expiry"].(string))
+		if time.Now().After(RtExpiry) {
+			res.Status = "Error"
+			res.Message = "Token Expired"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		RtUUID := claims["rt_uuid"].(string)
+		var collection = DB.Collection("tokens")
+		err = collection.FindOne(context.Background(), bson.M{"refresh_token_uuid": RtUUID}).Decode(&tokenDetail)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something went wrong"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		authToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"_id":            id,
+			"email":          claims["email"].(string),
+			"first_name":     claims["first_name"].(string),
+			"last_name":      claims["last_name"].(string),
+			"avatar":         claims["avatar"].(string),
+			"role":           claims["role"].(string),
+			"last_active_at": primitive.NewDateTimeFromTime(time.Now()),
+			"at_expiry":      primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 15)),
+			"at_uuid":        tokenDetail.AuthTokenUUID,
+		})
+		authTokenString, err := authToken.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
+
+		update := bson.M{"$set": bson.M{"auth_token": authTokenString, "auth_token_expiry": primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 15))}}
+		_, err = collection.UpdateOne(context.Background(), bson.D{{"user_id", id}}, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something went wrong"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+	} else {
+		res.Status = "Error"
+		res.Message = "Token Expired"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	var resp responses.GenericResponse
+	resp.Status = "Success"
+	resp.Message = "Token Refreshed"
+	resp.Data = tokenDetail
+	json.NewEncoder(c.Writer).Encode(resp)
+	return
 }
 
 func ResetPasswordHandler(c *gin.Context) {
@@ -578,23 +669,59 @@ func GenerateConfirmToken(c *gin.Context) {
 	return
 }
 
-func generateNewToken(user models.User) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+func generateNewToken(user models.User) (models.Token, error) {
+	authTokenUUID := uuid.NewV4().String()
+	refreshTokenUUID := uuid.NewV4().String()
+
+	authToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"_id":            user.ID,
 		"email":          user.Email,
 		"first_name":     user.FirstName,
 		"last_name":      user.LastName,
 		"avatar":         user.AvatarURL,
+		"role":           user.Role,
 		"last_active_at": primitive.NewDateTimeFromTime(time.Now()),
+		"at_expiry":      primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 15)),
+		"at_uuid":        authTokenUUID,
 	})
 
-	tokenString, err := token.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"_id":            user.ID,
+		"email":          user.Email,
+		"first_name":     user.FirstName,
+		"last_name":      user.LastName,
+		"avatar":         user.AvatarURL,
+		"role":           user.Role,
+		"last_active_at": primitive.NewDateTimeFromTime(time.Now()),
+		"rt_expiry":      primitive.NewDateTimeFromTime(time.Now().Add(time.Hour * 24 * 365)),
+		"rt_uuid":        refreshTokenUUID,
+	})
 
+	authTokenString, err := authToken.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
+	refreshTokenString, err := refreshToken.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
+
+	var token models.Token
 	if err != nil {
-		return "Error while generating token, try again", err
+		return token, err
 	}
 
-	return tokenString, err
+	token.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+	token.UserID = user.ID
+	token.AuthToken = authTokenString
+	token.AuthTokenExpiry = primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 15))
+	token.AuthTokenUUID = authTokenUUID
+	token.RefreshToken = refreshTokenString
+	token.RefreshTokenExpiry = primitive.NewDateTimeFromTime(time.Now().Add(time.Hour * 24 * 365))
+	token.RefreshTokenUUID = refreshTokenUUID
+
+	var collection = DB.Collection("tokens")
+	_, err = collection.InsertOne(context.Background(), token)
+
+	if err != nil {
+		return token, err
+	}
+
+	return token, err
 }
 
 func generateResetToken(user models.User) (string, error) {

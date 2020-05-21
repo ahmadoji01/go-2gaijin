@@ -26,8 +26,11 @@ type User struct {
 	WeChat      string             `json:"wechat,omitempty" bson:"wechat,omitempty"`
 	AvatarURL   string             `json:"avatar_url,omitempty" bson:"avatar,omitempty"`
 
-	Password string `json:"password,omitempty" bson:"password,omitempty"`
-	Token    string `json:"authentication_token,omitempty" bson:"token,omitempty"`
+	Password     string `json:"password,omitempty" bson:"password,omitempty"`
+	Token        string `json:"authentication_token,omitempty"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+
+	Role string `json:"role,omitempty" bson:"role,omitempty"`
 
 	CreatedAt    primitive.DateTime `json:"created_at,omitempty" bson:"created_at,omitempty"`
 	UpdatedAt    primitive.DateTime `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
