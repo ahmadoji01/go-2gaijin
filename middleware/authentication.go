@@ -414,6 +414,8 @@ func RefreshToken(c *gin.Context) {
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
+		tokenDetail.AuthToken = authTokenString
+		tokenDetail.AuthTokenExpiry = primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 15))
 	} else {
 		res.Status = "Error"
 		res.Message = "Token Expired"
