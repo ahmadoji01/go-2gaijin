@@ -40,7 +40,7 @@ type SearchPage struct {
 }
 
 type UserData struct {
-	User interface{} `json:"user"`
+	User models.User `json:"user"`
 }
 
 type LoginPage struct {

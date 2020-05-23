@@ -79,17 +79,16 @@ func RegisterHandler(c *gin.Context) {
 			user.RefreshToken = tokenString.RefreshToken
 			user.Password = ""
 
-			var result = struct {
-				Status   string      `json:"status"`
-				Message  string      `json:"message" `
-				UserData models.User `json:"data"`
-			}{}
+			var userData responses.UserData
+			userData.User = user
 
-			result.Status = "Success"
-			result.Message = "Registration Successful"
-			result.UserData = user
+			var res responses.GenericResponse
 
-			json.NewEncoder(c.Writer).Encode(result)
+			res.Status = "Success"
+			res.Message = "Registration Successful"
+			res.Data = userData
+
+			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
 
@@ -162,16 +161,15 @@ func LoginHandler(c *gin.Context) {
 	result.RefreshToken = tokenString.RefreshToken
 	result.Password = ""
 
-	var results = struct {
-		Status   string      `json:"status" bson:"message"`
-		Message  string      `json:"message" bson:"message"`
-		UserData models.User `json:"data"`
-	}{}
-	results.Status = "Success"
-	results.Message = "Login Success"
-	results.UserData = result
+	var userData responses.UserData
+	userData.User = result
 
-	json.NewEncoder(c.Writer).Encode(results)
+	var resp responses.GenericResponse
+
+	resp.Status = "Success"
+	resp.Message = "Registration Successful"
+	resp.Data = userData
+	json.NewEncoder(c.Writer).Encode(resp)
 }
 
 func ProfileHandler(c *gin.Context) {
