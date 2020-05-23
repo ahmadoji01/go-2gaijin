@@ -305,6 +305,7 @@ func PopulateNotificationsFromUserID(idFilter bson.D) []models.Notification {
 		if e != nil {
 			log.Fatal(e)
 		}
+		result.Notifier = GetUserForNotification(result.NotifierID)
 
 		if !result.AppointmentID.IsZero() {
 			var appointment models.Appointment
@@ -323,6 +324,25 @@ func PopulateNotificationsFromUserID(idFilter bson.D) []models.Notification {
 		results = make([]models.Notification, 0)
 	}
 	return results
+}
+
+func GetUserForNotification(id primitive.ObjectID) interface{} {
+	var collection = DB.Collection("users")
+
+	result := struct {
+		ID         primitive.ObjectID `json:"_id" bson:"_id"`
+		FirstName  string             `json:"first_name" bson:"first_name"`
+		LastName   string             `json:"last_name" bson:"last_name"`
+		GoldCoin   int64              `json:"gold_coin"`
+		SilverCoin int64              `json:"silver_coin"`
+		AvatarURL  string             `json:"avatar_url" bson:"avatar_url"`
+	}{}
+	err := collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&result)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return result
 }
 
 func GetSellerInfo(id primitive.ObjectID) interface{} {

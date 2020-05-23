@@ -12,6 +12,7 @@ type Notification struct {
 	NotifIcon     string             `json:"notif_icon,omitempty" bson:"notif_icon,omitempty"`
 	NotifiedID    primitive.ObjectID `json:"notified_id" bson:"notified_id"`
 	NotifierID    primitive.ObjectID `json:"notifier_id" bson:"notifier_id"`
+	Notifier      interface{}        `json:"notifier,omitempty"`
 	AppointmentID primitive.ObjectID `json:"appointment_id,omitempty" bson:"appointment_id,omitempty"`
 	Appointment   interface{}        `json:"appointment,omitempty"`
 }
