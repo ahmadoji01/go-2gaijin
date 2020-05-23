@@ -39,9 +39,12 @@ func Router() *gin.Engine {
 	r.POST("/insert_notification", middleware.InsertNotification)
 	r.POST("/insert_appointment", middleware.InsertAppointment)
 	r.POST("/insert_trust_coin", middleware.InsertTrustCoin)
+	r.POST("/confirm_appointment", middleware.AppointmentConfirmation)
+	r.POST("/reschedule_appointment", middleware.RescheduleAppointment)
 
 	r.GET("/get_appointments", middleware.GetAppointmentPage)
-	r.GET("/get_notifications", middleware.GetNotificationPage)
+	r.GET("/get_seller_notifications", middleware.GetSellerNotificationPage)
+	r.GET("/get_buyer_notifications", middleware.GetBuyerNotificationPage)
 
 	return r
 }

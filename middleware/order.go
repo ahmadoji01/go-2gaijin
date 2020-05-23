@@ -171,6 +171,103 @@ func AppointmentConfirmation(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
+	var appointment models.Appointment
+	var res responses.GenericResponse
+
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &appointment)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Something wrong happened. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	var collection = DB.Collection("appointments")
+	tokenString := c.Request.Header.Get("Authorization")
+	_, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		update := bson.M{"$set": bson.M{"status": appointment.Status}}
+		_, err = collection.UpdateOne(context.Background(), bson.D{{"_id", appointment.ID}}, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		collection = DB.Collection("notifications")
+		update = bson.M{"$set": bson.M{"status": appointment.Status}}
+		_, err = collection.UpdateOne(context.Background(), bson.D{{"appointment_id", appointment.ID}}, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		res.Status = "Success"
+		res.Message = "Appointment successfully updated"
+		res.Data = appointment
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func RescheduleAppointment(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var appointment models.Appointment
+	var res responses.GenericResponse
+
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &appointment)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Something wrong happened. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	var collection = DB.Collection("appointments")
+	tokenString := c.Request.Header.Get("Authorization")
+	_, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		update := bson.M{"$set": bson.M{"meeting_time": appointment.MeetingTime, "status": "accepted"}}
+		_, err = collection.UpdateOne(context.Background(), bson.D{{"_id", appointment.ID}}, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var collection = DB.Collection("notifications")
+		update = bson.M{"$set": bson.M{"status": "accepted"}}
+		_, err = collection.UpdateOne(context.Background(), bson.D{{"appointment_id", appointment.ID}}, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		res.Status = "Success"
+		res.Message = "Appointment successfully rescheduled"
+		res.Data = appointment
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
 }
 
 func addNotification(name string, notifType string, notifIcon string, notifiedID primitive.ObjectID, notifierID primitive.ObjectID, appointmentID primitive.ObjectID) {
