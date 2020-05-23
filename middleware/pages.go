@@ -312,8 +312,8 @@ func GetSellerNotificationPage(c *gin.Context) {
 	var notificationData responses.NotificationData
 
 	if isLoggedIn {
-		idFilter := bson.D{{"notified_id", userData.ID}}
-		notifications = PopulateNotificationsFromUserID(idFilter)
+		idFilter := bson.D{{"notifier_id", userData.ID}}
+		notifications = PopulateNotificationsFromUserID(idFilter, "seller")
 		notificationData.Notifications = notifications
 
 		res.Status = "Success"
@@ -341,8 +341,8 @@ func GetBuyerNotificationPage(c *gin.Context) {
 	var notificationData responses.NotificationData
 
 	if isLoggedIn {
-		idFilter := bson.D{{"notifier_id", userData.ID}}
-		notifications = PopulateNotificationsFromUserID(idFilter)
+		idFilter := bson.D{{"notified_id", userData.ID}}
+		notifications = PopulateNotificationsFromUserID(idFilter, "buyer")
 		notificationData.Notifications = notifications
 
 		res.Status = "Success"
