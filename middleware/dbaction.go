@@ -289,7 +289,7 @@ func PopulateAppointmentsFromUserID(id primitive.ObjectID) []models.Appointment 
 	return results
 }
 
-func PopulateNotificationsFromUserID(idFilter bson.D) []models.Notification {
+func PopulateNotificationsFromUserID(idFilter bson.D, notifType string) []models.Notification {
 
 	var collection = DB.Collection("notifications")
 	cur, err := collection.Find(context.Background(), idFilter)
@@ -305,7 +305,12 @@ func PopulateNotificationsFromUserID(idFilter bson.D) []models.Notification {
 		if e != nil {
 			log.Fatal(e)
 		}
-		result.Notifier = GetUserForNotification(result.NotifierID)
+
+		if notifType == "seller" {
+			result.NotificationUser = GetUserForNotification(result.NotifierID)
+		} else if notifType == "buyer" {
+			result.NotificationUser = GetUserForNotification(result.NotifiedID)
+		}
 
 		if !result.AppointmentID.IsZero() {
 			var appointment models.Appointment
