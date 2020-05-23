@@ -167,7 +167,7 @@ func LoginHandler(c *gin.Context) {
 	var resp responses.GenericResponse
 
 	resp.Status = "Success"
-	resp.Message = "Registration Successful"
+	resp.Message = "Login Successful"
 	resp.Data = userData
 	json.NewEncoder(c.Writer).Encode(resp)
 }
