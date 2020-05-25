@@ -123,6 +123,10 @@ type ChatRoomData struct {
 	Messages      []models.RoomMessage `json:"messages"`
 }
 
+type TokenData struct {
+	Token models.Token `json:"token"`
+}
+
 type RoomMsgData struct {
 	Message models.RoomMessage `json:"message"`
 }

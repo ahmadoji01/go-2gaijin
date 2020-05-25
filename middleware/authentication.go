@@ -422,9 +422,12 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	var resp responses.GenericResponse
+	var tokenData responses.TokenData
+	tokenData.Token = tokenDetail
+
 	resp.Status = "Success"
 	resp.Message = "Token Refreshed"
-	resp.Data = tokenDetail
+	resp.Data = tokenData
 	json.NewEncoder(c.Writer).Encode(resp)
 	return
 }
