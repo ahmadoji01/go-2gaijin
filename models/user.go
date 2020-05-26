@@ -24,7 +24,8 @@ type User struct {
 	DateOfBirth primitive.DateTime `json:"date_of_birth,omitempty" bson:"date_of_birth,omitempty"`
 	Phone       string             `json:"phone" bson:"phone"`
 	WeChat      string             `json:"wechat,omitempty" bson:"wechat,omitempty"`
-	AvatarURL   string             `json:"avatar_url,omitempty" bson:"avatar,omitempty"`
+	AvatarURL   string             `json:"avatar_url" bson:"avatar"`
+	ShortBio    string             `json:"short_bio" bson:"short_bio"`
 
 	Password     string `json:"password,omitempty" bson:"password,omitempty"`
 	Token        string `json:"authentication_token,omitempty"`
@@ -41,8 +42,8 @@ type User struct {
 	Rooms        []primitive.ObjectID `json:"rooms,omitempty" bson:"rooms,omitempty"`
 	RoomMessages []primitive.ObjectID `json:"room_messages,omitempty" bson:"room_messages,omitempty"`
 
-	EmailConfirmed bool `json:"email_confirmed,omitempty" bson:"email_confirmed,omitempty"`
-	PhoneConfirmed bool `json:"phone_confirmed,omitempty" bson:"phone_confirmed,omitempty"`
+	EmailConfirmed bool `json:"email_confirmed" bson:"email_confirmed"`
+	PhoneConfirmed bool `json:"phone_confirmed" bson:"phone_confirmed"`
 
 	ConfirmToken       string             `json:"confirm_token,omitempty" bson:"confirm_token,omitempty"`
 	ConfirmTokenExpiry primitive.DateTime `json:"confirm_token_expiry,omitempty" bson:"confirm_token_expiry,omitempty"`

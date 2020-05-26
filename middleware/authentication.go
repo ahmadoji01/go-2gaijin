@@ -217,6 +217,7 @@ func ProfileHandler(c *gin.Context) {
 
 		result.ID = id
 		result.Email = claims["email"].(string)
+		result.Phone = claims["phone"].(string)
 		result.FirstName = claims["first_name"].(string)
 		result.LastName = claims["last_name"].(string)
 		result.AvatarURL = ""
@@ -248,7 +249,131 @@ func ProfileHandler(c *gin.Context) {
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
+}
 
+func UpdateProfile(c *gin.Context) {
+	c.Writer.Header().Set("Content-Type", "application/json")
+	tokenString := c.Request.Header.Get("Authorization")
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return []byte(os.Getenv("MY_JWT_TOKEN")), nil
+	})
+	var res responses.ResponseMessage
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		id, err := primitive.ObjectIDFromHex(claims["_id"].(string))
+
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something went wrong. Please try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		AtUUID := claims["at_uuid"].(string)
+		var collection = DB.Collection("tokens")
+		var tokenDetail models.Token
+		err = collection.FindOne(context.Background(), bson.M{"auth_token_uuid": AtUUID}).Decode(&tokenDetail)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Unauthorized"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		AtExpiry, _ := time.Parse(time.RFC3339, claims["at_expiry"].(string))
+		if time.Now().After(AtExpiry) {
+			res.Status = "Error"
+			res.Message = "Token Expired"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var user models.User
+		body, _ := ioutil.ReadAll(c.Request.Body)
+		err = json.Unmarshal(body, &user)
+		var res responses.ResponseMessage
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var filter = bson.M{"_id": id}
+		var update = bson.M{}
+		if user.Email != claims["email"].(string) && user.Phone != claims["phone"].(string) {
+			update = bson.M{"$set": bson.M{"first_name": user.FirstName, "last_name": user.LastName, "phone_confirmed": false,
+				"email": user.Email, "date_of_birth": user.DateOfBirth, "phone": user.Phone, "short_bio": user.ShortBio, "email_confirmed": false}}
+		} else if user.Email != claims["email"].(string) && user.Phone == claims["phone"].(string) {
+			update = bson.M{"$set": bson.M{"first_name": user.FirstName, "last_name": user.LastName,
+				"email": user.Email, "date_of_birth": user.DateOfBirth, "phone": user.Phone, "short_bio": user.ShortBio, "email_confirmed": false}}
+		} else if user.Email == claims["email"].(string) && user.Phone != claims["phone"].(string) {
+			update = bson.M{"$set": bson.M{"first_name": user.FirstName, "last_name": user.LastName, "phone_confirmed": false,
+				"email": user.Email, "date_of_birth": user.DateOfBirth, "phone": user.Phone, "short_bio": user.ShortBio}}
+		} else {
+			update = bson.M{"$set": bson.M{"first_name": user.FirstName, "last_name": user.LastName,
+				"email": user.Email, "date_of_birth": user.DateOfBirth, "phone": user.Phone, "short_bio": user.ShortBio}}
+		}
+
+		collection = DB.Collection("users")
+		_, err = collection.UpdateOne(context.Background(), filter, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var newProfile models.User
+		err = collection.FindOne(context.Background(), filter).Decode(&newProfile)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		authToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"_id":            id,
+			"email":          user.Email,
+			"phone":          user.Phone,
+			"first_name":     user.FirstName,
+			"last_name":      user.LastName,
+			"avatar":         claims["avatar"].(string),
+			"role":           claims["role"].(string),
+			"last_active_at": primitive.NewDateTimeFromTime(time.Now()),
+			"at_expiry":      primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 15)),
+			"at_uuid":        AtUUID,
+		})
+		authTokenString, err := authToken.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
+
+		update = bson.M{"$set": bson.M{"auth_token": authTokenString, "auth_token_expiry": primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 15))}}
+		_, err = collection.UpdateOne(context.Background(), bson.D{{"auth_token_uuid", AtUUID}}, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+		user.Token = authTokenString
+
+		var resp responses.GenericResponse
+		resp.Status = "Success"
+		resp.Message = "Profile Successfully Updated"
+		resp.Data = user
+
+		json.NewEncoder(c.Writer).Encode(resp)
+		return
+	}
+
+	res.Status = "Error"
+	res.Message = err.Error()
+	json.NewEncoder(c.Writer).Encode(res)
+	return
 }
 
 func LogoutHandler(c *gin.Context) {
@@ -400,6 +525,7 @@ func RefreshToken(c *gin.Context) {
 
 		authToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"_id":            id,
+			"phone":          claims["phone"].(string),
 			"email":          claims["email"].(string),
 			"first_name":     claims["first_name"].(string),
 			"last_name":      claims["last_name"].(string),
@@ -412,7 +538,7 @@ func RefreshToken(c *gin.Context) {
 		authTokenString, err := authToken.SignedString([]byte(os.Getenv("MY_JWT_TOKEN")))
 
 		update := bson.M{"$set": bson.M{"auth_token": authTokenString, "auth_token_expiry": primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 15))}}
-		_, err = collection.UpdateOne(context.Background(), bson.D{{"user_id", id}}, update)
+		_, err = collection.UpdateOne(context.Background(), bson.D{{"refresh_token_uuid", RtUUID}}, update)
 		if err != nil {
 			res.Status = "Error"
 			res.Message = "Something went wrong"
@@ -445,7 +571,7 @@ func ResetPasswordHandler(c *gin.Context) {
 	var user models.User
 	body, _ := ioutil.ReadAll(c.Request.Body)
 	err := json.Unmarshal(body, &user)
-	var res responses.ResponseMessage
+	var res responses.GenericResponse
 	if err != nil {
 		res.Status = "Error"
 		res.Message = err.Error()
@@ -485,6 +611,7 @@ func ResetPasswordHandler(c *gin.Context) {
 
 	res.Status = "Success"
 	res.Message = "Check your email to reset your password"
+	SendResetPasswordEmail(tokenString, user.Email)
 
 	json.NewEncoder(c.Writer).Encode(res)
 	return
@@ -710,7 +837,7 @@ func GenerateConfirmToken(c *gin.Context) {
 	}
 	if user.Phone != "" {
 		filter = append(filter, bson.E{"phone", user.Phone})
-		message = "Confirmation has been sent to your email"
+		message = "Confirmation has been sent to your phone"
 	}
 
 	var result models.User
@@ -762,6 +889,7 @@ func generateNewToken(user models.User) (models.Token, error) {
 	authToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"_id":            user.ID,
 		"email":          user.Email,
+		"phone":          user.Phone,
 		"first_name":     user.FirstName,
 		"last_name":      user.LastName,
 		"avatar":         user.AvatarURL,
@@ -774,6 +902,7 @@ func generateNewToken(user models.User) (models.Token, error) {
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"_id":            user.ID,
 		"email":          user.Email,
+		"phone":          user.Phone,
 		"first_name":     user.FirstName,
 		"last_name":      user.LastName,
 		"avatar":         user.AvatarURL,
