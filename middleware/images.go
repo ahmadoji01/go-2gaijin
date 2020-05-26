@@ -10,6 +10,7 @@ import (
 
 //Image URL Prefix
 var ImgURLPrefix string = "https://storage.googleapis.com/rails-2gaijin-storage/"
+var AvatarURLPrefix string = "https://storage.googleapis.com/rails-2gaijin-storage/uploads/user/avatar/"
 
 func FindProductImages(productID primitive.ObjectID) []interface{} {
 	var results []interface{}

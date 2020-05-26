@@ -367,6 +367,10 @@ func GetSellerInfo(id primitive.ObjectID) interface{} {
 		log.Fatal(err)
 	}
 
+	if result.AvatarURL != "" {
+		result.AvatarURL = AvatarURLPrefix + result.ID.Hex() + "/" + result.AvatarURL
+	}
+
 	collection = DB.Collection("trust_coins")
 	// Search Gold Trust Coins
 	wg.Add(1)

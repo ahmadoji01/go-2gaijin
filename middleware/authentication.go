@@ -219,7 +219,11 @@ func ProfileHandler(c *gin.Context) {
 		result.Email = claims["email"].(string)
 		result.FirstName = claims["first_name"].(string)
 		result.LastName = claims["last_name"].(string)
-		result.AvatarURL = claims["avatar"].(string)
+		result.AvatarURL = ""
+		if claims["avatar"].(string) != "" {
+			result.AvatarURL = AvatarURLPrefix + claims["_id"].(string) + "/" + claims["avatar"].(string)
+		}
+		result.Role = claims["role"].(string)
 
 		var options = &options.FindOptions{}
 		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}, {"latitude", 1}, {"longitude", 1}, {"status_cd", 1}}
@@ -334,7 +338,10 @@ func LoggedInUser(tokenString string) (models.User, bool) {
 		result.Email = claims["email"].(string)
 		result.FirstName = claims["first_name"].(string)
 		result.LastName = claims["last_name"].(string)
-		result.AvatarURL = claims["avatar"].(string)
+		result.AvatarURL = ""
+		if claims["avatar"].(string) != "" {
+			result.AvatarURL = AvatarURLPrefix + claims["_id"].(string) + "/" + claims["avatar"].(string)
+		}
 		result.Role = claims["role"].(string)
 	} else {
 		return result, false
