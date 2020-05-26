@@ -360,6 +360,9 @@ func UpdateProfile(c *gin.Context) {
 			return
 		}
 		user.Token = authTokenString
+		if claims["avatar"].(string) != "" {
+			user.AvatarURL = AvatarURLPrefix + id.Hex() + "/" + claims["avatar"].(string)
+		}
 
 		var resp responses.GenericResponse
 		resp.Status = "Success"
