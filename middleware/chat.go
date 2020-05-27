@@ -66,6 +66,8 @@ func GetChatRoomMsg(c *gin.Context) {
 		msgsData = PopulateRoomMsgFromRoomID(id, start, limit)
 		roomData.Messages = msgsData
 		roomData.TotalMessages = totalMessages
+		setIsRead(id)
+
 		res.Status = "Success"
 		res.Message = "Chat Messages Successfully Retrieved"
 		res.Data = roomData
@@ -141,6 +143,14 @@ func notifyUnreadMessage(userID primitive.ObjectID) {
 	m.Data = msgByte
 	m.Room = userID.Hex()
 	channels.H.Broadcast <- m
+}
+
+func setIsRead(roomID primitive.ObjectID) {
+	var collection = DB.Collection("rooms")
+	_, err := collection.UpdateOne(context.Background(), bson.M{"_id": roomID}, bson.M{"$set": bson.M{"is_read": true}})
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func ChatUser(c *gin.Context) {
