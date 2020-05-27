@@ -131,6 +131,10 @@ type RoomMsgData struct {
 	Message models.RoomMessage `json:"message"`
 }
 
+type RoomData struct {
+	Room models.Room `json:"room"`
+}
+
 type GenericResponse struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`

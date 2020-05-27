@@ -152,10 +152,12 @@ func ChatUser(c *gin.Context) {
 
 			room.ID = result.InsertedID.(primitive.ObjectID)
 		}
+		var roomData responses.RoomData
+		roomData.Room = room
 
 		res.Status = "Success"
 		res.Message = "Chat room has been obtained"
-		res.Data = room
+		res.Data = roomData
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	} else {
