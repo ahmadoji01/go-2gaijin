@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gitlab.com/kitalabs/go-2gaijin/channels"
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
@@ -111,16 +113,34 @@ func InsertMessage(c *gin.Context) {
 			return
 		}
 
+		notifyUnreadMessage(roomMsg.UserID)
+
 		res.Status = "Success"
 		res.Message = "Message successfully saved"
 		json.NewEncoder(c.Writer).Encode(res)
 		return
-	} else {
-		res.Status = "Error"
-		res.Message = "Unauthorized"
-		json.NewEncoder(c.Writer).Encode(res)
-		return
 	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func notifyUnreadMessage(userID primitive.ObjectID) {
+	var collection = DB.Collection("users")
+	_, err := collection.UpdateOne(context.Background(), bson.M{"_id": userID}, bson.M{"$set": bson.M{"message_read": false}})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	msg := `{"message_read": false}`
+	msgByte := []byte(msg)
+
+	var m channels.Message
+
+	m.Data = msgByte
+	m.Room = userID.Hex()
+	channels.H.Broadcast <- m
 }
 
 func ChatUser(c *gin.Context) {

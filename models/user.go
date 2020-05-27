@@ -62,6 +62,9 @@ type User struct {
 
 	ResetPasswordToken string             `json:"reset_token,omitempty" bson:"reset_password_token,omitempty"`
 	ResetTokenExpiry   primitive.DateTime `json:"reset_token_expiry,omitempty" bson:"reset_token_expiry,omitempty"`
+
+	MessageRead bool `json:"message_read" bson:"message_read"`
+	NotifRead   bool `json:"notif_read" bson:"notif_read"`
 }
 
 type ResponseResult struct {

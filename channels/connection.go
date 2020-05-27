@@ -55,8 +55,8 @@ func (s subscription) readPump() {
 			}
 			break
 		}
-		m := message{msg, s.room}
-		H.broadcast <- m
+		m := Message{msg, s.Room}
+		H.Broadcast <- m
 	}
 }
 
@@ -96,7 +96,7 @@ func (s *subscription) writePump() {
 func ServeChat(c *gin.Context) {
 	r := c.Request
 	w := c.Writer
-	roomName := r.URL.Query().Get("room")
+	RoomName := r.URL.Query().Get("Room")
 
 	//if !config.IsProduction {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -108,7 +108,7 @@ func ServeChat(c *gin.Context) {
 		return
 	}
 	conn := &connection{send: make(chan []byte, 256), ws: ws}
-	s := subscription{conn, roomName}
+	s := subscription{conn, RoomName}
 	H.register <- s
 	go s.writePump()
 	s.readPump()
