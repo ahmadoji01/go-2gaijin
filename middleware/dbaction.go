@@ -268,13 +268,15 @@ func PopulateAppointmentsFromUserID(id primitive.ObjectID, userType string) []mo
 
 	var collection = DB.Collection("appointments")
 	var filter bson.M
+	var options = &options.FindOptions{}
+	options.SetSort(bson.D{{"created_at", -1}})
 	if userType == "seller" {
 		filter = bson.M{"requested_id": id}
 	} else {
 		filter = bson.M{"requester_id": id}
 	}
 
-	cur, err := collection.Find(context.Background(), filter)
+	cur, err := collection.Find(context.Background(), filter, options)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -299,7 +301,9 @@ func PopulateAppointmentsFromUserID(id primitive.ObjectID, userType string) []mo
 func PopulateNotificationsFromUserID(idFilter bson.D) []models.Notification {
 
 	var collection = DB.Collection("notifications")
-	cur, err := collection.Find(context.Background(), idFilter)
+	var options = &options.FindOptions{}
+	options.SetSort(bson.D{{"created_at", -1}})
+	cur, err := collection.Find(context.Background(), idFilter, options)
 	if err != nil {
 		log.Fatal(err)
 	}
