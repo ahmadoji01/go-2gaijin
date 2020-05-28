@@ -263,12 +263,11 @@ func GetChatLobby(c *gin.Context) {
 		res.Data = lobbyData
 		json.NewEncoder(c.Writer).Encode(res)
 		return
-	} else {
-		res.Status = "Error"
-		res.Message = "Unauthorized"
-		json.NewEncoder(c.Writer).Encode(res)
-		return
 	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
 }
 
 func GetSellerAppointmentPage(c *gin.Context) {
@@ -412,4 +411,58 @@ func GetWishlistPage(c *gin.Context) {
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
+}
+
+func GetProfileForVisitorPage(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var res responses.GenericResponse
+	var userID = c.Request.URL.Query().Get("user_id")
+	var wg sync.WaitGroup
+
+	if userID == "" {
+		res.Status = "Error"
+		res.Message = "You have to input the user ID"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Something went wrong"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	var profileData responses.ProfileForVisitorData
+	var opts = &options.FindOptions{}
+	projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}, {"latitude", 1}, {"longitude", 1}, {"status_cd", 1}}
+	sort := bson.D{{"created_at", -1}}
+	opts.SetProjection(projection)
+	opts.SetSort(sort)
+
+	// Search User Info
+	wg.Add(1)
+	go func() {
+		profileData.UserInfo = GetSellerInfo(id)
+		wg.Done()
+	}()
+
+	// Search Seller Items
+	wg.Add(1)
+	go func() {
+		filter := bson.D{{"user_id", id}}
+		profileData.Collections = PopulateProductsWithAnImage(filter, opts)
+		wg.Done()
+	}()
+	wg.Wait()
+
+	res.Status = "Success"
+	res.Message = "Profile for visitor data retrieved!"
+	res.Data = profileData
+	json.NewEncoder(c.Writer).Encode(res)
+	return
 }

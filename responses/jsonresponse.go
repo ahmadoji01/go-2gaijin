@@ -135,6 +135,12 @@ type RoomData struct {
 	Room models.Room `json:"room"`
 }
 
+type ProfileForVisitorData struct {
+	UserInfo    interface{} `json:"user_info"`
+	Collections interface{} `json:"collections"`
+	Description interface{} `json:"description"`
+}
+
 type GenericResponse struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`

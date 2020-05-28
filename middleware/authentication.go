@@ -56,6 +56,8 @@ func RegisterHandler(c *gin.Context) {
 				return
 			}
 			user.Password = string(hash)
+			user.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+			user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 			_, err = collection.InsertOne(context.TODO(), user)
 			if err != nil {
