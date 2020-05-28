@@ -79,6 +79,7 @@ func InsertAppointment(c *gin.Context) {
 	appointment.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 	appointment.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 	appointment.ExpiresAt = primitive.NewDateTimeFromTime(time.Now().Add(time.Hour * 24))
+	appointment.Status = "pending"
 
 	var collection = DB.Collection("appointments")
 	tokenString := c.Request.Header.Get("Authorization")
@@ -105,7 +106,7 @@ func InsertAppointment(c *gin.Context) {
 		}
 
 		notifName := userData.FirstName + " wants to meet you at " + appointment.MeetingTime.Time().String() + " for your " + product.Name
-		addNotification(notifName, "order_incoming", "", appointment.SellerID, userData.ID, newApp.InsertedID.(primitive.ObjectID))
+		addNotification(notifName, "order_incoming", "", "pending", appointment.SellerID, userData.ID, newApp.InsertedID.(primitive.ObjectID))
 
 		res.Status = "Success"
 		res.Message = "Appointment successfully saved"
@@ -182,12 +183,35 @@ func AppointmentConfirmation(c *gin.Context) {
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
+	status := appointment.Status
 
 	var collection = DB.Collection("appointments")
 	tokenString := c.Request.Header.Get("Authorization")
-	_, isLoggedIn := LoggedInUser(tokenString)
+	userData, isLoggedIn := LoggedInUser(tokenString)
 	if isLoggedIn {
-		update := bson.M{"$set": bson.M{"status": appointment.Status}}
+		err = collection.FindOne(context.Background(), bson.D{{"_id", appointment.ID}}).Decode(&appointment)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if userData.ID != appointment.SellerID {
+			res.Status = "Error"
+			res.Message = "You are not authorized to confirm this appointment"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if appointment.Status != "pending" {
+			res.Status = "Error"
+			res.Message = "You have already confirmed this appointment"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		update := bson.M{"$set": bson.M{"status": status}}
 		_, err = collection.UpdateOne(context.Background(), bson.D{{"_id", appointment.ID}}, update)
 		if err != nil {
 			res.Status = "Error"
@@ -204,6 +228,24 @@ func AppointmentConfirmation(c *gin.Context) {
 			res.Message = "Something wrong happened. Try again"
 			json.NewEncoder(c.Writer).Encode(res)
 			return
+		}
+
+		var product models.Product
+		collection = DB.Collection("products")
+		err = collection.FindOne(context.Background(), bson.M{"_id": appointment.ProductID}).Decode(&product)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if status == "accepted" {
+			notifName := userData.FirstName + " accepted your appointment request for " + product.Name
+			addNotification(notifName, "appointment_confirmation", "", "accepted", appointment.RequesterID, userData.ID, appointment.ID)
+		} else if status == "rejected" {
+			notifName := userData.FirstName + " rejected your appointment request for " + product.Name
+			addNotification(notifName, "appointment_confirmation", "", "rejected", appointment.RequesterID, userData.ID, appointment.ID)
 		}
 
 		res.Status = "Success"
@@ -270,7 +312,7 @@ func RescheduleAppointment(c *gin.Context) {
 	return
 }
 
-func addNotification(name string, notifType string, notifIcon string, notifiedID primitive.ObjectID, notifierID primitive.ObjectID, appointmentID primitive.ObjectID) {
+func addNotification(name string, notifType string, notifIcon string, status string, notifiedID primitive.ObjectID, notifierID primitive.ObjectID, appointmentID primitive.ObjectID) {
 	var collection = DB.Collection("notifications")
 	var notification models.Notification
 
@@ -279,7 +321,7 @@ func addNotification(name string, notifType string, notifIcon string, notifiedID
 	notification.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 	notification.IsRead = false
 	notification.Type = notifType
-	notification.Status = "pending"
+	notification.Status = status
 	notification.NotifIcon = notifIcon
 	notification.NotifierID = notifierID
 	notification.NotifiedID = notifiedID

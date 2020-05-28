@@ -264,10 +264,17 @@ func PopulateRoomMsgFromRoomID(id primitive.ObjectID, start int64, limit int64) 
 	return results
 }
 
-func PopulateAppointmentsFromUserID(id primitive.ObjectID) []models.Appointment {
+func PopulateAppointmentsFromUserID(id primitive.ObjectID, userType string) []models.Appointment {
 
 	var collection = DB.Collection("appointments")
-	cur, err := collection.Find(context.Background(), bson.M{"requester_id": id})
+	var filter bson.M
+	if userType == "seller" {
+		filter = bson.M{"requested_id": id}
+	} else {
+		filter = bson.M{"requester_id": id}
+	}
+
+	cur, err := collection.Find(context.Background(), filter)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -289,7 +296,7 @@ func PopulateAppointmentsFromUserID(id primitive.ObjectID) []models.Appointment 
 	return results
 }
 
-func PopulateNotificationsFromUserID(idFilter bson.D, notifType string) []models.Notification {
+func PopulateNotificationsFromUserID(idFilter bson.D) []models.Notification {
 
 	var collection = DB.Collection("notifications")
 	cur, err := collection.Find(context.Background(), idFilter)
@@ -306,11 +313,7 @@ func PopulateNotificationsFromUserID(idFilter bson.D, notifType string) []models
 			log.Fatal(e)
 		}
 
-		if notifType == "seller" {
-			result.NotificationUser = GetUserForNotification(result.NotifierID)
-		} else if notifType == "buyer" {
-			result.NotificationUser = GetUserForNotification(result.NotifiedID)
-		}
+		result.NotificationUser = GetUserForNotification(result.NotifierID)
 
 		if !result.AppointmentID.IsZero() {
 			var appointment models.Appointment

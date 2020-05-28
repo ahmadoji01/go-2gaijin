@@ -271,7 +271,7 @@ func GetChatLobby(c *gin.Context) {
 	}
 }
 
-func GetAppointmentPage(c *gin.Context) {
+func GetSellerAppointmentPage(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Writer.Header().Set("Content-Type", "application/json")
@@ -284,7 +284,7 @@ func GetAppointmentPage(c *gin.Context) {
 	var appointmentData responses.AppointmentData
 
 	if isLoggedIn {
-		appointments = PopulateAppointmentsFromUserID(userData.ID)
+		appointments = PopulateAppointmentsFromUserID(userData.ID, "seller")
 		appointmentData.Appointments = appointments
 
 		res.Status = "Success"
@@ -299,7 +299,7 @@ func GetAppointmentPage(c *gin.Context) {
 	return
 }
 
-func GetSellerNotificationPage(c *gin.Context) {
+func GetBuyerAppointmentPage(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Writer.Header().Set("Content-Type", "application/json")
@@ -308,17 +308,16 @@ func GetSellerNotificationPage(c *gin.Context) {
 	userData, isLoggedIn := LoggedInUser(tokenString)
 
 	var res responses.GenericResponse
-	var notifications []models.Notification
-	var notificationData responses.NotificationData
+	var appointments []models.Appointment
+	var appointmentData responses.AppointmentData
 
 	if isLoggedIn {
-		idFilter := bson.D{{"notifier_id", userData.ID}}
-		notifications = PopulateNotificationsFromUserID(idFilter, "seller")
-		notificationData.Notifications = notifications
+		appointments = PopulateAppointmentsFromUserID(userData.ID, "buyer")
+		appointmentData.Appointments = appointments
 
 		res.Status = "Success"
-		res.Message = "Notifications Retrieved"
-		res.Data = notificationData
+		res.Message = "Appointments Retrieved"
+		res.Data = appointmentData
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -328,7 +327,7 @@ func GetSellerNotificationPage(c *gin.Context) {
 	return
 }
 
-func GetBuyerNotificationPage(c *gin.Context) {
+func GetNotificationPage(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Writer.Header().Set("Content-Type", "application/json")
@@ -342,7 +341,7 @@ func GetBuyerNotificationPage(c *gin.Context) {
 
 	if isLoggedIn {
 		idFilter := bson.D{{"notified_id", userData.ID}}
-		notifications = PopulateNotificationsFromUserID(idFilter, "buyer")
+		notifications = PopulateNotificationsFromUserID(idFilter)
 		notificationData.Notifications = notifications
 
 		res.Status = "Success"
