@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "rails-2gaijin",
+  "private_key_id": "790de45ba7c6fe31c6276ff889f579f7a01fbed4",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5Z3NwjgRz+9hx\nC85Sa8q93ufQCmH561EMq4jZ4wS0fpWX29w9Ic2dCIDc0lppWIsbLpkqG0cOl7Lf\n08ynyB8PFDBtNXB6LQsjLY1OsiJ0826AO+h3SELXGJv0Vb8tRuFxEymCJZxZ0Gpo\nzWT/ntTPFRgwKHlZ1FLbyH4m1uqCzqzikemlCEaVupeL2raaOSKpURSfNv0wu+Qq\nGYhRWgsDeBybDsO+6Vl7+593n7Dm22cqeGKIAJ/nGQz+BQUrj0wmzqCiTva/8W+b\nbeltAxGfoxP8Emcq97lg7vxc3uWxMdObzbqNC/yFzDubGhzmRhs0idxAX+81gZJJ\nAu2rt2EFAgMBAAECggEAJr0oYDy0Tn2xSFGUryEJsCmKmywIM72I5lJTGl+2ZHZM\nkHnmZzmQaj7UGg+zx24yRqAybZtcef6VZ/IrwWTtpGtuAOuZEFYoDRYf//D1hSU2\nEgIyfPXyzVm9gEyIURAN2+AKnMB6DkQfb7123HhV89zu/GUAkhXsqDKYtUnTnzfu\nzGxjr7KOOBSzORScYU/4b4yNpSDkgfbCBYKhLJuDGiUmMj/NjHhy5dpYGwKHKcI+\nC2DgiskVQlWktwmEEX6fj0T/TmBfohi2xfDUSvTjo2VaE2lgMHMUjxs3FlxjCXgG\n3XblV3q5VZybyzGj6cdsSGy7OCn2UjpRs8mVCjmtIwKBgQD9me1b73o+cdmGPWTF\nP/GR1zDkK3cQczUY3deq+1EXLom7IRRslc4RYGFYTfj8DiV9gT4oZLc5K7CyKTYC\nG1cSsqk36XDURNt58Gv22NR3H2bhO7QiZuVA0/EzdY4mmxdP5vT/7ZFNnQoaTtE9\nPFidB5jKehP2zyfyz+2Ua/OJXwKBgQC7KGPxCyBssEyAiVf+fyYdnzEAdWwVoQVj\nOiX6QLgcgldf9s3vLIJUuww78GeUW809CdqhtuZt2zzZwfNObDbSP/xrOskHIW1q\n06FDEvyhSCjgo1hb7qnmduqxjVY8PiNB6zwdgM8RDTu7xOWN8w5nffTJe6Tr4URg\nm+qMte6cGwKBgFI5k1Uoq2kNvuqgg0jVN70Cma6RTTR/NisO2rtsatlqVGvhCN9A\nHyVRK57XATCwYYV03zN3nFSkDtFlPUanmK7OUMF5JgUdIlBCHK9XlGPfQZsroXc6\nB4DidyUpK2LnDELy7mMAowkYLsti3MLPCyg261pTBKAUgK5grnZeHgNfAoGAebfU\n96ji14z41Ad+oNcUdONZPREg0Bg+pr/kfxKkKnZiWNjsKYZq5KwZUsoQsx3ZJr9H\n3zBSQFP7CSvoDrK2HJrckOhUYTzOKlGkaTjp8AI8A4x4JKHdATOJgxuGX/uRdoeE\nOzPQdyiCFqYBHQZb8daq4nZ1VarVi3cbXZPcsM0CgYEA8gLJCIbFN7JF58zt3qnn\n2HDIJbYwuEjzwTY3LeXljeOxMiESsQw9MeD03TdYu64kQm/1+K5xn5rdBhDPN4Lk\nfjPmIrAVSFCFp0QpAzrWeVRZfdRtbtpuC0mBnuUrNBPEn1UG+85hvfdFOkBVX41V\n+O7vJWf4fKrTY4m7Obkoln4=\n-----END PRIVATE KEY-----\n",
+  "client_email": "rails-2gaijin-storage@rails-2gaijin.iam.gserviceaccount.com",
+  "client_id": "106732711267561291772",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/rails-2gaijin-storage%40rails-2gaijin.iam.gserviceaccount.com"
+}

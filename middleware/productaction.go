@@ -2,10 +2,17 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"strconv"
+	"sync"
+	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/twinj/uuid"
 	"gitlab.com/kitalabs/go-2gaijin/models"
+	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -110,4 +117,112 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 	}
 
 	return results
+}
+
+func PostNewProduct(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	var res responses.GenericResponse
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+
+	if isLoggedIn {
+		isSubscribed := IsUserSubscribed(userData.ID)
+		isSubscribed = true
+
+		if isSubscribed {
+			var productInsert models.ProductInsert
+
+			body, _ := ioutil.ReadAll(c.Request.Body)
+			err := json.Unmarshal(body, &productInsert)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = err.Error()
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+
+			productInsert.ProductDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+			productInsert.Product.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+
+			productInsert.Product.User = userData.ID
+			productInsert.Product.DateCreated = primitive.NewDateTimeFromTime(time.Now())
+			productInsert.Product.DateUpdated = primitive.NewDateTimeFromTime(time.Now())
+			productInsert.Product.ProductDetails = productInsert.ProductDetail.ID
+
+			var collection = DB.Collection("products")
+			productData, err := collection.InsertOne(context.Background(), productInsert.Product)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = "Something went wrong"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+			uploadProductImages(productData.InsertedID.(primitive.ObjectID), productInsert.ProductImages)
+
+			collection = DB.Collection("product_details")
+			productInsert.ProductDetail.ProductID = productData.InsertedID.(primitive.ObjectID)
+			_, err = collection.InsertOne(context.Background(), productInsert.ProductDetail)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = "Something went wrong"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+
+			res.Status = "Success"
+			res.Message = "Product Successfully Inserted"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func uploadProductImages(productID primitive.ObjectID, productImages []models.ProductImage) {
+	var collection = DB.Collection("product_images")
+	var wg sync.WaitGroup
+
+	for i := 0; i < len(productImages); i++ {
+		imgPath := uuid.NewV4().String()
+		imgPath = imgPath + "/"
+
+		imgName := uuid.NewV4().String()
+		imgName = imgName + ".jpg"
+
+		imgData := productImages[i].ImgData
+		thumbData := productImages[i].ThumbData
+
+		productImages[i].Order = i + 1
+		productImages[i].Product = productID
+		productImages[i].ImgURL = GCSProductImgPrefix + imgPath + imgName
+		productImages[i].ThumbURL = GCSProductImgPrefix + imgPath + "thumb_" + imgName
+		productImages[i].ImgData = ""
+		productImages[i].ThumbData = ""
+
+		_, err := collection.InsertOne(context.Background(), productImages[i])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		wg.Add(1)
+		go func() {
+			DecodeBase64ToImage(imgData, imgName)
+			UploadToGCS(ProductImagePrefix+imgPath, imgName)
+			wg.Done()
+		}()
+
+		wg.Add(1)
+		go func() {
+			DecodeBase64ToImage(thumbData, "thumb_"+imgName)
+			UploadToGCS(ProductImagePrefix+imgPath, "thumb_"+imgName)
+			wg.Done()
+		}()
+		wg.Wait()
+	}
 }

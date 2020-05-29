@@ -37,10 +37,19 @@ type Product struct {
 	Orders       []primitive.ObjectID `json:"order_ids" bson:"order_ids"`
 	Appointments []primitive.ObjectID `json:"appointment_ids" bson:"appointment_ids"`
 
-	Location []float64 `json:"location" bson:"location"`
+	Location  []float64 `json:"location" bson:"location"`
+	Latitude  float64   `json:"latitude" bson:"latitude"`
+	Longitude float64   `json:"longitude" bson:"longitude"`
 
 	PageViews int `json:"page_views"`
 
-	Status    ProductStatus `json:"status_cd" bson:"status_cd"`
-	Relevance float64
+	Status       ProductStatus `json:"status_cd" bson:"status_cd"`
+	Availability string        `json:"availability" bson:"availability"`
+	Relevance    float64
+}
+
+type ProductInsert struct {
+	Product       Product        `json:"product"`
+	ProductImages []ProductImage `json:"product_images"`
+	ProductDetail ProductDetail  `json:"product_detail"`
 }

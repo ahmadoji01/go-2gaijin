@@ -138,7 +138,7 @@ func searchFilter(query string, status string, priceMin int64, priceMax int64, c
 	}
 
 	if category != "" {
-		cat := GetCategoryIDFromName(category, "en")
+		cat := GetCategoryIDFromName(category)
 		if cat != primitive.NilObjectID {
 			filter = append(filter, bson.E{"category_ids", cat})
 		}

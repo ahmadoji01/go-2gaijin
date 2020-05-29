@@ -4,18 +4,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type SubsType int
-
-const (
-	Normal SubsType = iota
-	Basic
-	Full
-)
-
-func (st SubsType) String() string {
-	return [...]string{"Normal", "Basic", "Full"}[st]
-}
-
 type User struct {
 	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Email       string             `json:"email" bson:"email"`
@@ -48,7 +36,7 @@ type User struct {
 	ConfirmToken       string             `json:"confirm_token,omitempty" bson:"confirm_token,omitempty"`
 	ConfirmTokenExpiry primitive.DateTime `json:"confirm_token_expiry,omitempty" bson:"confirm_token_expiry,omitempty"`
 
-	Subscribed     SubsType           `json:"subscribed,omitempty" bson:"subscribed,omitempty"`
+	Subscription   string             `json:"subscribed,omitempty" bson:"subscribed,omitempty"`
 	SubsExpiryDate primitive.DateTime `json:"subs_expiry_date,omitempty" bson:"subs_expiry_date,omitempty"`
 
 	FollowedProducts []primitive.ObjectID `json:"followed_product_ids,omitempty" bson:"followed_product_ids,omitempty"`

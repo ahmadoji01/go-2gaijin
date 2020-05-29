@@ -702,6 +702,24 @@ func UpdatePasswordHandler(c *gin.Context) {
 	}
 }
 
+func IsUserSubscribed(id primitive.ObjectID) bool {
+	var user models.User
+
+	var collection = DB.Collection("users")
+	err := collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if user.Subscription == "basic" || user.Subscription == "full" {
+		if time.Now().After(user.SubsExpiryDate.Time()) {
+			return false
+		}
+		return true
+	}
+	return false
+}
+
 func EmailConfirmation(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")

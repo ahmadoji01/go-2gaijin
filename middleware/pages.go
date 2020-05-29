@@ -116,7 +116,6 @@ func GetProductDetail(c *gin.Context) {
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var collection = DB.Collection("products")
-	var locale = "en"
 	var wg sync.WaitGroup
 
 	productID, err := primitive.ObjectIDFromHex(c.Param("id"))
@@ -163,7 +162,7 @@ func GetProductDetail(c *gin.Context) {
 		item.Comments = make([]interface{}, 0)
 	}
 	item.Location = location
-	item.Category = FindACategoryFromProductID(productID, locale)
+	item.Category = FindACategoryFromProductID(productID)
 	item.Status = ProductStatusEnum(item.StatusEnum)
 	item.Images = FindProductImages(productID)
 	payload.Item = item

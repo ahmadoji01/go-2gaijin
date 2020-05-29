@@ -96,7 +96,7 @@ func PopulateCategories(locale string) []interface{} {
 		}
 
 		appResult.ID = result.ID
-		appResult.Name = result.Name.Map()[locale].(string)
+		appResult.Name = result.Name
 		appResult.IconURL = result.IconURL
 
 		results = append(results, appResult)
@@ -110,7 +110,7 @@ func PopulateCategories(locale string) []interface{} {
 	return results
 }
 
-func PopulateACategory(id primitive.ObjectID, locale string) interface{} {
+func PopulateACategory(id primitive.ObjectID) interface{} {
 
 	var result models.Category
 
@@ -124,7 +124,7 @@ func PopulateACategory(id primitive.ObjectID, locale string) interface{} {
 	}{}
 
 	appResult.ID = result.ID
-	appResult.Name = result.Name.Map()[locale].(string)
+	appResult.Name = result.Name
 	appResult.IconURL = result.IconURL
 
 	if err != nil {
@@ -134,7 +134,7 @@ func PopulateACategory(id primitive.ObjectID, locale string) interface{} {
 	return appResult
 }
 
-func FindACategoryFromProductID(id primitive.ObjectID, locale string) responses.ProductCategory {
+func FindACategoryFromProductID(id primitive.ObjectID) responses.ProductCategory {
 	var query = bson.M{"product_ids": bson.M{"$elemMatch": bson.M{"$eq": id}}}
 	var result models.Category
 
@@ -144,7 +144,7 @@ func FindACategoryFromProductID(id primitive.ObjectID, locale string) responses.
 	var appResult responses.ProductCategory
 
 	appResult.ID = result.ID
-	appResult.Name = result.Name.Map()[locale].(string)
+	appResult.Name = result.Name
 	appResult.IconURL = result.IconURL
 
 	if err != nil {
@@ -154,8 +154,8 @@ func FindACategoryFromProductID(id primitive.ObjectID, locale string) responses.
 	return appResult
 }
 
-func GetCategoryIDFromName(categoryName string, locale string) primitive.ObjectID {
-	columnToSearch := "name." + locale
+func GetCategoryIDFromName(categoryName string) primitive.ObjectID {
+	columnToSearch := "name"
 	query := bson.M{columnToSearch: categoryName}
 
 	collection := DB.Collection("categories")

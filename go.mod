@@ -3,6 +3,7 @@ module gitlab.com/kitalabs/go-2gaijin
 go 1.14
 
 require (
+	cloud.google.com/go/storage v1.6.0
 	github.com/Kamva/mgm/v2 v2.0.0 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/contrib v0.0.0-20191209060500-d6e26eeaa607 // indirect
@@ -22,6 +23,8 @@ require (
 	github.com/yasaricli/gah v0.0.0-20200110175914-1d93173de233
 	go.mongodb.org/mongo-driver v1.3.2
 	golang.org/x/crypto v0.0.0-20200406173513-056763e48d71
+	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a // indirect
+	google.golang.org/api v0.25.0
 	gopkg.in/unrolled/render.v1 v1.0.0 // indirect
 )
