@@ -85,6 +85,7 @@ func GetSearch(c *gin.Context) {
 	searchPage.Data = searchData
 
 	json.NewEncoder(c.Writer).Encode(searchPage)
+	return
 }
 
 func getSearch(query string, category string, start int64, limit int64, priceMin int64, priceMax int64, sort string, asc int, status string, userid string) interface{} {

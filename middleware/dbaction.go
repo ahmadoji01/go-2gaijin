@@ -75,7 +75,7 @@ func PopulateBanners(cur *mongo.Cursor, err error) []models.Banner {
 	return results
 }
 
-func PopulateCategories(locale string) []interface{} {
+func PopulateCategories() []interface{} {
 
 	collection := DB.Collection("categories")
 	cur, err := collection.Find(context.Background(), bson.D{{}})
@@ -140,7 +140,6 @@ func FindACategoryFromProductID(id primitive.ObjectID) responses.ProductCategory
 
 	collection := DB.Collection("categories")
 	err := collection.FindOne(context.Background(), query).Decode(&result)
-
 	var appResult responses.ProductCategory
 
 	appResult.ID = result.ID

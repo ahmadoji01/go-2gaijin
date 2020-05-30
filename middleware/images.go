@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"cloud.google.com/go/storage"
 	"go.mongodb.org/mongo-driver/bson"
@@ -79,8 +80,10 @@ func FindProductImages(productID primitive.ObjectID) []interface{} {
 		if e != nil {
 			log.Fatal(e)
 		}
-		result.Image = ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + result.Image
 
+		if !strings.HasPrefix(result.Image, "https://") {
+			result.Image = ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + result.Image
+		}
 		results = append(results, result)
 	}
 	return results

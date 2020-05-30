@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
-	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,8 +31,10 @@ func FindAProductImage(id primitive.ObjectID) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	return ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + result.Image
+	if !strings.HasPrefix(result.Image, "https://") {
+		return ImgURLPrefix + "uploads/product_image/image/" + result.ID.Hex() + "/" + result.Image
+	}
+	return result.Image
 }
 
 func PopulateProducts(cur *mongo.Cursor, err error) []models.Product {
@@ -69,8 +71,8 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		UserID     primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
 		SellerName string             `json:"seller_name"`
 		ImgURL     string             `json:"img_url"`
-		Latitude   string             `json:"latitude,omitempty" bson:"latitude,omitempty"`
-		Longitude  string             `json:"longitude,omitempty" bson:"longitude,omitempty"`
+		Latitude   float64            `json:"latitude,omitempty" bson:"latitude,omitempty"`
+		Longitude  float64            `json:"longitude,omitempty" bson:"longitude,omitempty"`
 		Location   interface{}        `json:"location"`
 		StatusEnum int                `json:"status_enum" bson:"status_cd"`
 		Status     string             `json:"status" bson:"status"`
@@ -92,15 +94,12 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		result.SellerName = FindUserName(result.UserID)
 		result.UserID = primitive.NilObjectID
 
-		latitude, e := strconv.ParseFloat(result.Latitude, 64)
-		longitude, e := strconv.ParseFloat(result.Longitude, 64)
-
-		location.Latitude = latitude
-		location.Longitude = longitude
+		location.Latitude = result.Latitude
+		location.Longitude = result.Longitude
 		result.Location = location
 
-		result.Latitude = ""
-		result.Longitude = ""
+		result.Latitude = 0
+		result.Longitude = 0
 
 		result.Status = ProductStatusEnum(result.StatusEnum)
 

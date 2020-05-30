@@ -38,8 +38,7 @@ func GetHome(c *gin.Context) {
 	// Get Categories
 	wg.Add(1)
 	go func() {
-		locale := "en"
-		homeData.Categories = PopulateCategories(locale)
+		homeData.Categories = PopulateCategories()
 		wg.Done()
 	}()
 
@@ -132,7 +131,6 @@ func GetProductDetail(c *gin.Context) {
 	var payload responses.ProductDetails
 	var item responses.ProductDetailItem
 	err = collection.FindOne(context.Background(), bson.M{"_id": productID}).Decode(&item)
-
 	if err != nil {
 		res.Status = "Error"
 		res.Message = "Error while retrieving product info, try again"
@@ -145,8 +143,8 @@ func GetProductDetail(c *gin.Context) {
 		Longitude float64 `json:"longitude"`
 	}{}
 
-	latitude, err := strconv.ParseFloat(item.Latitude, 64)
-	longitude, err := strconv.ParseFloat(item.Longitude, 64)
+	latitude := item.Latitude
+	longitude := item.Longitude
 
 	if err != nil {
 		res.Status = "Error"
@@ -161,8 +159,20 @@ func GetProductDetail(c *gin.Context) {
 	if len(item.Comments) == 0 {
 		item.Comments = make([]interface{}, 0)
 	}
+
+	var cat models.Category
+	collection = DB.Collection("categories")
+	var findOneOpt = &options.FindOneOptions{}
+	findOneOpt.SetProjection(bson.D{{"_id", 1}, {"name", 1}, {"icon_url", 1}})
+	err = collection.FindOne(context.Background(), bson.M{"_id": item.CategoryIDs[0]}, findOneOpt).Decode(&cat)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Error while retrieving product info, try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	item.Category = cat
 	item.Location = location
-	item.Category = FindACategoryFromProductID(productID)
 	item.Status = ProductStatusEnum(item.StatusEnum)
 	item.Images = FindProductImages(productID)
 	payload.Item = item
@@ -184,7 +194,7 @@ func GetProductDetail(c *gin.Context) {
 	// Search Related Items
 	wg.Add(1)
 	go func() {
-		filter := bson.D{{"category_ids", item.Category.ID}}
+		filter := bson.D{{"category_ids", item.CategoryIDs[0]}}
 		payload.RelatedItems = PopulateProductsWithAnImage(filter, options)
 		wg.Done()
 	}()

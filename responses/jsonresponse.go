@@ -62,11 +62,12 @@ type ProductCategory struct {
 }
 
 type ProductDetailItem struct {
-	ID          primitive.ObjectID `json:"_id" bson:"_id"`
-	Name        string             `json:"name" bson:"name"`
-	Description string             `json:"description" bson:"description"`
-	Price       int                `json:"price" bson:"price"`
-	Category    ProductCategory    `json:"category"`
+	ID          primitive.ObjectID   `json:"_id" bson:"_id"`
+	Name        string               `json:"name" bson:"name"`
+	Description string               `json:"description" bson:"description"`
+	Price       int                  `json:"price" bson:"price"`
+	Category    interface{}          `json:"category"`
+	CategoryIDs []primitive.ObjectID `json:"category_ids" bson:"category_ids"`
 
 	Images []interface{} `json:"images"`
 
@@ -75,8 +76,8 @@ type ProductDetailItem struct {
 
 	User primitive.ObjectID `json:"user_id" bson:"user_id"`
 
-	Latitude  string      `json:"latitude,omitempty" bson:"latitude,omitempty"`
-	Longitude string      `json:"longitude,omitempty" bson:"longitude,omitempty"`
+	Latitude  float64     `json:"latitude,omitempty" bson:"latitude,omitempty"`
+	Longitude float64     `json:"longitude,omitempty" bson:"longitude,omitempty"`
 	Location  interface{} `json:"location"`
 
 	Comments   []interface{} `json:"comment_ids" bson:"comment_ids"`

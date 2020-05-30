@@ -18,7 +18,7 @@ import (
 const connectionString = "mongodb://localhost:27017"
 
 // Database Name
-const dbName = "go-2gaijin"
+const dbName = "go2gaijin"
 
 // Database instance
 var DB *mongo.Database
