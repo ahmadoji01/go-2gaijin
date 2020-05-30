@@ -171,6 +171,18 @@ func GetProductDetail(c *gin.Context) {
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
+
+	var detail models.ProductDetail
+	collection = DB.Collection("product_details")
+	err = collection.FindOne(context.Background(), bson.M{"product_id": productID}).Decode(&detail)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Error while retrieving product info, try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	payload.Detail = detail
+
 	item.Category = cat
 	item.Location = location
 	item.Status = ProductStatusEnum(item.StatusEnum)

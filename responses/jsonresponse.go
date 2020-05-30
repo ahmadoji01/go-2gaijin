@@ -86,10 +86,11 @@ type ProductDetailItem struct {
 }
 
 type ProductDetails struct {
-	Item         ProductDetailItem `json:"item"`
-	Seller       interface{}       `json:"seller"`
-	RelatedItems []interface{}     `json:"relateditems"`
-	SellerItems  []interface{}     `json:"selleritems"`
+	Item         ProductDetailItem    `json:"item"`
+	Detail       models.ProductDetail `json:"details"`
+	Seller       interface{}          `json:"seller"`
+	RelatedItems []interface{}        `json:"relateditems"`
+	SellerItems  []interface{}        `json:"selleritems"`
 }
 
 type ProductDetailPage struct {
