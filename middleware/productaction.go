@@ -118,6 +118,47 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 	return results
 }
 
+func GetAProductWithAnImage(id primitive.ObjectID) interface{} {
+	var collection = DB.Collection("products")
+	var product models.Product
+
+	err := collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&product)
+	if err != nil {
+		panic(err)
+	}
+
+	result := struct {
+		ID         primitive.ObjectID `json:"_id" bson:"_id"`
+		Name       string             `json:"name"`
+		Price      int                `json:"price"`
+		UserID     primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
+		SellerName string             `json:"seller_name"`
+		ImgURL     string             `json:"img_url"`
+		Location   interface{}        `json:"location"`
+		StatusEnum int                `json:"status_enum" bson:"status_cd"`
+		Status     string             `json:"status" bson:"status"`
+	}{}
+
+	var location = struct {
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
+	}{}
+
+	result.ID = product.ID
+	result.Name = product.Name
+	result.Price = product.Price
+	result.UserID = product.User
+	result.SellerName = FindUserName(product.User)
+	result.ImgURL = FindAProductImage(product.ID)
+	location.Latitude = product.Latitude
+	location.Longitude = product.Longitude
+	result.Location = location
+	result.Status = ProductStatusEnum(product.StatusEnum)
+	result.StatusEnum = product.StatusEnum
+
+	return result
+}
+
 func PostNewProduct(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)

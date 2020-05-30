@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"sync"
 
@@ -234,6 +235,7 @@ func GetProductDetail(c *gin.Context) {
 	output.Status = "Success"
 	output.Message = "Product Detail Successfully Loaded"
 	output.Data = payload
+	fmt.Println(output)
 
 	json.NewEncoder(c.Writer).Encode(output)
 }

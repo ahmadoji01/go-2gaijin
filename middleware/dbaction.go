@@ -300,9 +300,9 @@ func PopulateAppointmentsFromUserID(id primitive.ObjectID, userType string) []mo
 func PopulateNotificationsFromUserID(idFilter bson.D) []models.Notification {
 
 	var collection = DB.Collection("notifications")
-	var options = &options.FindOptions{}
-	options.SetSort(bson.D{{"created_at", -1}})
-	cur, err := collection.Find(context.Background(), idFilter, options)
+	var opts = &options.FindOptions{}
+	opts.SetSort(bson.D{{"created_at", -1}})
+	cur, err := collection.Find(context.Background(), idFilter, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -326,6 +326,7 @@ func PopulateNotificationsFromUserID(idFilter bson.D) []models.Notification {
 			}
 
 			result.Appointment = appointment
+			result.Product = GetAProductWithAnImage(appointment.ProductID)
 		}
 
 		results = append(results, result)

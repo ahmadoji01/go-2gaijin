@@ -43,7 +43,8 @@ type Product struct {
 
 	PageViews int `json:"page_views"`
 
-	Status       ProductStatus `json:"status_cd" bson:"status_cd"`
+	Status       ProductStatus `json:"status" bson:"status"`
+	StatusEnum   int           `json:"status_cd" bson:"status_cd"`
 	Availability string        `json:"availability" bson:"availability"`
 	Relevance    float64
 }
