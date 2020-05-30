@@ -160,30 +160,34 @@ func GetProductDetail(c *gin.Context) {
 		item.Comments = make([]interface{}, 0)
 	}
 
-	var cat models.Category
-	collection = DB.Collection("categories")
-	var findOneOpt = &options.FindOneOptions{}
-	findOneOpt.SetProjection(bson.D{{"_id", 1}, {"name", 1}, {"icon_url", 1}})
-	err = collection.FindOne(context.Background(), bson.M{"_id": item.CategoryIDs[0]}, findOneOpt).Decode(&cat)
-	if err != nil {
-		res.Status = "Error"
-		res.Message = "Error while retrieving product info, try again"
-		json.NewEncoder(c.Writer).Encode(res)
-		return
-	}
+	wg.Add(1)
+	go func() {
+		var cat models.Category
+		collection = DB.Collection("categories")
+		var findOneOpt = &options.FindOneOptions{}
+		findOneOpt.SetProjection(bson.D{{"_id", 1}, {"name", 1}, {"icon_url", 1}})
+		err = collection.FindOne(context.Background(), bson.M{"_id": item.CategoryIDs[0]}, findOneOpt).Decode(&cat)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Error while retrieving product info, try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+		item.Category = cat
+		wg.Done()
+	}()
 
-	var detail models.ProductDetail
-	collection = DB.Collection("product_details")
-	err = collection.FindOne(context.Background(), bson.M{"product_id": productID}).Decode(&detail)
-	if err != nil {
-		res.Status = "Error"
-		res.Message = "Error while retrieving product info, try again"
-		json.NewEncoder(c.Writer).Encode(res)
-		return
-	}
-	payload.Detail = detail
+	wg.Add(1)
+	go func() {
+		var detail models.ProductDetail
+		collection = DB.Collection("product_details")
+		collection.FindOne(context.Background(), bson.M{"product_id": productID}).Decode(&detail)
+		payload.Detail = detail
+		wg.Done()
+	}()
 
-	item.Category = cat
+	wg.Wait()
+
 	item.Location = location
 	item.Status = ProductStatusEnum(item.StatusEnum)
 	item.Images = FindProductImages(productID)
