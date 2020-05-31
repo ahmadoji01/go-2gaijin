@@ -302,6 +302,7 @@ func PopulateAppointmentsFromUserID(id primitive.ObjectID, userType string) []mo
 
 	var collection = DB.Collection("appointments")
 	var filter bson.M
+	var appointedUserID primitive.ObjectID
 	var options = &options.FindOptions{}
 	options.SetSort(bson.D{{"created_at", -1}})
 	if userType == "seller" {
@@ -323,6 +324,15 @@ func PopulateAppointmentsFromUserID(id primitive.ObjectID, userType string) []mo
 		if e != nil {
 			log.Fatal(e)
 		}
+
+		if userType == "seller" {
+			appointedUserID = result.SellerID
+		} else {
+			appointedUserID = result.RequesterID
+		}
+
+		result.AppointmentUser = GetUserForNotification(appointedUserID)
+		result.ProductDetail = GetAProductWithAnImage(result.ProductID)
 		results = append(results, result)
 	}
 

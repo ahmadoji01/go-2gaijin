@@ -13,7 +13,9 @@ type Appointment struct {
 	MeetingLat  float64            `json:"latitude,omitempty" bson:"latitude,omitempty"`
 	MeetingLng  float64            `json:"longitude,omitempty" bson:"longitude,omitempty"`
 
-	ProductID   primitive.ObjectID `json:"product_id" bson:"product_id"`
-	SellerID    primitive.ObjectID `json:"seller_id" bson:"seller_id"`
-	RequesterID primitive.ObjectID `json:"requester_id" bson:"requester_id"`
+	ProductID       primitive.ObjectID `json:"product_id" bson:"product_id"`
+	ProductDetail   interface{}        `json:"product_detail"`
+	SellerID        primitive.ObjectID `json:"seller_id" bson:"seller_id"`
+	AppointmentUser interface{}        `json:"appointment_user,omitempty"`
+	RequesterID     primitive.ObjectID `json:"requester_id" bson:"requester_id"`
 }
