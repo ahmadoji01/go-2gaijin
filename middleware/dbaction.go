@@ -305,7 +305,7 @@ func PopulateAppointmentsFromUserID(id primitive.ObjectID, userType string) []mo
 	var options = &options.FindOptions{}
 	options.SetSort(bson.D{{"created_at", -1}})
 	if userType == "seller" {
-		filter = bson.M{"requested_id": id}
+		filter = bson.M{"seller_id": id}
 	} else {
 		filter = bson.M{"requester_id": id}
 	}

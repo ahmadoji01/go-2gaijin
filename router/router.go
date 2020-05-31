@@ -46,6 +46,7 @@ func Router() *gin.Engine {
 	r.POST("/insert_trust_coin", middleware.InsertTrustCoin)
 	r.POST("/confirm_appointment", middleware.AppointmentConfirmation)
 	r.POST("/reschedule_appointment", middleware.RescheduleAppointment)
+	r.POST("/finish_appointment", middleware.FinishAppointment)
 
 	r.GET("/get_seller_appointments", middleware.GetSellerAppointmentPage)
 	r.GET("/get_buyer_appointments", middleware.GetBuyerAppointmentPage)
