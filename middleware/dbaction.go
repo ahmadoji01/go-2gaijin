@@ -326,9 +326,9 @@ func PopulateAppointmentsFromUserID(id primitive.ObjectID, userType string) []mo
 		}
 
 		if userType == "seller" {
-			appointedUserID = result.SellerID
-		} else {
 			appointedUserID = result.RequesterID
+		} else {
+			appointedUserID = result.SellerID
 		}
 
 		result.AppointmentUser = GetUserForNotification(appointedUserID)
