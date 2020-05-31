@@ -159,6 +159,123 @@ func GetAProductWithAnImage(id primitive.ObjectID) interface{} {
 	return result
 }
 
+func DeleteProduct(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var product models.Product
+	var res responses.GenericResponse
+
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &product)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Something wrong happened. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+
+	if isLoggedIn {
+		var collection = DB.Collection("products")
+		err := collection.FindOne(context.Background(), bson.M{"_id": product.ID}).Decode(&product)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if product.User != userData.ID {
+			res.Status = "Error"
+			res.Message = "You are not authorized to mark this product as sold"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		collection = DB.Collection("products")
+		_, err = collection.DeleteOne(context.Background(), bson.D{{"_id", product.ID}})
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		res.Status = "Success"
+		res.Message = "You have deleted this product"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func MarkAsSold(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var product models.Product
+	var res responses.GenericResponse
+
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &product)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Something wrong happened. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+
+	if isLoggedIn {
+		var collection = DB.Collection("products")
+		err := collection.FindOne(context.Background(), bson.M{"_id": product.ID}).Decode(&product)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if product.User != userData.ID {
+			res.Status = "Error"
+			res.Message = "You are not authorized to mark this product as sold"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		collection = DB.Collection("products")
+		update := bson.M{"$set": bson.M{"availability": "sold", "status_cd": 2}}
+		_, err = collection.UpdateOne(context.Background(), bson.D{{"_id", product.ID}}, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		res.Status = "Success"
+		res.Message = "You have marked this product as sold"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
 func GetAllCategories(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)

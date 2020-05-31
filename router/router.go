@@ -17,6 +17,8 @@ func Router() *gin.Engine {
 	r.GET("/products/:id", middleware.GetProductDetail)
 	r.GET("/wishlist", middleware.GetWishlistPage)
 	r.POST("/add_product", middleware.PostNewProduct)
+	r.POST("/mark_as_sold", middleware.MarkAsSold)
+	r.POST("/delete_product", middleware.DeleteProduct)
 	r.GET("/get_categories", middleware.GetAllCategories)
 
 	r.POST("/sign_in", middleware.LoginHandler)
