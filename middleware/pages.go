@@ -39,7 +39,7 @@ func GetHome(c *gin.Context) {
 	// Get Categories
 	wg.Add(1)
 	go func() {
-		homeData.Categories = PopulateCategories()
+		homeData.Categories = PopulateMainCategories()
 		wg.Done()
 	}()
 

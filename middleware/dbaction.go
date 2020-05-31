@@ -110,6 +110,41 @@ func PopulateCategories() []interface{} {
 	return results
 }
 
+func PopulateMainCategories() []interface{} {
+
+	collection := DB.Collection("categories")
+	cur, err := collection.Find(context.Background(), bson.D{{"depth", 0}})
+
+	var results []interface{}
+
+	appResult := struct {
+		ID      primitive.ObjectID `json:"_id" bson:"_id"`
+		Name    string             `json:"name" bson:"name"`
+		IconURL string             `json:"icon_url" bson:"icon_url"`
+	}{}
+
+	for cur.Next(context.Background()) {
+		var result models.Category
+		e := cur.Decode(&result)
+		if e != nil {
+			log.Fatal(e)
+		}
+
+		appResult.ID = result.ID
+		appResult.Name = result.Name
+		appResult.IconURL = result.IconURL
+
+		results = append(results, appResult)
+	}
+
+	if err = cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	cur.Close(context.Background())
+	return results
+}
+
 func PopulateACategory(id primitive.ObjectID) interface{} {
 
 	var result models.Category
