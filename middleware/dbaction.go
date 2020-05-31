@@ -400,3 +400,83 @@ func GetSellerInfo(id primitive.ObjectID) interface{} {
 
 	return result
 }
+
+func PopulateCategoriesWithChildren() []interface{} {
+	collection := DB.Collection("categories")
+	opts := &options.FindOptions{}
+	opts.SetSort(bson.D{{"name", 1}})
+
+	cur, err := collection.Find(context.Background(), bson.D{{"depth", 0}}, opts)
+
+	var results []interface{}
+
+	appResult := struct {
+		ID       primitive.ObjectID `json:"_id" bson:"_id"`
+		Name     string             `json:"name" bson:"name"`
+		IconURL  string             `json:"icon_url" bson:"icon_url"`
+		Depth    int64              `json:"depth" bson:"depth"`
+		Children []interface{}      `json:"children"`
+	}{}
+
+	for cur.Next(context.Background()) {
+		var result models.Category
+		e := cur.Decode(&result)
+		if e != nil {
+			log.Fatal(e)
+		}
+
+		appResult.ID = result.ID
+		appResult.Name = result.Name
+		appResult.IconURL = result.IconURL
+		appResult.Children = getCategoriesChildrenWithRecursion(1, result.ID, 2)
+
+		results = append(results, appResult)
+	}
+
+	if err = cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	cur.Close(context.Background())
+	return results
+}
+
+func getCategoriesChildrenWithRecursion(depth int, parentID primitive.ObjectID, limit int) []interface{} {
+	var children []interface{}
+	childTemp := struct {
+		ID       primitive.ObjectID `json:"_id" bson:"_id"`
+		Name     string             `json:"name" bson:"name"`
+		IconURL  string             `json:"icon_url" bson:"icon_url"`
+		Depth    int64              `json:"depth" bson:"depth"`
+		Children []interface{}      `json:"children"`
+	}{}
+
+	if depth <= limit {
+		var collection = DB.Collection("categories")
+		opts := &options.FindOptions{}
+		opts.SetSort(bson.D{{"name", 1}})
+
+		childrenCur, err := collection.Find(context.Background(), bson.D{{"parent_id", parentID}, {"depth", depth}}, opts)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for childrenCur.Next(context.Background()) {
+			var result models.Category
+			e := childrenCur.Decode(&result)
+			if e != nil {
+				log.Fatal(e)
+			}
+
+			childTemp.ID = result.ID
+			childTemp.Name = result.Name
+			childTemp.IconURL = result.IconURL
+			childTemp.Depth = result.Depth
+			childTemp.Children = getCategoriesChildrenWithRecursion(depth+1, result.ID, limit)
+			children = append(children, childTemp)
+		}
+	}
+	if children == nil {
+		children = make([]interface{}, 0)
+	}
+	return children
+}

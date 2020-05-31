@@ -159,6 +159,26 @@ func GetAProductWithAnImage(id primitive.ObjectID) interface{} {
 	return result
 }
 
+func GetAllCategories(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	catData := struct {
+		Categories interface{} `json:"categories"`
+	}{}
+
+	var res responses.GenericResponse
+
+	catData.Categories = PopulateCategoriesWithChildren()
+
+	res.Status = "Success"
+	res.Message = "Categories Retrieved"
+	res.Data = catData
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
 func PostNewProduct(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
