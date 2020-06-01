@@ -74,6 +74,7 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		Latitude   float64            `json:"latitude,omitempty" bson:"latitude,omitempty"`
 		Longitude  float64            `json:"longitude,omitempty" bson:"longitude,omitempty"`
 		Location   interface{}        `json:"location"`
+		IsLiked    bool               `json:"is_liked"`
 		StatusEnum int                `json:"status_enum" bson:"status_cd"`
 		Status     string             `json:"status" bson:"status"`
 	}{}
@@ -86,14 +87,22 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 	var results []interface{}
 	for cur.Next(context.Background()) {
 		result.Location = nil
+		var prod models.Product
 		e := cur.Decode(&result)
 		if e != nil {
 			log.Fatal(e)
 		}
 		result.ImgURL = FindAProductImage(result.ID)
 		result.SellerName = FindUserName(result.UserID)
-		result.UserID = primitive.NilObjectID
 
+		err := collection.FindOne(context.Background(), bson.M{"$and": bson.D{{"_id", result.ID}, {"liked_by", result.UserID}}}).Decode(&prod)
+		if err == nil {
+			result.IsLiked = true
+		} else {
+			result.IsLiked = false
+		}
+
+		result.UserID = primitive.NilObjectID
 		location.Latitude = result.Latitude
 		location.Longitude = result.Longitude
 		result.Location = location
@@ -135,6 +144,7 @@ func GetAProductWithAnImage(id primitive.ObjectID) interface{} {
 		SellerName string             `json:"seller_name"`
 		ImgURL     string             `json:"img_url"`
 		Location   interface{}        `json:"location"`
+		IsLiked    bool               `json:"is_liked"`
 		StatusEnum int                `json:"status_enum" bson:"status_cd"`
 		Status     string             `json:"status" bson:"status"`
 	}{}
@@ -143,6 +153,14 @@ func GetAProductWithAnImage(id primitive.ObjectID) interface{} {
 		Latitude  float64 `json:"latitude"`
 		Longitude float64 `json:"longitude"`
 	}{}
+
+	var prod models.Product
+	err = collection.FindOne(context.Background(), bson.M{"$and": bson.D{{"_id", result.ID}, {"liked_by", result.UserID}}}).Decode(&prod)
+	if err == nil {
+		result.IsLiked = true
+	} else {
+		result.IsLiked = false
+	}
 
 	result.ID = product.ID
 	result.Name = product.Name
@@ -290,6 +308,56 @@ func EditProduct(c *gin.Context) {
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
+	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func LikeProduct(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var product models.Product
+	var res responses.GenericResponse
+
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &product)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Something wrong happened. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		var prod models.Product
+		var collection = DB.Collection("products")
+
+		err := collection.FindOne(context.Background(), bson.M{"$and": bson.D{{"_id", product.ID}, {"liked_by", userData.ID}}}).Decode(&prod)
+		if err == nil {
+			res.Status = "Error"
+			res.Message = "Product is already liked"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		update := bson.M{"$push": bson.M{"liked_by.$.arr": userData.ID}}
+		_, err = collection.UpdateOne(context.Background(), bson.M{"_id": product.ID}, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+		res.Status = "Success"
+		res.Message = "Product has successfully been liked"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
 	}
 	res.Status = "Error"
 	res.Message = "Unauthorized"

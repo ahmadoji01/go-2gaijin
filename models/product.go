@@ -33,6 +33,7 @@ type Product struct {
 
 	Keywords  []string             `json:"_keywords" bson:"_keywords"`
 	Followers []primitive.ObjectID `json:"followers" bson:"followers"`
+	LikedBy   []primitive.ObjectID `json:"liked_by" bson:"liked_by"`
 
 	Orders       []primitive.ObjectID `json:"order_ids" bson:"order_ids"`
 	Appointments []primitive.ObjectID `json:"appointment_ids" bson:"appointment_ids"`
