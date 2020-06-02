@@ -234,12 +234,12 @@ func AppointmentConfirmation(c *gin.Context) {
 			return
 		}
 
-		//if appointment.Status != "pending" {
-		//	res.Status = "Error"
-		//	res.Message = "You have already confirmed this appointment"
-		//	json.NewEncoder(c.Writer).Encode(res)
-		//	return
-		//}
+		if appointment.Status != "pending" {
+			res.Status = "Error"
+			res.Message = "You have already confirmed this appointment"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
 
 		update := bson.M{"$set": bson.M{"status": status}}
 		_, err = collection.UpdateOne(context.Background(), bson.D{{"_id", appointment.ID}}, update)
