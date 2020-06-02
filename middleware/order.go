@@ -86,6 +86,8 @@ func InsertAppointment(c *gin.Context) {
 	userData, isLoggedIn := LoggedInUser(tokenString)
 	if isLoggedIn {
 		appointment.RequesterID = userData.ID
+		notifID := primitive.NewObjectIDFromTimestamp(time.Now())
+		appointment.NotificationID = notifID
 		newApp, err := collection.InsertOne(context.TODO(), appointment)
 
 		if err != nil {
@@ -106,7 +108,7 @@ func InsertAppointment(c *gin.Context) {
 		}
 
 		notifName := userData.FirstName + " wants to meet you at " + appointment.MeetingTime.Time().String() + " for your " + product.Name
-		addNotification(notifName, "order_incoming", "", "pending", appointment.SellerID, userData.ID, newApp.InsertedID.(primitive.ObjectID))
+		addNotification(notifID, notifName, "order_incoming", "", "pending", appointment.SellerID, userData.ID, newApp.InsertedID.(primitive.ObjectID), product.ID)
 
 		res.Status = "Success"
 		res.Message = "Appointment successfully saved"
@@ -187,7 +189,6 @@ func InsertTrustCoin(c *gin.Context) {
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
-
 	}
 
 	res.Status = "Error"
@@ -233,12 +234,12 @@ func AppointmentConfirmation(c *gin.Context) {
 			return
 		}
 
-		if appointment.Status != "pending" {
-			res.Status = "Error"
-			res.Message = "You have already confirmed this appointment"
-			json.NewEncoder(c.Writer).Encode(res)
-			return
-		}
+		//if appointment.Status != "pending" {
+		//	res.Status = "Error"
+		//	res.Message = "You have already confirmed this appointment"
+		//	json.NewEncoder(c.Writer).Encode(res)
+		//	return
+		//}
 
 		update := bson.M{"$set": bson.M{"status": status}}
 		_, err = collection.UpdateOne(context.Background(), bson.D{{"_id", appointment.ID}}, update)
@@ -251,7 +252,8 @@ func AppointmentConfirmation(c *gin.Context) {
 
 		collection = DB.Collection("notifications")
 		update = bson.M{"$set": bson.M{"status": appointment.Status}}
-		_, err = collection.UpdateOne(context.Background(), bson.D{{"appointment_id", appointment.ID}}, update)
+		_, err := collection.UpdateOne(context.Background(), bson.D{{"appointment_id", appointment.ID}}, update)
+
 		if err != nil {
 			res.Status = "Error"
 			res.Message = "Something wrong happened. Try again"
@@ -270,11 +272,10 @@ func AppointmentConfirmation(c *gin.Context) {
 		}
 
 		if status == "accepted" {
-			notifName := userData.FirstName + " accepted your appointment request for " + product.Name
-			addNotification(notifName, "appointment_confirmation", "", "accepted", appointment.RequesterID, userData.ID, appointment.ID)
+			setNotifsToRejectOrder(appointment.NotificationID, appointment.ProductID)
 		} else if status == "rejected" {
-			notifName := userData.FirstName + " rejected your appointment request for " + product.Name
-			addNotification(notifName, "appointment_confirmation", "", "rejected", appointment.RequesterID, userData.ID, appointment.ID)
+			notifName := "Appointment Rejected"
+			addNotification(primitive.NewObjectIDFromTimestamp(time.Now()), notifName, "appointment_confirmation", "", "rejected", appointment.RequesterID, userData.ID, appointment.ID, appointment.ProductID)
 		}
 
 		res.Status = "Success"
@@ -414,10 +415,10 @@ func FinishAppointment(c *gin.Context) {
 		}
 
 		notifName := userData.FirstName + " has finished transaction with you"
-		addNotification(notifName, "give_trust_coin", "", "pending", appointment.RequesterID, userData.ID, appointment.ID)
+		addNotification(primitive.NewObjectIDFromTimestamp(time.Now()), notifName, "give_trust_coin", "", "pending", appointment.RequesterID, userData.ID, appointment.ID, appointment.ProductID)
 
 		notifName = FindUserName(appointment.SellerID) + " has finished transaction with you"
-		addNotification(notifName, "give_trust_coin", "", "pending", appointment.SellerID, appointment.RequesterID, appointment.ID)
+		addNotification(primitive.NewObjectIDFromTimestamp(time.Now()), notifName, "give_trust_coin", "", "pending", appointment.SellerID, appointment.RequesterID, appointment.ID, appointment.ProductID)
 
 		res.Status = "Success"
 		res.Message = "Appointment successfully updated"
@@ -439,11 +440,40 @@ func trustCoinNotif(notifierID primitive.ObjectID, notifiedID primitive.ObjectID
 	return notif
 }
 
-func addNotification(name string, notifType string, notifIcon string, status string, notifiedID primitive.ObjectID, notifierID primitive.ObjectID, appointmentID primitive.ObjectID) {
+func setNotifsToRejectOrder(acceptedNotifID primitive.ObjectID, productID primitive.ObjectID) {
+	var collection = DB.Collection("notifications")
+	cur, err := collection.Find(context.Background(), bson.M{"product_id": productID})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	collection = DB.Collection("appointments")
+	for cur.Next(context.Background()) {
+		var result models.Notification
+		e := cur.Decode(&result)
+		if e != nil {
+			log.Fatal(e)
+		}
+
+		if result.ID != acceptedNotifID {
+			update := bson.M{"$set": bson.M{"status": "rejected"}}
+			_, e = collection.UpdateOne(context.Background(), bson.M{"_id": result.AppointmentID}, update)
+			notifName := "Appointment Rejected"
+			addNotification(primitive.NewObjectIDFromTimestamp(time.Now()), notifName, "appointment_confirmation", "", "rejected", result.NotifierID, result.NotifiedID, result.AppointmentID, result.ProductID)
+		} else {
+			update := bson.M{"$set": bson.M{"status": "accepted"}}
+			_, e = collection.UpdateOne(context.Background(), bson.M{"_id": result.AppointmentID}, update)
+			notifName := "Appointment Accepted"
+			addNotification(primitive.NewObjectIDFromTimestamp(time.Now()), notifName, "appointment_confirmation", "", "accepted", result.NotifierID, result.NotifiedID, result.AppointmentID, result.ProductID)
+		}
+	}
+}
+
+func addNotification(notifID primitive.ObjectID, name string, notifType string, notifIcon string, status string, notifiedID primitive.ObjectID, notifierID primitive.ObjectID, appointmentID primitive.ObjectID, productID primitive.ObjectID) {
 	var collection = DB.Collection("notifications")
 	var notification models.Notification
 
-	notification.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+	notification.ID = notifID
 	notification.Name = name
 	notification.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 	notification.IsRead = false
@@ -453,9 +483,11 @@ func addNotification(name string, notifType string, notifIcon string, status str
 	notification.NotifierID = notifierID
 	notification.NotifiedID = notifiedID
 	notification.AppointmentID = appointmentID
+	notification.ProductID = productID
 
 	_, err := collection.InsertOne(context.TODO(), notification)
 
+	_, err = DB.Collection("users").UpdateOne(context.Background(), bson.M{"_id": notification.NotifiedID}, bson.M{"$set": bson.M{"notif_read": false}})
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -15,5 +15,6 @@ type Notification struct {
 	NotificationUser interface{}        `json:"notification_user,omitempty"`
 	AppointmentID    primitive.ObjectID `json:"appointment_id,omitempty" bson:"appointment_id,omitempty"`
 	Appointment      interface{}        `json:"appointment,omitempty"`
+	ProductID        primitive.ObjectID `json:"product_id" bson:"product_id"`
 	Product          interface{}        `json:"product,omitempty"`
 }
