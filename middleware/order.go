@@ -251,9 +251,8 @@ func AppointmentConfirmation(c *gin.Context) {
 		}
 
 		collection = DB.Collection("notifications")
-		update = bson.M{"$set": bson.M{"status": appointment.Status}}
-		_, err := collection.UpdateOne(context.Background(), bson.D{{"appointment_id", appointment.ID}}, update)
-
+		update = bson.M{"$set": bson.M{"status": status}}
+		_, err := collection.UpdateOne(context.Background(), bson.D{{"_id", appointment.NotificationID}}, update)
 		if err != nil {
 			res.Status = "Error"
 			res.Message = "Something wrong happened. Try again"
@@ -458,11 +457,13 @@ func setNotifsToRejectOrder(acceptedNotifID primitive.ObjectID, productID primit
 		if result.ID != acceptedNotifID {
 			update := bson.M{"$set": bson.M{"status": "rejected"}}
 			_, e = collection.UpdateOne(context.Background(), bson.M{"_id": result.AppointmentID}, update)
+			_, e = DB.Collection("notifications").UpdateOne(context.Background(), bson.M{"_id": result.ID}, update)
 			notifName := "Appointment Rejected"
 			addNotification(primitive.NewObjectIDFromTimestamp(time.Now()), notifName, "appointment_confirmation", "", "rejected", result.NotifierID, result.NotifiedID, result.AppointmentID, result.ProductID)
 		} else {
 			update := bson.M{"$set": bson.M{"status": "accepted"}}
 			_, e = collection.UpdateOne(context.Background(), bson.M{"_id": result.AppointmentID}, update)
+			_, e = DB.Collection("notifications").UpdateOne(context.Background(), bson.M{"_id": result.ID}, update)
 			notifName := "Appointment Accepted"
 			addNotification(primitive.NewObjectIDFromTimestamp(time.Now()), notifName, "appointment_confirmation", "", "accepted", result.NotifierID, result.NotifiedID, result.AppointmentID, result.ProductID)
 		}
