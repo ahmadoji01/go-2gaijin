@@ -23,6 +23,8 @@ import (
 
 func RegisterHandler(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 	var user models.User
 	body, _ := ioutil.ReadAll(c.Request.Body)
@@ -109,6 +111,8 @@ func RegisterHandler(c *gin.Context) {
 
 func LoginHandler(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 	var user models.User
 	body, _ := ioutil.ReadAll(c.Request.Body)
@@ -178,6 +182,8 @@ func LoginHandler(c *gin.Context) {
 
 func ProfileHandler(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 	tokenString := c.Request.Header.Get("Authorization")
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -258,6 +264,8 @@ func ProfileHandler(c *gin.Context) {
 
 func UpdateProfile(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 	tokenString := c.Request.Header.Get("Authorization")
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -387,6 +395,8 @@ func UpdateProfile(c *gin.Context) {
 
 func LogoutHandler(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 	tokenString := c.Request.Header.Get("Authorization")
 	var res responses.ResponseMessage
@@ -487,6 +497,8 @@ func LoggedInUser(tokenString string) (models.User, bool) {
 
 func RefreshToken(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 	tokenString := c.Request.Header.Get("Authorization")
 	var res responses.ResponseMessage
@@ -578,6 +590,8 @@ func RefreshToken(c *gin.Context) {
 
 func ResetPasswordHandler(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 	var user models.User
 	body, _ := ioutil.ReadAll(c.Request.Body)
@@ -630,6 +644,8 @@ func ResetPasswordHandler(c *gin.Context) {
 
 func UpdatePasswordHandler(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 	var user models.User
 	body, _ := ioutil.ReadAll(c.Request.Body)
@@ -728,6 +744,8 @@ func IsUserSubscribed(id primitive.ObjectID) bool {
 
 func EmailConfirmation(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var res responses.ResponseMessage
@@ -787,6 +805,8 @@ func EmailConfirmation(c *gin.Context) {
 
 func PhoneConfirmation(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var res responses.ResponseMessage
@@ -846,6 +866,8 @@ func PhoneConfirmation(c *gin.Context) {
 
 func GenerateConfirmToken(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 	var user models.User
 	body, _ := ioutil.ReadAll(c.Request.Body)
