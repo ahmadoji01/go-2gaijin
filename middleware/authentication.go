@@ -108,6 +108,7 @@ func RegisterHandler(c *gin.Context) {
 }
 
 func LoginHandler(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 	var user models.User
 	body, _ := ioutil.ReadAll(c.Request.Body)
@@ -176,6 +177,7 @@ func LoginHandler(c *gin.Context) {
 }
 
 func ProfileHandler(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 	tokenString := c.Request.Header.Get("Authorization")
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
