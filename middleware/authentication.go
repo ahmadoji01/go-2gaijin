@@ -254,6 +254,7 @@ func ProfileHandler(c *gin.Context) {
 }
 
 func UpdateProfile(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 	tokenString := c.Request.Header.Get("Authorization")
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -382,6 +383,7 @@ func UpdateProfile(c *gin.Context) {
 }
 
 func LogoutHandler(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 	tokenString := c.Request.Header.Get("Authorization")
 	var res responses.ResponseMessage
@@ -481,6 +483,7 @@ func LoggedInUser(tokenString string) (models.User, bool) {
 }
 
 func RefreshToken(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 	tokenString := c.Request.Header.Get("Authorization")
 	var res responses.ResponseMessage
