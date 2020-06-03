@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
+	"gitlab.com/kitalabs/go-2gaijin/config"
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
@@ -179,7 +180,7 @@ func GetAProductWithAnImage(id primitive.ObjectID) interface{} {
 
 func DeleteProduct(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var product models.Product
@@ -237,7 +238,7 @@ func DeleteProduct(c *gin.Context) {
 
 func EditProduct(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 	var res responses.GenericResponse
 
@@ -317,7 +318,7 @@ func EditProduct(c *gin.Context) {
 
 func LikeProduct(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var product models.Product
@@ -367,7 +368,7 @@ func LikeProduct(c *gin.Context) {
 
 func MarkAsSold(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var product models.Product
@@ -426,7 +427,7 @@ func MarkAsSold(c *gin.Context) {
 
 func GetAllCategories(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	catData := struct {
@@ -446,7 +447,7 @@ func GetAllCategories(c *gin.Context) {
 
 func PostNewProduct(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 	var res responses.GenericResponse
 

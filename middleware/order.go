@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gitlab.com/kitalabs/go-2gaijin/config"
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,7 +17,7 @@ import (
 
 func InsertNotification(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var notification models.Notification
@@ -62,7 +63,7 @@ func InsertNotification(c *gin.Context) {
 
 func InsertAppointment(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var appointment models.Appointment
@@ -125,7 +126,7 @@ func InsertAppointment(c *gin.Context) {
 
 func InsertTrustCoin(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var trustcoin models.TrustCoin
@@ -199,7 +200,7 @@ func InsertTrustCoin(c *gin.Context) {
 
 func AppointmentConfirmation(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var appointment models.Appointment
@@ -291,7 +292,7 @@ func AppointmentConfirmation(c *gin.Context) {
 
 func RescheduleAppointment(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var appointment models.Appointment
@@ -343,7 +344,7 @@ func RescheduleAppointment(c *gin.Context) {
 
 func FinishAppointment(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var appointment models.Appointment

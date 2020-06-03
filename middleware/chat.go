@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gitlab.com/kitalabs/go-2gaijin/channels"
+	"gitlab.com/kitalabs/go-2gaijin/config"
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,7 +19,7 @@ import (
 
 func GetChatRoomMsg(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var urlQuery = c.Request.URL.Query()
@@ -83,7 +84,7 @@ func GetChatRoomMsg(c *gin.Context) {
 
 func InsertMessage(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var roomMsg models.RoomMessage
@@ -155,7 +156,7 @@ func setIsRead(roomID primitive.ObjectID) {
 
 func ChatUser(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
 
 	var room models.Room
