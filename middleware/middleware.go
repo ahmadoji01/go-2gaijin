@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/gin-gonic/gin"
 	"gitlab.com/kitalabs/go-2gaijin/channels"
+	"gitlab.com/kitalabs/go-2gaijin/config"
 	"gitlab.com/kitalabs/go-2gaijin/pkg/websocket"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -56,4 +58,11 @@ func productIndex() {
 	weights := bson.M{"name": 5, "description": 2}
 	keys := bson.M{"name": "text", "description": "text"}
 	CreateIndex(weights, keys, DB.Collection("products"))
+}
+
+func HandlePreflight(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Authorization")
+	return
 }
