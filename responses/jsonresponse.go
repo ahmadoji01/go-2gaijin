@@ -105,7 +105,8 @@ type ProfileData struct {
 }
 
 type SearchData struct {
-	Items interface{} `json:"items"`
+	TotalItems int64       `json:"total_items"`
+	Items      interface{} `json:"items"`
 }
 
 type AppointmentData struct {

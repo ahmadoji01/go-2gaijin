@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -74,11 +76,12 @@ func GetSearch(c *gin.Context) {
 
 	userid := urlQuery.Get("userid")
 
-	payload := getSearch(query, category, start, limit, priceMin, priceMax, sort, asc, status, userid)
+	total, payload := getSearch(query, category, start, limit, priceMin, priceMax, sort, asc, status, userid)
 
 	var searchPage responses.GenericResponse
 	var searchData responses.SearchData
 	searchData.Items = payload
+	searchData.TotalItems = total
 
 	searchPage.Status = "Success"
 	searchPage.Message = "Products Successfully Searched"
@@ -88,7 +91,7 @@ func GetSearch(c *gin.Context) {
 	return
 }
 
-func getSearch(query string, category string, start int64, limit int64, priceMin int64, priceMax int64, sort string, asc int, status string, userid string) interface{} {
+func getSearch(query string, category string, start int64, limit int64, priceMin int64, priceMax int64, sort string, asc int, status string, userid string) (int64, interface{}) {
 
 	filter := searchFilter(query, status, priceMin, priceMax, category, userid)
 	findOptions := searchOptions(start, limit, sort)
@@ -105,7 +108,12 @@ func getSearch(query string, category string, start int64, limit int64, priceMin
 		"relevance":   bson.M{"$meta": "textScore"},
 	})
 
-	return PopulateProductsWithAnImage(filter, findOptions)
+	totalItems, err := DB.Collection("products").CountDocuments(context.Background(), filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return totalItems, PopulateProductsWithAnImage(filter, findOptions)
 }
 
 func searchFilter(query string, status string, priceMin int64, priceMax int64, category string, userid string) bson.D {
