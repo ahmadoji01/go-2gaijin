@@ -184,6 +184,9 @@ func InsertTrustCoin(c *gin.Context) {
 				return
 			}
 
+			notifName := FindUserName(trustcoin.GiverID) + " has given you coin"
+			addNotification(primitive.NewObjectIDFromTimestamp(time.Now()), notifName, "trust_coin_sent", "", trustcoin.Type, trustcoin.ReceiverID, trustcoin.GiverID, trustcoin.AppointmentID, primitive.NilObjectID)
+
 			res.Status = "Success"
 			res.Message = "Trust coin successfully saved"
 			res.Data = newCoin
