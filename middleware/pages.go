@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"sync"
 
@@ -369,6 +370,11 @@ func GetNotificationPage(c *gin.Context) {
 		idFilter := bson.D{{"notified_id", userData.ID}}
 		notifications = PopulateNotificationsFromUserID(idFilter)
 		notificationData.Notifications = notifications
+
+		_, err := DB.Collection("users").UpdateOne(context.Background(), bson.M{"_id": userData.ID}, bson.M{"$set": bson.M{"notif_read": true}})
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		res.Status = "Success"
 		res.Message = "Notifications Retrieved"
