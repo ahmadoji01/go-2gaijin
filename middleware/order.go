@@ -456,7 +456,7 @@ func setNotifsToRejectOrder(acceptedNotifID primitive.ObjectID, productID primit
 		}
 
 		if result.ID != acceptedNotifID {
-			if result.Status == "pending" {
+			if result.Status == "pending" && result.Type == "order_incoming" {
 				update := bson.M{"$set": bson.M{"status": "rejected"}}
 				_, e = collection.UpdateOne(context.Background(), bson.M{"_id": result.AppointmentID}, update)
 				_, e = DB.Collection("notifications").UpdateOne(context.Background(), bson.M{"_id": result.ID}, update)
