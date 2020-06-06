@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"os"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -66,18 +68,18 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 	}
 
 	result := struct {
-		ID         primitive.ObjectID `json:"_id" bson:"_id"`
-		Name       string             `json:"name"`
-		Price      int                `json:"price"`
-		UserID     primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
-		SellerName string             `json:"seller_name"`
-		ImgURL     string             `json:"img_url"`
-		Latitude   float64            `json:"latitude,omitempty" bson:"latitude,omitempty"`
-		Longitude  float64            `json:"longitude,omitempty" bson:"longitude,omitempty"`
-		Location   interface{}        `json:"location"`
-		IsLiked    bool               `json:"is_liked"`
-		StatusEnum int                `json:"status_enum" bson:"status_cd"`
-		Status     string             `json:"status" bson:"status"`
+		ID           primitive.ObjectID `json:"_id" bson:"_id"`
+		Name         string             `json:"name"`
+		Price        int                `json:"price"`
+		UserID       primitive.ObjectID `json:"user_id,omitempty" bson:"user_id,omitempty"`
+		SellerName   string             `json:"seller_name"`
+		ImgURL       string             `json:"img_url"`
+		Latitude     float64            `json:"latitude,omitempty" bson:"latitude,omitempty"`
+		Longitude    float64            `json:"longitude,omitempty" bson:"longitude,omitempty"`
+		Location     interface{}        `json:"location"`
+		IsLiked      bool               `json:"is_liked"`
+		StatusEnum   int                `json:"status_cd" bson:"status_cd"`
+		Availability string             `json:"availability" bson:"availability"`
 	}{}
 
 	var location = struct {
@@ -111,7 +113,7 @@ func PopulateProductsWithAnImage(filter interface{}, options *options.FindOption
 		result.Latitude = 0
 		result.Longitude = 0
 
-		result.Status = ProductStatusEnum(result.StatusEnum)
+		result.Availability = ProductStatusEnum(result.StatusEnum)
 
 		results = append(results, result)
 	}
@@ -472,6 +474,8 @@ func PostNewProduct(c *gin.Context) {
 
 			productInsert.ProductDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 			productInsert.Product.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+			productInsert.Product.StatusEnum = 1
+			productInsert.Product.Availability = "available"
 
 			productInsert.Product.User = userData.ID
 			productInsert.Product.DateCreated = primitive.NewDateTimeFromTime(time.Now())
@@ -498,8 +502,14 @@ func PostNewProduct(c *gin.Context) {
 				return
 			}
 
+			dir, err := ioutil.ReadDir("tmp")
+			for _, d := range dir {
+				os.RemoveAll(path.Join([]string{"tmp", d.Name()}...))
+			}
+
 			res.Status = "Success"
 			res.Message = "Product Successfully Inserted"
+			res.Data = productData
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}

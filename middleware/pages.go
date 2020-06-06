@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"strconv"
 	"sync"
@@ -190,8 +189,11 @@ func GetProductDetail(c *gin.Context) {
 
 	wg.Wait()
 
+	if item.Availability == "" {
+		item.Availability = ProductStatusEnum(item.StatusEnum)
+	}
+
 	item.Location = location
-	item.Status = ProductStatusEnum(item.StatusEnum)
 	item.Images = FindProductImages(productID)
 	payload.Item = item
 
@@ -236,7 +238,6 @@ func GetProductDetail(c *gin.Context) {
 	output.Status = "Success"
 	output.Message = "Product Detail Successfully Loaded"
 	output.Data = payload
-	fmt.Println(output)
 
 	json.NewEncoder(c.Writer).Encode(output)
 }

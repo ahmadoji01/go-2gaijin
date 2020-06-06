@@ -82,7 +82,8 @@ type ProductDetailItem struct {
 
 	Comments   []interface{} `json:"comment_ids" bson:"comment_ids"`
 	StatusEnum int           `json:"status_enum" bson:"status_cd"`
-	Status     string        `json:"status"`
+	//Status     string        `json:"status"`
+	Availability string `json:"availability"`
 }
 
 type ProductDetails struct {

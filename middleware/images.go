@@ -31,7 +31,7 @@ func UploadToGCS(filePath string, fileName string) {
 		log.Fatal(err)
 	}
 
-	f, err := os.Open(fileName)
+	f, err := os.Open("tmp/" + fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,14 +47,13 @@ func UploadToGCS(filePath string, fileName string) {
 	if err := wc.Close(); err != nil {
 		log.Fatal(err)
 	}
-	os.Remove(fileName)
 	log.Println("done")
 }
 
 func DecodeBase64ToImage(str string, filename string) *os.File {
 	data, _ := base64.StdEncoding.DecodeString(str) //[]byte
 
-	file, _ := os.Create(filename)
+	file, _ := os.Create("tmp/" + filename)
 	defer file.Close()
 
 	file.Write(data)
