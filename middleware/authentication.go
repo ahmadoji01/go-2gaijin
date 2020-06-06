@@ -864,6 +864,34 @@ func PhoneConfirmation(c *gin.Context) {
 	}
 }
 
+func CheckNotifRead(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var checkNotif responses.CheckNotifData
+	var res responses.GenericResponse
+	collection := DB.Collection("users")
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		err := collection.FindOne(context.Background(), bson.M{"_id": userData.ID}).Decode(&checkNotif)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Error retrieving notification info"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		res.Status = "Success"
+		res.Message = "Notification check info retrieved"
+		res.Data = checkNotif
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+}
+
 func GenerateConfirmToken(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")

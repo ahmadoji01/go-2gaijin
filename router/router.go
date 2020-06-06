@@ -32,6 +32,7 @@ func Router() *gin.Engine {
 	r.POST("/profile", middleware.ProfileHandler)
 	r.POST("/update_profile", middleware.UpdateProfile)
 	r.POST("/confirm_identity", middleware.GenerateConfirmToken)
+	r.GET("/check_notif_read", middleware.CheckNotifRead)
 	r.GET("/confirm_email", middleware.EmailConfirmation)
 	r.GET("/confirm_phone", middleware.PhoneConfirmation)
 
@@ -91,6 +92,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/get_seller_appointments", middleware.HandlePreflight)
 	r.OPTIONS("/get_buyer_appointments", middleware.HandlePreflight)
 	r.OPTIONS("/get_notifications", middleware.HandlePreflight)
+	r.OPTIONS("/check_notif_read", middleware.HandlePreflight)
 
 	return r
 }

@@ -281,6 +281,11 @@ func GetChatLobby(c *gin.Context) {
 	tokenString := c.Request.Header.Get("Authorization")
 	userData, isLoggedIn := LoggedInUser(tokenString)
 	if isLoggedIn {
+		_, err = DB.Collection("users").UpdateOne(context.Background(), bson.M{"_id": userData.ID}, bson.M{"$set": bson.M{"message_read": true}})
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		roomsData, _ = PopulateRoomsFromUserID(userData.ID, start, limit)
 		res.Message = "Chat Lobby Retrieved!"
 		res.Status = "Success"

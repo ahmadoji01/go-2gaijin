@@ -144,6 +144,11 @@ type ProfileForVisitorData struct {
 	Collections interface{} `json:"collections"`
 }
 
+type CheckNotifData struct {
+	NotifRead   bool `json:"notif_read" bson:"notif_read"`
+	MessageRead bool `json:"message_read" bson:"message_read"`
+}
+
 type GenericResponse struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`
