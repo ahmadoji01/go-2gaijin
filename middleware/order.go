@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"time"
@@ -148,7 +149,7 @@ func InsertTrustCoin(c *gin.Context) {
 	userData, isLoggedIn := LoggedInUser(tokenString)
 	if isLoggedIn {
 		var notif = trustCoinNotif(userData.ID, trustcoin.ReceiverID, trustcoin.AppointmentID)
-
+		fmt.Println(notif)
 		if notif.Type != "give_trust_coin" {
 			res.Status = "Error"
 			res.Message = "Something wrong happened. Try again"
@@ -435,7 +436,7 @@ func FinishAppointment(c *gin.Context) {
 	return
 }
 
-func trustCoinNotif(notifierID primitive.ObjectID, notifiedID primitive.ObjectID, appointmentID primitive.ObjectID) models.Notification {
+func trustCoinNotif(notifiedID primitive.ObjectID, notifierID primitive.ObjectID, appointmentID primitive.ObjectID) models.Notification {
 	var collection = DB.Collection("notifications")
 
 	var notif models.Notification
