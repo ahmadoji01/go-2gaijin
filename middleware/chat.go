@@ -130,7 +130,7 @@ func InsertMessage(c *gin.Context) {
 	err := json.Unmarshal(body, &roomMsg)
 	if err != nil {
 		res.Status = "Error"
-		res.Message = "Something wrong happened. Try again"
+		res.Message = err.Error()
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -147,7 +147,7 @@ func InsertMessage(c *gin.Context) {
 
 		if err != nil {
 			res.Status = "Error"
-			res.Message = "Something wrong happened. Try again"
+			res.Message = err.Error()
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
