@@ -82,6 +82,42 @@ func GetChatRoomMsg(c *gin.Context) {
 	}
 }
 
+func GetChatRoomUser(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var urlQuery = c.Request.URL.Query()
+
+	var roomUsersData responses.ChatRoomUsersData
+	var res responses.GenericResponse
+
+	tokenString := c.Request.Header.Get("Authorization")
+	_, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		id, err := primitive.ObjectIDFromHex(urlQuery.Get("room"))
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		roomUsersData.Users = PopulateRoomUsers(id)
+
+		res.Status = "Success"
+		res.Message = "Room's Users Data Successfully Retrieved"
+		res.Data = roomUsersData
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
 func InsertMessage(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)

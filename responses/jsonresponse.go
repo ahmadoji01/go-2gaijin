@@ -127,6 +127,10 @@ type ChatRoomData struct {
 	Messages      []models.RoomMessage `json:"messages"`
 }
 
+type ChatRoomUsersData struct {
+	Users []interface{} `json:"users"`
+}
+
 type TokenData struct {
 	Token models.Token `json:"token"`
 }

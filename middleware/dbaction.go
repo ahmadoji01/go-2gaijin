@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 
@@ -252,6 +253,38 @@ func PopulateRoomsFromUserID(id primitive.ObjectID, start int64, limit int64) ([
 	}
 
 	return results, err
+}
+
+func PopulateRoomUsers(roomID primitive.ObjectID) []interface{} {
+	var query = bson.M{"_id": roomID}
+	var room models.Room
+
+	collection := DB.Collection("rooms")
+	err := collection.FindOne(context.Background(), query).Decode(&room)
+	fmt.Println(room)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var results []interface{}
+	result := struct {
+		ID        primitive.ObjectID `json:"_id" bson:"_id"`
+		FirstName string             `json:"first_name" bson:"first_name"`
+		LastName  string             `json:"last_name" bson:"last_name"`
+		AvatarURL string             `json:"avatar_url" bson:"avatar_url"`
+	}{}
+
+	fmt.Println(room.UserIDs)
+
+	for _, user := range room.UserIDs {
+		err := DB.Collection("users").FindOne(context.Background(), bson.M{"_id": user}).Decode(&result)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, result)
+	}
+
+	return results
 }
 
 func GetLastRoomMsg(id primitive.ObjectID) string {

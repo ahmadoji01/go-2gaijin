@@ -40,6 +40,7 @@ func Router() *gin.Engine {
 
 	r.POST("/chat_lobby", middleware.GetChatLobby)
 	r.GET("/chat_messages", middleware.GetChatRoomMsg)
+	r.GET("/chat_users", middleware.GetChatRoomUser)
 	r.GET("/initiate_chat", middleware.ChatUser)
 	r.POST("/insert_message", middleware.InsertMessage)
 
@@ -93,6 +94,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/get_buyer_appointments", middleware.HandlePreflight)
 	r.OPTIONS("/get_notifications", middleware.HandlePreflight)
 	r.OPTIONS("/check_notif_read", middleware.HandlePreflight)
+	r.OPTIONS("/chat_users", middleware.HandlePreflight)
 
 	return r
 }
