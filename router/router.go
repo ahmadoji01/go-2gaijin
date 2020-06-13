@@ -31,6 +31,7 @@ func Router() *gin.Engine {
 	r.POST("/update_password", middleware.UpdatePasswordHandler)
 	r.POST("/profile", middleware.ProfileHandler)
 	r.POST("/update_profile", middleware.UpdateProfile)
+	r.POST("/upload_avatar", middleware.UploadProfilePhoto)
 	r.POST("/confirm_identity", middleware.GenerateConfirmToken)
 	r.GET("/check_notif_read", middleware.CheckNotifRead)
 	r.GET("/confirm_email", middleware.EmailConfirmation)

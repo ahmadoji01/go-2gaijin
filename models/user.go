@@ -59,3 +59,7 @@ type ResponseResult struct {
 	Error  string `json:"error"`
 	Result string `json:"result"`
 }
+
+type UploadAvatar struct {
+	Avatar string `json:"avatar"`
+}

@@ -16,6 +16,7 @@ import (
 
 //Image URL Prefix
 var ImgURLPrefix string = "https://storage.googleapis.com/rails-2gaijin-storage/"
+var AvatarImagePrefix string = "uploads/user/avatar/"
 var AvatarURLPrefix string = "https://storage.googleapis.com/rails-2gaijin-storage/uploads/user/avatar/"
 var ProductImagePrefix = "uploads/go_product_image/"
 var GCSProductImgPrefix = "https://storage.googleapis.com/rails-2gaijin-storage/uploads/go_product_image/"
