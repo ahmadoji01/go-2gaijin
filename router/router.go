@@ -97,6 +97,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/check_notif_read", middleware.HandlePreflight)
 	r.OPTIONS("/chat_users", middleware.HandlePreflight)
 	r.OPTIONS("/upload_avatar", middleware.HandlePreflight)
+	r.OPTIONS("/add_product", middleware.HandlePreflight)
 
 	return r
 }
