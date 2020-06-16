@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -236,7 +237,11 @@ func ProfileHandler(c *gin.Context) {
 		result.LastName = claims["last_name"].(string)
 		result.AvatarURL = ""
 		if claims["avatar"].(string) != "" {
-			result.AvatarURL = AvatarURLPrefix + claims["_id"].(string) + "/" + claims["avatar"].(string)
+			if !strings.HasPrefix(claims["avatar"].(string), "https://") {
+				result.AvatarURL = AvatarURLPrefix + claims["_id"].(string) + "/" + claims["avatar"].(string)
+			} else {
+				result.AvatarURL = claims["avatar"].(string)
+			}
 		}
 		result.Role = claims["role"].(string)
 
