@@ -61,6 +61,8 @@ func RegisterHandler(c *gin.Context) {
 			user.Password = string(hash)
 			user.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 			user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+			user.NotifRead = true
+			user.MessageRead = true
 
 			_, err = collection.InsertOne(context.TODO(), user)
 			if err != nil {
@@ -90,7 +92,7 @@ func RegisterHandler(c *gin.Context) {
 			var res responses.GenericResponse
 
 			res.Status = "Success"
-			res.Message = "Registration Successful"
+			res.Message = "Registration successful"
 			res.Data = userData
 
 			json.NewEncoder(c.Writer).Encode(res)
@@ -104,7 +106,7 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	res.Status = "Error"
-	res.Message = "Email already Exists!!"
+	res.Message = "Email already exists"
 	json.NewEncoder(c.Writer).Encode(res)
 	return
 }
@@ -959,6 +961,10 @@ func GenerateConfirmToken(c *gin.Context) {
 	res.Message = message
 	json.NewEncoder(c.Writer).Encode(res)
 	return
+}
+
+func OAuthHandler(c *gin.Context) {
+
 }
 
 func generateNewToken(user models.User) (models.Token, error) {
