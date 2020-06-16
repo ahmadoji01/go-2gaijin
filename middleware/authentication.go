@@ -86,6 +86,8 @@ func RegisterHandler(c *gin.Context) {
 
 			user.Token = tokenString.AuthToken
 			user.RefreshToken = tokenString.RefreshToken
+			user.AuthTokenExpiry = tokenString.AuthTokenExpiry
+			user.RefreshTokenExpiry = tokenString.RefreshTokenExpiry
 			user.Password = ""
 
 			var userData responses.UserData
@@ -160,8 +162,6 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	tokenString, err := generateNewToken(result)
-	/*update := bson.M{"$set": bson.M{"token": tokenString}}
-	_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)*/
 	if err != nil {
 		res.Status = "Error"
 		res.Message = "Error while generating token, try again"
@@ -171,6 +171,8 @@ func LoginHandler(c *gin.Context) {
 
 	result.Token = tokenString.AuthToken
 	result.RefreshToken = tokenString.RefreshToken
+	result.AuthTokenExpiry = tokenString.AuthTokenExpiry
+	result.RefreshTokenExpiry = tokenString.RefreshTokenExpiry
 	result.Password = ""
 
 	var userData responses.UserData

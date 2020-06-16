@@ -53,6 +53,9 @@ type User struct {
 
 	MessageRead bool `json:"message_read" bson:"message_read"`
 	NotifRead   bool `json:"notif_read" bson:"notif_read"`
+
+	AuthTokenExpiry    primitive.DateTime `json:"auth_token_expiry"`
+	RefreshTokenExpiry primitive.DateTime `json:"refresh_token_expiry"`
 }
 
 type ResponseResult struct {
