@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -231,6 +232,25 @@ func ProfileHandler(c *gin.Context) {
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
+
+		var wg sync.WaitGroup
+
+		// Search Gold Trust Coins
+		wg.Add(1)
+		go func() {
+			filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "gold"}}
+			result.GoldCoin, err = collection.CountDocuments(context.Background(), filter)
+			wg.Done()
+		}()
+
+		// Search Silver Trust Coins
+		wg.Add(1)
+		go func() {
+			filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "silver"}}
+			result.SilverCoin, err = collection.CountDocuments(context.Background(), filter)
+			wg.Done()
+		}()
+		wg.Wait()
 
 		result.ID = id
 		result.Email = claims["email"].(string)

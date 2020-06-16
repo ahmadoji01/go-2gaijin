@@ -47,6 +47,8 @@ type User struct {
 	Addresses      []primitive.ObjectID `json:"address_ids,omitempty" bson:"address_ids,omitempty"`
 	PrimaryAddress primitive.ObjectID   `json:"primary_address_id,omitempty" bson:"primary_address_id,omitempty"`
 	TrustCoins     []primitive.ObjectID `json:"trust_coin_ids,omitempty" bson:"trust_coin_ids,omitempty"`
+	GoldCoin       int64                `json:"gold_coin"`
+	SilverCoin     int64                `json:"silver_coin"`
 
 	ResetPasswordToken string             `json:"reset_token,omitempty" bson:"reset_password_token,omitempty"`
 	ResetTokenExpiry   primitive.DateTime `json:"reset_token_expiry,omitempty" bson:"reset_token_expiry,omitempty"`
@@ -54,8 +56,8 @@ type User struct {
 	MessageRead bool `json:"message_read" bson:"message_read"`
 	NotifRead   bool `json:"notif_read" bson:"notif_read"`
 
-	AuthTokenExpiry    primitive.DateTime `json:"auth_token_expiry"`
-	RefreshTokenExpiry primitive.DateTime `json:"refresh_token_expiry"`
+	AuthTokenExpiry    primitive.DateTime `json:"auth_token_expiry,omitempty"`
+	RefreshTokenExpiry primitive.DateTime `json:"refresh_token_expiry,omitempty"`
 }
 
 type ResponseResult struct {

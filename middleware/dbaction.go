@@ -467,7 +467,7 @@ func GetSellerInfo(id primitive.ObjectID) interface{} {
 		wg.Done()
 	}()
 
-	// Search Seller Items
+	// Search Silver Trust Coins
 	wg.Add(1)
 	go func() {
 		filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "silver"}}
