@@ -58,6 +58,7 @@ func RegisterHandler(c *gin.Context) {
 				json.NewEncoder(c.Writer).Encode(res)
 				return
 			}
+			user.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 			user.Password = string(hash)
 			user.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 			user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
@@ -961,10 +962,6 @@ func GenerateConfirmToken(c *gin.Context) {
 	res.Message = message
 	json.NewEncoder(c.Writer).Encode(res)
 	return
-}
-
-func OAuthHandler(c *gin.Context) {
-
 }
 
 func generateNewToken(user models.User) (models.Token, error) {
