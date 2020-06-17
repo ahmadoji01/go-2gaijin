@@ -201,12 +201,14 @@ func ProfileHandler(c *gin.Context) {
 		return []byte(os.Getenv("MY_JWT_TOKEN")), nil
 	})
 	var result models.User
+	var tmpUser models.User
 	var res responses.ResponseMessage
 	var profileData responses.ProfileData
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		id, err := primitive.ObjectIDFromHex(claims["_id"].(string))
 
+		err = DB.Collection("users").FindOne(context.Background(), bson.M{"_id": id}).Decode(&tmpUser)
 		if err != nil {
 			res.Status = "Error"
 			res.Message = "Something went wrong. Please try again"
@@ -260,9 +262,9 @@ func ProfileHandler(c *gin.Context) {
 		result.AvatarURL = ""
 		if claims["avatar"].(string) != "" {
 			if !strings.HasPrefix(claims["avatar"].(string), "https://") {
-				result.AvatarURL = AvatarURLPrefix + claims["_id"].(string) + "/" + claims["avatar"].(string)
+				result.AvatarURL = AvatarURLPrefix + claims["_id"].(string) + "/" + tmpUser.AvatarURL
 			} else {
-				result.AvatarURL = claims["avatar"].(string)
+				result.AvatarURL = tmpUser.AvatarURL
 			}
 		}
 		result.Role = claims["role"].(string)
