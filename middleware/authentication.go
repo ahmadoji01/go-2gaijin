@@ -241,7 +241,7 @@ func ProfileHandler(c *gin.Context) {
 		wg.Add(1)
 		go func() {
 			filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "gold"}}
-			result.GoldCoin, err = DB.Collection("users").CountDocuments(context.Background(), filter)
+			result.GoldCoin, err = DB.Collection("trust_coins").CountDocuments(context.Background(), filter)
 			wg.Done()
 		}()
 
@@ -249,7 +249,7 @@ func ProfileHandler(c *gin.Context) {
 		wg.Add(1)
 		go func() {
 			filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "silver"}}
-			result.SilverCoin, err = DB.Collection("users").CountDocuments(context.Background(), filter)
+			result.SilverCoin, err = DB.Collection("trust_coins").CountDocuments(context.Background(), filter)
 			wg.Done()
 		}()
 		wg.Wait()
