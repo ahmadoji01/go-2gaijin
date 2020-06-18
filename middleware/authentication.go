@@ -268,6 +268,7 @@ func ProfileHandler(c *gin.Context) {
 			}
 		}
 		result.Role = claims["role"].(string)
+		result.DateOfBirth = tmpUser.DateOfBirth
 
 		var options = &options.FindOptions{}
 		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}, {"latitude", 1}, {"longitude", 1}, {"status_cd", 1}}
