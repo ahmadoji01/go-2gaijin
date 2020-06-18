@@ -241,7 +241,7 @@ func ProfileHandler(c *gin.Context) {
 		wg.Add(1)
 		go func() {
 			filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "gold"}}
-			result.GoldCoin, err = collection.CountDocuments(context.Background(), filter)
+			result.GoldCoin, err = DB.Collection("users").CountDocuments(context.Background(), filter)
 			wg.Done()
 		}()
 
@@ -249,7 +249,7 @@ func ProfileHandler(c *gin.Context) {
 		wg.Add(1)
 		go func() {
 			filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "silver"}}
-			result.SilverCoin, err = collection.CountDocuments(context.Background(), filter)
+			result.SilverCoin, err = DB.Collection("users").CountDocuments(context.Background(), filter)
 			wg.Done()
 		}()
 		wg.Wait()
@@ -260,8 +260,8 @@ func ProfileHandler(c *gin.Context) {
 		result.FirstName = claims["first_name"].(string)
 		result.LastName = claims["last_name"].(string)
 		result.AvatarURL = ""
-		if claims["avatar"].(string) != "" {
-			if !strings.HasPrefix(claims["avatar"].(string), "https://") {
+		if tmpUser.AvatarURL != "" {
+			if !strings.HasPrefix(tmpUser.AvatarURL, "https://") {
 				result.AvatarURL = AvatarURLPrefix + claims["_id"].(string) + "/" + tmpUser.AvatarURL
 			} else {
 				result.AvatarURL = tmpUser.AvatarURL
