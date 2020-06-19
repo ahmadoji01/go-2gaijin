@@ -143,6 +143,11 @@ type RoomData struct {
 	Room models.Room `json:"room"`
 }
 
+type ProductEditInfo struct {
+	Product       models.Product       `json:"product"`
+	ProductDetail models.ProductDetail `json:"product_detail"`
+}
+
 type ProfileForVisitorData struct {
 	UserInfo    interface{} `json:"user_info"`
 	Collections interface{} `json:"collections"`

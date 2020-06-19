@@ -318,6 +318,61 @@ func EditProduct(c *gin.Context) {
 	return
 }
 
+func GetProductInfoForEdit(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	var res responses.GenericResponse
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+
+	var product models.Product
+	var productDetail models.ProductDetail
+
+	if isLoggedIn {
+		var collection = DB.Collection("products")
+		err := collection.FindOne(context.Background(), bson.M{"_id": product.ID}).Decode(&product)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if product.User != userData.ID {
+			res.Status = "Error"
+			res.Message = "You are not authorized to get the product information"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		collection = DB.Collection("product_details")
+		err = collection.FindOne(context.Background(), bson.M{"product_id": product.ID}).Decode(&productDetail)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var productEditInfo responses.ProductEditInfo
+		productEditInfo.Product = product
+		productEditInfo.ProductDetail = productDetail
+
+		res.Status = "Success"
+		res.Message = "Product Information for Editing Successfully Retrieved"
+		res.Data = productEditInfo
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
 func LikeProduct(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
@@ -406,7 +461,16 @@ func MarkAsSold(c *gin.Context) {
 		}
 
 		collection = DB.Collection("products")
-		update := bson.M{"$set": bson.M{"availability": "sold", "status_cd": 2}}
+
+		var update bson.M
+		if product.Availability == "available" {
+			update = bson.M{"$set": bson.M{"availability": "sold", "status_cd": 2}}
+			res.Message = "You have marked this product as sold"
+		} else {
+			update = bson.M{"$set": bson.M{"availability": "available", "status_cd": 1}}
+			res.Message = "You have marked this product as available"
+		}
+
 		_, err = collection.UpdateOne(context.Background(), bson.D{{"_id", product.ID}}, update)
 		if err != nil {
 			res.Status = "Error"
@@ -416,7 +480,6 @@ func MarkAsSold(c *gin.Context) {
 		}
 
 		res.Status = "Success"
-		res.Message = "You have marked this product as sold"
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
