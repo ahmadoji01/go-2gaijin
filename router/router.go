@@ -103,6 +103,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/add_product", middleware.HandlePreflight)
 	r.OPTIONS("/get_product_info_edit", middleware.HandlePreflight)
 	r.OPTIONS("/edit_pricing", middleware.HandlePreflight)
+	r.OPTIONS("/get_profile_info", middleware.HandlePreflight)
 
 	return r
 }
