@@ -19,6 +19,7 @@ func Router() *gin.Engine {
 	r.POST("/add_product", middleware.PostNewProduct)
 	r.POST("/get_product_info_edit", middleware.GetProductInfoForEdit)
 	r.POST("/mark_as_sold", middleware.MarkAsSold)
+	r.POST("/edit_pricing", middleware.EditPricing)
 	r.POST("/delete_product", middleware.DeleteProduct)
 	r.POST("/edit_product", middleware.EditProduct)
 	r.POST("/like_product", middleware.LikeProduct)
@@ -31,6 +32,7 @@ func Router() *gin.Engine {
 	r.POST("/reset_password", middleware.ResetPasswordHandler)
 	r.POST("/update_password", middleware.UpdatePasswordHandler)
 	r.POST("/profile", middleware.ProfileHandler)
+	r.POST("/get_profile_info", middleware.GetProfileInfo)
 	r.POST("/update_profile", middleware.UpdateProfile)
 	r.POST("/upload_avatar", middleware.UploadProfilePhoto)
 	r.POST("/confirm_identity", middleware.GenerateConfirmToken)
@@ -100,6 +102,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/upload_avatar", middleware.HandlePreflight)
 	r.OPTIONS("/add_product", middleware.HandlePreflight)
 	r.OPTIONS("/get_product_info_edit", middleware.HandlePreflight)
+	r.OPTIONS("/edit_pricing", middleware.HandlePreflight)
 
 	return r
 }

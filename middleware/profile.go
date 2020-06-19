@@ -3,15 +3,130 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"strings"
+	"sync"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
 	"gitlab.com/kitalabs/go-2gaijin/config"
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+func GetProfileInfo(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Authorization")
+	c.Writer.Header().Set("Content-Type", "application/json")
+	tokenString := c.Request.Header.Get("Authorization")
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method")
+		}
+		return []byte(os.Getenv("MY_JWT_TOKEN")), nil
+	})
+	var result models.User
+	var tmpUser models.User
+	var res responses.ResponseMessage
+	var profileData responses.ProfileInfoData
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		id, err := primitive.ObjectIDFromHex(claims["_id"].(string))
+
+		err = DB.Collection("users").FindOne(context.Background(), bson.M{"_id": id}).Decode(&tmpUser)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something went wrong. Please try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		AtUUID := claims["at_uuid"].(string)
+		var collection = DB.Collection("tokens")
+		var tokenDetail models.Token
+		err = collection.FindOne(context.Background(), bson.M{"auth_token_uuid": AtUUID}).Decode(&tokenDetail)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Unauthorized"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		AtExpiry, _ := time.Parse(time.RFC3339, claims["at_expiry"].(string))
+		if time.Now().After(AtExpiry) {
+			res.Status = "Error"
+			res.Message = "Token Expired"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var wg sync.WaitGroup
+
+		// Search Gold Trust Coins
+		wg.Add(1)
+		go func() {
+			filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "gold"}}
+			result.GoldCoin, err = DB.Collection("trust_coins").CountDocuments(context.Background(), filter)
+			wg.Done()
+		}()
+
+		// Search Silver Trust Coins
+		wg.Add(1)
+		go func() {
+			filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "silver"}}
+			result.SilverCoin, err = DB.Collection("trust_coins").CountDocuments(context.Background(), filter)
+			wg.Done()
+		}()
+		wg.Wait()
+
+		result.ID = id
+		result.Email = claims["email"].(string)
+		result.Phone = claims["phone"].(string)
+		result.FirstName = claims["first_name"].(string)
+		result.LastName = claims["last_name"].(string)
+		result.AvatarURL = ""
+		if tmpUser.AvatarURL != "" {
+			if !strings.HasPrefix(tmpUser.AvatarURL, "https://") {
+				result.AvatarURL = AvatarURLPrefix + claims["_id"].(string) + "/" + tmpUser.AvatarURL
+			} else {
+				result.AvatarURL = tmpUser.AvatarURL
+			}
+		}
+		result.Role = claims["role"].(string)
+		result.DateOfBirth = tmpUser.DateOfBirth
+		result.ShortBio = tmpUser.ShortBio
+
+		var options = &options.FindOptions{}
+		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}, {"latitude", 1}, {"longitude", 1}, {"status_cd", 1}}
+		sort := bson.D{{"created_at", -1}}
+		options.SetProjection(projection)
+		options.SetSort(sort)
+
+		profileData.Profile = result
+
+		var resp responses.GenericResponse
+		resp.Status = "Success"
+		resp.Message = "Profile Successfully Retrieved"
+		resp.Data = profileData
+
+		json.NewEncoder(c.Writer).Encode(resp)
+		return
+	}
+	res.Status = "Error"
+	res.Message = err.Error()
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+
+}
 
 func UploadProfilePhoto(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")

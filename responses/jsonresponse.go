@@ -105,6 +105,10 @@ type ProfileData struct {
 	PostedItems interface{} `json:"posted_items"`
 }
 
+type ProfileInfoData struct {
+	Profile models.User `json:"profile"`
+}
+
 type SearchData struct {
 	TotalItems int64       `json:"total_items"`
 	Items      interface{} `json:"items"`
