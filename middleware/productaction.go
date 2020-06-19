@@ -330,6 +330,15 @@ func GetProductInfoForEdit(c *gin.Context) {
 	var product models.Product
 	var productDetail models.ProductDetail
 
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &product)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Something wrong happened. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
 	if isLoggedIn {
 		var collection = DB.Collection("products")
 		err := collection.FindOne(context.Background(), bson.M{"_id": product.ID}).Decode(&product)
