@@ -17,6 +17,7 @@ func Router() *gin.Engine {
 	r.GET("/products/:id", middleware.GetProductDetail)
 	r.GET("/wishlist", middleware.GetWishlistPage)
 	r.POST("/add_product", middleware.PostNewProduct)
+	r.POST("/get_product_info_edit", middleware.GetProductInfoForEdit)
 	r.POST("/mark_as_sold", middleware.MarkAsSold)
 	r.POST("/delete_product", middleware.DeleteProduct)
 	r.POST("/edit_product", middleware.EditProduct)
@@ -98,6 +99,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/chat_users", middleware.HandlePreflight)
 	r.OPTIONS("/upload_avatar", middleware.HandlePreflight)
 	r.OPTIONS("/add_product", middleware.HandlePreflight)
+	r.OPTIONS("/get_product_info_edit", middleware.HandlePreflight)
 
 	return r
 }
