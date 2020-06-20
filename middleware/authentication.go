@@ -983,10 +983,10 @@ func GenerateConfirmToken(c *gin.Context) {
 	}
 
 	if user.Email != "" {
-		SendEmailConfirmation(tokenString, user.Email)
+		SendEmailConfirmation(tokenString, user.Email, user.ConfirmSource)
 	}
 	if user.Phone != "" {
-		SendPhoneConfirmation(tokenString, user.Phone)
+		SendPhoneConfirmation(tokenString, user.Phone, user.ConfirmSource)
 	}
 
 	res.Status = "Success"

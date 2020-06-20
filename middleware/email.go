@@ -10,18 +10,33 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"gitlab.com/kitalabs/go-2gaijin/config"
 )
 
-func SendEmailConfirmation(token string, email string) {
+func SendEmailConfirmation(token string, email string, source string) {
+
+	var confirmLink string
+	if source == "mobile_web_app" {
+		confirmLink = config.MobileWebAppLink + "confirm_email/token=" + token
+	} else if source == "android_app" {
+		confirmLink = config.AndroidAppLink + "confirm_email/token=" + token
+	} else if source == "ios_app" {
+		confirmLink = config.IOSAppLink + "confirm_email/token=" + token
+	} else if source == "desktop_web_app" {
+		confirmLink = config.DesktopWebAppLink + "confirm_email/token=" + token
+	} else {
+		confirmLink = config.MobileWebAppLink + "confirm_email/token=" + token
+	}
 
 	from := "2gaijin@kitalabs.com"
 	pass := "4Managing2GaijinEmail2020!"
 	to := email
-	body := "You can reset the password Token using the information below:\n" + token
+	body := "To confirm your email, click the link below:\n" + confirmLink
 
 	msg := "From: " + from + "\n" +
 		"To: " + to + "\n" +
-		"Subject: Reset Password Request\n\n" +
+		"Subject: 2Gaijin.com - Email Confirmation\n\n" +
 		body
 
 	err := smtp.SendMail("smtp.gmail.com:587",
@@ -34,7 +49,7 @@ func SendEmailConfirmation(token string, email string) {
 	}
 }
 
-func SendPhoneConfirmation(token string, phone string) {
+func SendPhoneConfirmation(token string, phone string, source string) {
 	accountSid := "ACd93fe1eee224f1fcddd98f1149190302"
 	authToken := "e79c7cd73ca3706771c74ff720db10ef"
 	urlStr := "https://api.twilio.com/2010-04-01/Accounts/" + accountSid + "/Messages.json"
@@ -44,8 +59,21 @@ func SendPhoneConfirmation(token string, phone string) {
 		phoneNumber = "+81" + phoneNumber
 	}
 
+	var confirmLink string
+	if source == "mobile_web_app" {
+		confirmLink = config.MobileWebAppLink + "confirm_phone/token=" + token
+	} else if source == "android_app" {
+		confirmLink = config.AndroidAppLink + "confirm_phone/token=" + token
+	} else if source == "ios_app" {
+		confirmLink = config.IOSAppLink + "confirm_phone/token=" + token
+	} else if source == "desktop_web_app" {
+		confirmLink = config.DesktopWebAppLink + "confirm_phone/token=" + token
+	} else {
+		confirmLink = config.MobileWebAppLink + "confirm_phone/token=" + token
+	}
+
 	// Create possible message bodies
-	body := "https://go.2gaijin.com/confirm_phone?phone=" + phoneNumber + "&confirm_token=" + token
+	body := "To confirm your phone, click the link below:\n" + confirmLink
 
 	// Set up rand
 	rand.Seed(time.Now().Unix())

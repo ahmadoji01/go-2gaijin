@@ -35,6 +35,7 @@ type User struct {
 
 	ConfirmToken       string             `json:"confirm_token,omitempty" bson:"confirm_token,omitempty"`
 	ConfirmTokenExpiry primitive.DateTime `json:"confirm_token_expiry,omitempty" bson:"confirm_token_expiry,omitempty"`
+	ConfirmSource      string             `json:"confirm_source"`
 
 	Subscription   string             `json:"subscribed,omitempty" bson:"subscribed,omitempty"`
 	SubsExpiryDate primitive.DateTime `json:"subs_expiry_date,omitempty" bson:"subs_expiry_date,omitempty"`
