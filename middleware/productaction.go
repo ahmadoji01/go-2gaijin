@@ -253,12 +253,28 @@ func EditProduct(c *gin.Context) {
 
 		if isSubscribed {
 			var productInsert models.ProductInsert
+			var productData models.Product
 
 			body, _ := ioutil.ReadAll(c.Request.Body)
 			err := json.Unmarshal(body, &productInsert)
 			if err != nil {
 				res.Status = "Error"
 				res.Message = err.Error()
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+
+			err = DB.Collection("products").FindOne(context.Background(), bson.M{"_id": productInsert.Product.ID}).Decode(&productData)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = "Product not found!"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+
+			if productData.User != userData.ID {
+				res.Status = "Error"
+				res.Message = "You are not authorized to edit this product"
 				json.NewEncoder(c.Writer).Encode(res)
 				return
 			}

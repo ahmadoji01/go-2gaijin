@@ -43,7 +43,6 @@ func SendPhoneConfirmation(token string, phone string) {
 		phoneNumber = strings.TrimPrefix(phoneNumber, "0")
 		phoneNumber = "+81" + phoneNumber
 	}
-	fmt.Println(phoneNumber)
 
 	// Create possible message bodies
 	body := "https://go.2gaijin.com/confirm_phone?phone=" + phoneNumber + "&confirm_token=" + token

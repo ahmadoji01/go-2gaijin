@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sync"
 
@@ -261,7 +260,6 @@ func PopulateRoomUsers(roomID primitive.ObjectID) []interface{} {
 
 	collection := DB.Collection("rooms")
 	err := collection.FindOne(context.Background(), query).Decode(&room)
-	fmt.Println(room)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -273,8 +271,6 @@ func PopulateRoomUsers(roomID primitive.ObjectID) []interface{} {
 		LastName  string             `json:"last_name" bson:"last_name"`
 		AvatarURL string             `json:"avatar_url" bson:"avatar_url"`
 	}{}
-
-	fmt.Println(room.UserIDs)
 
 	for _, user := range room.UserIDs {
 		err := DB.Collection("users").FindOne(context.Background(), bson.M{"_id": user}).Decode(&result)
