@@ -253,7 +253,6 @@ func EditProduct(c *gin.Context) {
 
 		if isSubscribed {
 			var productInsert models.ProductInsert
-			var productData = productInsert.Product
 
 			body, _ := ioutil.ReadAll(c.Request.Body)
 			err := json.Unmarshal(body, &productInsert)
@@ -264,25 +263,16 @@ func EditProduct(c *gin.Context) {
 				return
 			}
 
-			productInsert.ProductDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
-			productInsert.Product.ID = primitive.NewObjectIDFromTimestamp(time.Now())
-
-			productInsert.Product.User = userData.ID
-			productInsert.Product.DateCreated = primitive.NewDateTimeFromTime(time.Now())
-			productInsert.Product.DateUpdated = primitive.NewDateTimeFromTime(time.Now())
-			productInsert.Product.ProductDetails = productInsert.ProductDetail.ID
-
 			var collection = DB.Collection("products")
-			update := bson.M{"$set": bson.D{
-				{"name", productData.Name},
-				{"price", productData.Price},
-				{"description", productData.Description},
-				{"category_ids", productData.Category},
-				{"latitude", productData.Latitude},
-				{"longitude", productData.Longitude},
-			},
-			}
-			_, err = collection.UpdateOne(context.Background(), bson.M{"_id": productData.ID}, update)
+			update := bson.M{"$set": bson.M{
+				"name":         productInsert.Product.Name,
+				"price":        productInsert.Product.Price,
+				"description":  productInsert.Product.Description,
+				"category_ids": productInsert.Product.Category,
+				"latitude":     productInsert.Product.Latitude,
+				"longitude":    productInsert.Product.Longitude,
+			}}
+			_, err = collection.UpdateOne(context.Background(), bson.M{"_id": productInsert.Product.ID}, update)
 			if err != nil {
 				res.Status = "Error"
 				res.Message = "Something went wrong"
@@ -291,13 +281,12 @@ func EditProduct(c *gin.Context) {
 			}
 
 			collection = DB.Collection("product_details")
-			update = bson.M{"$set": bson.D{
-				{"brand", productInsert.ProductDetail.Brand},
-				{"condition", productInsert.ProductDetail.Condition},
-				{"years_owned", productInsert.ProductDetail.YearsOwned},
-				{"model_name", productInsert.ProductDetail.ModelName},
-			},
-			}
+			update = bson.M{"$set": bson.M{
+				"brand":       productInsert.ProductDetail.Brand,
+				"condition":   productInsert.ProductDetail.Condition,
+				"years_owned": productInsert.ProductDetail.YearsOwned,
+				"model_name":  productInsert.ProductDetail.ModelName,
+			}}
 			_, err = collection.UpdateOne(context.Background(), bson.M{"product_id": productInsert.Product.ID}, update)
 			if err != nil {
 				res.Status = "Error"
