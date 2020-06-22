@@ -306,6 +306,7 @@ func PopulateRoomMsgFromRoomID(id primitive.ObjectID, start int64, limit int64) 
 
 	if start < 1 {
 		start = 1
+		limit = 0
 	}
 
 	options := options.Find()
