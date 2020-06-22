@@ -38,7 +38,7 @@ func GetChatRoomMsg(c *gin.Context) {
 		id, err := primitive.ObjectIDFromHex(urlQuery.Get("room"))
 		if err != nil {
 			res.Status = "Error"
-			res.Message = "Something wrong happened"
+			res.Message = err.Error()
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
@@ -60,7 +60,7 @@ func GetChatRoomMsg(c *gin.Context) {
 		}
 		if err != nil {
 			res.Status = "Error"
-			res.Message = "Something wrong happened"
+			res.Message = err.Error()
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
