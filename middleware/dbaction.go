@@ -299,6 +299,15 @@ func GetLastRoomMsg(id primitive.ObjectID) string {
 func PopulateRoomMsgFromRoomID(id primitive.ObjectID, start int64, limit int64) []models.RoomMessage {
 	var query = bson.M{"room_id": id}
 
+	limit = limit - start
+	if limit > 16 {
+		limit = 16
+	}
+
+	if start < 1 {
+		start = 1
+	}
+
 	options := options.Find()
 	options.SetSkip(start)
 	options.SetLimit(limit)
