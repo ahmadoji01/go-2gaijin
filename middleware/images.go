@@ -20,6 +20,8 @@ var AvatarImagePrefix string = "uploads/user/avatar/"
 var AvatarURLPrefix string = "https://storage.googleapis.com/rails-2gaijin-storage/uploads/user/avatar/"
 var ProductImagePrefix = "uploads/go_product_image/"
 var GCSProductImgPrefix = "https://storage.googleapis.com/rails-2gaijin-storage/uploads/go_product_image/"
+var ChatImagePrefix = "uploads/room_images/"
+var GCSChatImgPrefix = "https://storage.googleapis.com/rails-2gaijin-storage/uploads/room_images/"
 
 // Authenticate to Google Cloud Storage and return handler
 func UploadToGCS(filePath string, fileName string) {

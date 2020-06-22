@@ -162,6 +162,10 @@ type CheckNotifData struct {
 	MessageRead bool `json:"message_read" bson:"message_read"`
 }
 
+type InsertRoomPicture struct {
+	RoomMsg models.RoomMessage `json:"room_message"`
+}
+
 type GenericResponse struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`

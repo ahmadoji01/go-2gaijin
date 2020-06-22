@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/twinj/uuid"
 	"gitlab.com/kitalabs/go-2gaijin/channels"
 	"gitlab.com/kitalabs/go-2gaijin/config"
 	"gitlab.com/kitalabs/go-2gaijin/models"
@@ -156,6 +157,76 @@ func InsertMessage(c *gin.Context) {
 
 		res.Status = "Success"
 		res.Message = "Message successfully saved"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func InsertPictureMessage(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var roomMsg models.RoomMessage
+	var res responses.GenericResponse
+
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &roomMsg)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	roomMsg.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	var collection = DB.Collection("room_messages")
+	tokenString := c.Request.Header.Get("Authorization")
+	_, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		if roomMsg.ImgData == "" {
+			res.Status = "Error"
+			res.Message = "No image was attached"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		imgName := uuid.NewV4().String()
+		imgName = imgName + ".jpg"
+
+		imgPath := GCSChatImgPrefix + roomMsg.RoomID.Hex() + "/"
+
+		DecodeBase64ToImage(roomMsg.ImgData, imgName)
+		UploadToGCS(ChatImagePrefix+roomMsg.RoomID.Hex()+"/", imgName)
+
+		roomMsg.Message = ""
+		roomMsg.ImgData = ""
+		roomMsg.Image = imgPath + imgName
+
+		_, err := collection.InsertOne(context.TODO(), roomMsg)
+
+		collection = DB.Collection("rooms")
+		_, err = collection.UpdateOne(context.Background(), bson.M{"_id": roomMsg.RoomID}, bson.D{{"$set", bson.D{{"last_active", roomMsg.CreatedAt}}}})
+
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		notifyUnreadMessage(roomMsg.UserID)
+
+		var roomMsgPic responses.InsertRoomPicture
+		roomMsgPic.RoomMsg = roomMsg
+
+		res.Status = "Success"
+		res.Message = "Picture Message Successfully Saved"
+		res.Data = roomMsgPic
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
