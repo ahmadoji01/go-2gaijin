@@ -137,7 +137,7 @@ func InsertTrustCoin(c *gin.Context) {
 	err := json.Unmarshal(body, &trustcoin)
 	if err != nil {
 		res.Status = "Error"
-		res.Message = "Something wrong happened. Try again"
+		res.Message = err.Error()
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -152,7 +152,7 @@ func InsertTrustCoin(c *gin.Context) {
 		fmt.Println(notif)
 		if notif.Type != "give_trust_coin" {
 			res.Status = "Error"
-			res.Message = "Something wrong happened. Try again"
+			res.Message = "This is not a notification for giving trust coin"
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
@@ -170,7 +170,7 @@ func InsertTrustCoin(c *gin.Context) {
 
 			if err != nil {
 				res.Status = "Error"
-				res.Message = "Something wrong happened. Try again"
+				res.Message = err.Error()
 				json.NewEncoder(c.Writer).Encode(res)
 				return
 			}
@@ -180,7 +180,7 @@ func InsertTrustCoin(c *gin.Context) {
 			_, err = collection.UpdateOne(context.Background(), bson.D{{"_id", notif.ID}}, update)
 			if err != nil {
 				res.Status = "Error"
-				res.Message = "Something wrong happened. Try again"
+				res.Message = err.Error()
 				json.NewEncoder(c.Writer).Encode(res)
 				return
 			}

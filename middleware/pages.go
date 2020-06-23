@@ -168,12 +168,6 @@ func GetProductDetail(c *gin.Context) {
 		var findOneOpt = &options.FindOneOptions{}
 		findOneOpt.SetProjection(bson.D{{"_id", 1}, {"name", 1}, {"icon_url", 1}})
 		err = collection.FindOne(context.Background(), bson.M{"_id": item.CategoryIDs[0]}, findOneOpt).Decode(&cat)
-		if err != nil {
-			res.Status = "Error"
-			res.Message = "Error while retrieving product info, try again"
-			json.NewEncoder(c.Writer).Encode(res)
-			return
-		}
 		item.Category = cat
 		wg.Done()
 	}()
@@ -188,6 +182,13 @@ func GetProductDetail(c *gin.Context) {
 	}()
 
 	wg.Wait()
+
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
 
 	if item.Availability == "" {
 		item.Availability = ProductStatusEnum(item.StatusEnum)
