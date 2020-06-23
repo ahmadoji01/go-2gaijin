@@ -293,6 +293,10 @@ func GetLastRoomMsg(id primitive.ObjectID) string {
 	if err != nil {
 		return ""
 	}
+
+	if roomMsg.Image != "" {
+		return "An image was sent"
+	}
 	return roomMsg.Message
 }
 
