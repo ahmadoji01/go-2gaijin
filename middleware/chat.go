@@ -156,9 +156,12 @@ func InsertMessage(c *gin.Context) {
 
 		notifyUnreadMessage(roomMsg.UserID)
 
+		var roomMsgRes responses.InsertRoomMsg
+		roomMsgRes.RoomMsg = roomMsg
+
 		res.Status = "Success"
 		res.Message = "Message successfully saved"
-		res.Data = roomMsg
+		res.Data = roomMsgRes
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -223,7 +226,7 @@ func InsertImageMessage(c *gin.Context) {
 
 		notifyUnreadMessage(roomMsg.UserID)
 
-		var roomMsgImg responses.InsertRoomImage
+		var roomMsgImg responses.InsertRoomMsg
 		roomMsgImg.RoomMsg = roomMsg
 
 		res.Status = "Success"
