@@ -269,7 +269,7 @@ func PopulateRoomUsers(roomID primitive.ObjectID) []interface{} {
 		ID        primitive.ObjectID `json:"_id" bson:"_id"`
 		FirstName string             `json:"first_name" bson:"first_name"`
 		LastName  string             `json:"last_name" bson:"last_name"`
-		AvatarURL string             `json:"avatar_url" bson:"avatar_url"`
+		AvatarURL string             `json:"avatar_url" bson:"avatar"`
 	}{}
 
 	for _, user := range room.UserIDs {
@@ -432,7 +432,7 @@ func GetUserForNotification(id primitive.ObjectID) interface{} {
 		LastName   string             `json:"last_name" bson:"last_name"`
 		GoldCoin   int64              `json:"gold_coin"`
 		SilverCoin int64              `json:"silver_coin"`
-		AvatarURL  string             `json:"avatar_url" bson:"avatar_url"`
+		AvatarURL  string             `json:"avatar_url" bson:"avatar"`
 	}{}
 	err := collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&result)
 	if err != nil {
@@ -453,7 +453,7 @@ func GetSellerInfo(id primitive.ObjectID) interface{} {
 		CreatedAt  primitive.DateTime `json:"created_at" bson:"created_at"`
 		GoldCoin   int64              `json:"gold_coin"`
 		SilverCoin int64              `json:"silver_coin"`
-		AvatarURL  string             `json:"avatar_url" bson:"avatar_url"`
+		AvatarURL  string             `json:"avatar_url" bson:"avatar"`
 		ShortBio   string             `json:"short_bio" bson:"short_bio"`
 	}{}
 	err := collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&result)
