@@ -158,6 +158,7 @@ func InsertMessage(c *gin.Context) {
 
 		res.Status = "Success"
 		res.Message = "Message successfully saved"
+		res.Data = roomMsg
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -167,7 +168,7 @@ func InsertMessage(c *gin.Context) {
 	return
 }
 
-func InsertPictureMessage(c *gin.Context) {
+func InsertImageMessage(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
 	c.Writer.Header().Set("Content-Type", "application/json")
@@ -222,12 +223,12 @@ func InsertPictureMessage(c *gin.Context) {
 
 		notifyUnreadMessage(roomMsg.UserID)
 
-		var roomMsgPic responses.InsertRoomPicture
-		roomMsgPic.RoomMsg = roomMsg
+		var roomMsgImg responses.InsertRoomImage
+		roomMsgImg.RoomMsg = roomMsg
 
 		res.Status = "Success"
-		res.Message = "Picture Message Successfully Saved"
-		res.Data = roomMsgPic
+		res.Message = "Image Message Successfully Saved"
+		res.Data = roomMsgImg
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}

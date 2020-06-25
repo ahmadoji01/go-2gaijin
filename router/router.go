@@ -47,7 +47,7 @@ func Router() *gin.Engine {
 	r.GET("/chat_users", middleware.GetChatRoomUser)
 	r.GET("/initiate_chat", middleware.ChatUser)
 	r.POST("/insert_message", middleware.InsertMessage)
-	r.POST("/insert_picture_message", middleware.InsertPictureMessage)
+	r.POST("/insert_image_message", middleware.InsertImageMessage)
 
 	r.GET("/ws", channels.ServeChat)
 
@@ -105,7 +105,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/get_product_info_edit", middleware.HandlePreflight)
 	r.OPTIONS("/edit_pricing", middleware.HandlePreflight)
 	r.OPTIONS("/get_profile_info", middleware.HandlePreflight)
-	r.OPTIONS("/insert_picture_message", middleware.HandlePreflight)
+	r.OPTIONS("/insert_image_message", middleware.HandlePreflight)
 
 	return r
 }
