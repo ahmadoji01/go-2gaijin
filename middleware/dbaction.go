@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"log"
+	"strings"
 	"sync"
 
 	"gitlab.com/kitalabs/go-2gaijin/models"
@@ -277,6 +278,11 @@ func PopulateRoomUsers(roomID primitive.ObjectID) []interface{} {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		if !strings.HasPrefix(result.AvatarURL, "https://") {
+			result.AvatarURL = AvatarURLPrefix + result.ID.Hex() + "/" + result.AvatarURL
+		}
+
 		results = append(results, result)
 	}
 
@@ -439,6 +445,10 @@ func GetUserForNotification(id primitive.ObjectID) interface{} {
 		log.Fatal(err)
 	}
 
+	if !strings.HasPrefix(result.AvatarURL, "https://") {
+		result.AvatarURL = AvatarURLPrefix + result.ID.Hex() + "/" + result.AvatarURL
+	}
+
 	return result
 }
 
@@ -462,7 +472,9 @@ func GetSellerInfo(id primitive.ObjectID) interface{} {
 	}
 
 	if result.AvatarURL != "" {
-		result.AvatarURL = AvatarURLPrefix + result.ID.Hex() + "/" + result.AvatarURL
+		if !strings.HasPrefix(result.AvatarURL, "https://") {
+			result.AvatarURL = AvatarURLPrefix + result.ID.Hex() + "/" + result.AvatarURL
+		}
 	}
 
 	collection = DB.Collection("trust_coins")
