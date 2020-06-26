@@ -281,8 +281,8 @@ func EditProduct(c *gin.Context) {
 
 			var geoLoc models.GeoJson
 			geoLoc.Type = "Point"
-			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Latitude)
 			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Longitude)
+			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Latitude)
 
 			var collection = DB.Collection("products")
 			update := bson.M{"$set": bson.M{
@@ -618,8 +618,8 @@ func PostNewProduct(c *gin.Context) {
 
 			var geoLoc models.GeoJson
 			geoLoc.Type = "Point"
-			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Latitude)
 			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Longitude)
+			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Latitude)
 
 			productInsert.ProductDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 			productInsert.Product.ID = primitive.NewObjectIDFromTimestamp(time.Now())
