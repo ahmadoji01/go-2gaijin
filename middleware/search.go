@@ -66,6 +66,20 @@ func GetSearch(c *gin.Context) {
 		priceMax, err = strconv.ParseInt(urlQuery.Get("pricemax"), 10, 64)
 	}
 
+	var latitude float64
+	var longitude float64
+
+	if urlQuery.Get("latitude") == "" {
+		latitude = 0
+	} else {
+		latitude, err = strconv.ParseFloat(urlQuery.Get("latitude"), 64)
+	}
+	if urlQuery.Get("longitude") == "" {
+		longitude = 0
+	} else {
+		longitude, err = strconv.ParseFloat(urlQuery.Get("longitude"), 64)
+	}
+
 	var res responses.ResponseMessage
 	if err != nil {
 		res.Status = "Error"
@@ -76,7 +90,7 @@ func GetSearch(c *gin.Context) {
 
 	userid := urlQuery.Get("userid")
 
-	total, payload := getSearch(query, category, start, limit, priceMin, priceMax, sort, asc, status, userid)
+	total, payload := getSearch(query, category, start, limit, priceMin, priceMax, sort, asc, status, userid, latitude, longitude)
 
 	var searchPage responses.GenericResponse
 	var searchData responses.SearchData
@@ -91,7 +105,18 @@ func GetSearch(c *gin.Context) {
 	return
 }
 
-func getSearch(query string, category string, start int64, limit int64, priceMin int64, priceMax int64, sort string, asc int, status string, userid string) (int64, interface{}) {
+func getSearch(query string,
+	category string,
+	start int64,
+	limit int64,
+	priceMin int64,
+	priceMax int64,
+	sort string,
+	asc int,
+	status string,
+	userid string,
+	latitude float64,
+	longitude float64) (int64, interface{}) {
 
 	filter := searchFilter(query, status, priceMin, priceMax, category, userid)
 	findOptions := searchOptions(start, limit, sort)
@@ -104,6 +129,7 @@ func getSearch(query string, category string, start int64, limit int64, priceMin
 		"latitude":    1,
 		"longitude":   1,
 		"location":    1,
+		"geoloc":      1,
 		"status_cd":   1,
 		"relevance":   bson.M{"$meta": "textScore"},
 	})

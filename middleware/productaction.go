@@ -279,6 +279,11 @@ func EditProduct(c *gin.Context) {
 				return
 			}
 
+			var geoLoc models.GeoJson
+			geoLoc.Type = "Point"
+			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Latitude)
+			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Longitude)
+
 			var collection = DB.Collection("products")
 			update := bson.M{"$set": bson.M{
 				"name":         productInsert.Product.Name,
@@ -287,6 +292,7 @@ func EditProduct(c *gin.Context) {
 				"category_ids": productInsert.Product.Category,
 				"latitude":     productInsert.Product.Latitude,
 				"longitude":    productInsert.Product.Longitude,
+				"geoloc":       geoLoc,
 			}}
 			_, err = collection.UpdateOne(context.Background(), bson.M{"_id": productInsert.Product.ID}, update)
 			if err != nil {
@@ -610,6 +616,11 @@ func PostNewProduct(c *gin.Context) {
 				return
 			}
 
+			var geoLoc models.GeoJson
+			geoLoc.Type = "Point"
+			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Latitude)
+			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Longitude)
+
 			productInsert.ProductDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 			productInsert.Product.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 			productInsert.Product.StatusEnum = 1
@@ -619,6 +630,7 @@ func PostNewProduct(c *gin.Context) {
 			productInsert.Product.DateCreated = primitive.NewDateTimeFromTime(time.Now())
 			productInsert.Product.DateUpdated = primitive.NewDateTimeFromTime(time.Now())
 			productInsert.Product.ProductDetails = productInsert.ProductDetail.ID
+			productInsert.Product.GeoLoc = geoLoc
 
 			var collection = DB.Collection("products")
 			productData, err := collection.InsertOne(context.Background(), productInsert.Product)
