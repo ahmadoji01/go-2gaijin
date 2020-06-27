@@ -24,6 +24,13 @@ func CreateIndex(weights bson.M, keys bson.M, coll *mongo.Collection) {
 	}
 }
 
+func CreateIndexWithoutWeights(keys bson.M, coll *mongo.Collection) {
+	index := mongo.IndexModel{Keys: keys, Options: nil}
+	if _, err := coll.Indexes().CreateOne(context.Background(), index); err != nil {
+		log.Println("Could not create text index:", err)
+	}
+}
+
 func PopulateModels(cur *mongo.Cursor, err error) []bson.M {
 	var results []bson.M
 	for cur.Next(context.Background()) {
@@ -189,7 +196,8 @@ func FindACategoryFromProductID(id primitive.ObjectID) responses.ProductCategory
 	return appResult
 }
 
-func GetCategoryIDFromName(categoryName string) primitive.ObjectID {
+func GetCategoryIDFromName(categoryName string) []primitive.ObjectID {
+	var results []primitive.ObjectID
 	columnToSearch := "name"
 	query := bson.M{columnToSearch: categoryName}
 
@@ -200,9 +208,49 @@ func GetCategoryIDFromName(categoryName string) primitive.ObjectID {
 
 	err := collection.FindOne(context.Background(), query).Decode(&result)
 	if err != nil {
-		return primitive.NilObjectID
+		return make([]primitive.ObjectID, 0)
 	}
-	return result.ID
+	results = append(results, result.ID)
+
+	children := getChildrenCategoriesID(1, result.ID, 2)
+	i := 0
+	for i < len(children) {
+		results = append(results, children[i])
+		i++
+	}
+
+	return results
+}
+
+func getChildrenCategoriesID(depth int, parentID primitive.ObjectID, limit int) []primitive.ObjectID {
+	var children []primitive.ObjectID
+	var childTemp primitive.ObjectID
+
+	if depth <= limit {
+		var collection = DB.Collection("categories")
+		opts := &options.FindOptions{}
+		opts.SetSort(bson.D{{"name", 1}})
+
+		childrenCur, err := collection.Find(context.Background(), bson.D{{"parent_id", parentID}, {"depth", depth}}, opts)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for childrenCur.Next(context.Background()) {
+			var result models.Category
+			e := childrenCur.Decode(&result)
+			if e != nil {
+				log.Fatal(e)
+			}
+
+			childTemp = result.ID
+			children = append(children, childTemp)
+			getCategoriesChildrenWithRecursion(depth+1, result.ID, limit)
+		}
+	}
+	if children == nil {
+		children = make([]primitive.ObjectID, 0)
+	}
+	return children
 }
 
 func PopulateRoomsFromUserID(id primitive.ObjectID, start int64, limit int64) ([]models.Room, error) {

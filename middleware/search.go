@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 
@@ -174,8 +175,15 @@ func searchFilter(query string, status string, priceMin int64, priceMax int64, c
 
 	if category != "" {
 		cat := GetCategoryIDFromName(category)
-		if cat != primitive.NilObjectID {
-			filter = append(filter, bson.E{"category_ids", cat})
+		var catFilter []interface{}
+		if len(cat) != 0 {
+			i := 0
+			for i < len(cat) {
+				catFilter = append(catFilter, bson.D{{"category_ids", cat[i]}})
+				i++
+			}
+			filter = append(filter, bson.E{"$or", catFilter})
+			fmt.Println(filter)
 		}
 	}
 

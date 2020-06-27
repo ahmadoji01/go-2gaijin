@@ -58,6 +58,7 @@ func productIndex() {
 	weights := bson.M{"name": 5, "description": 2}
 	keys := bson.M{"name": "text", "description": "text"}
 	CreateIndex(weights, keys, DB.Collection("products"))
+	CreateIndexWithoutWeights(bson.M{"category_ids": 1}, DB.Collection("products"))
 }
 
 func HandlePreflight(c *gin.Context) {
