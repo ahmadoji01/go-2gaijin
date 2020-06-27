@@ -202,9 +202,7 @@ func GetCategoryIDFromName(categoryName string) []primitive.ObjectID {
 	query := bson.M{columnToSearch: categoryName}
 
 	collection := DB.Collection("categories")
-	result := struct {
-		ID primitive.ObjectID `json:"_id" bson:"_id"`
-	}{}
+	var result models.Category
 
 	err := collection.FindOne(context.Background(), query).Decode(&result)
 	if err != nil {
@@ -212,7 +210,7 @@ func GetCategoryIDFromName(categoryName string) []primitive.ObjectID {
 	}
 	results = append(results, result.ID)
 
-	children := getChildrenCategoriesID(1, result.ID, 2)
+	children := getChildrenCategoriesID(result.Depth, result.ID, 2)
 	i := 0
 	for i < len(children) {
 		results = append(results, children[i])
@@ -222,16 +220,14 @@ func GetCategoryIDFromName(categoryName string) []primitive.ObjectID {
 	return results
 }
 
-func getChildrenCategoriesID(depth int, parentID primitive.ObjectID, limit int) []primitive.ObjectID {
+func getChildrenCategoriesID(depth int64, parentID primitive.ObjectID, limit int64) []primitive.ObjectID {
 	var children []primitive.ObjectID
 	var childTemp primitive.ObjectID
 
 	if depth <= limit {
 		var collection = DB.Collection("categories")
-		opts := &options.FindOptions{}
-		opts.SetSort(bson.D{{"name", 1}})
 
-		childrenCur, err := collection.Find(context.Background(), bson.D{{"parent_id", parentID}, {"depth", depth}}, opts)
+		childrenCur, err := collection.Find(context.Background(), bson.D{{"parent_id", parentID}})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -244,7 +240,7 @@ func getChildrenCategoriesID(depth int, parentID primitive.ObjectID, limit int) 
 
 			childTemp = result.ID
 			children = append(children, childTemp)
-			getCategoriesChildrenWithRecursion(depth+1, result.ID, limit)
+			getChildrenCategoriesID(depth+1, result.ID, limit)
 		}
 	}
 	if children == nil {
