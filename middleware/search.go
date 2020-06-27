@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 
@@ -181,6 +182,7 @@ func searchFilter(query string, status string, priceMin int64, priceMax int64, c
 				catFilter = append(catFilter, bson.D{{"category_ids", cat[i]}})
 				i++
 			}
+			fmt.Println(catFilter)
 			var loopResult bson.D
 			loopResult = bson.D{{"$or", catFilter}}
 			joinQuery := bson.D{{"$and", bson.A{filter, loopResult}}}

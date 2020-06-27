@@ -14,6 +14,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var tmpCategoryIDs []primitive.ObjectID
+
 func CreateIndex(weights bson.M, keys bson.M, coll *mongo.Collection) {
 	opt := options.Index()
 	opt.SetWeights(weights)
@@ -211,6 +213,7 @@ func GetCategoryIDFromName(categoryName string) []primitive.ObjectID {
 	results = append(results, result.ID)
 
 	children := getChildrenCategoriesID(result.Depth, result.ID, 2)
+	tmpCategoryIDs = make([]primitive.ObjectID, 0)
 	i := 0
 	for i < len(children) {
 		results = append(results, children[i])
@@ -221,7 +224,6 @@ func GetCategoryIDFromName(categoryName string) []primitive.ObjectID {
 }
 
 func getChildrenCategoriesID(depth int64, parentID primitive.ObjectID, limit int64) []primitive.ObjectID {
-	var children []primitive.ObjectID
 	var childTemp primitive.ObjectID
 
 	if depth <= limit {
@@ -239,14 +241,11 @@ func getChildrenCategoriesID(depth int64, parentID primitive.ObjectID, limit int
 			}
 
 			childTemp = result.ID
-			children = append(children, childTemp)
+			tmpCategoryIDs = append(tmpCategoryIDs, childTemp)
 			getChildrenCategoriesID(depth+1, result.ID, limit)
 		}
 	}
-	if children == nil {
-		children = make([]primitive.ObjectID, 0)
-	}
-	return children
+	return tmpCategoryIDs
 }
 
 func PopulateRoomsFromUserID(id primitive.ObjectID, start int64, limit int64) ([]models.Room, error) {
