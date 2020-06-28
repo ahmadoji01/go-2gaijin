@@ -184,3 +184,77 @@ func UploadProfilePhoto(c *gin.Context) {
 	json.NewEncoder(c.Writer).Encode(res)
 	return
 }
+
+func GetEmailConfirmationStatus(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	var res responses.GenericResponse
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	var tmpUser models.User
+
+	if isLoggedIn {
+		err := DB.Collection("users").FindOne(context.Background(), bson.M{"_id": userData.ID}).Decode(&tmpUser)
+
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var emailConfirm = struct {
+			EmailConfirmed bool `json:"email_confirmed"`
+		}{}
+		emailConfirm.EmailConfirmed = userData.EmailConfirmed
+
+		res.Status = "Success"
+		res.Message = "Email Confirmation Status Retrieved"
+		res.Data = emailConfirm
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func GetPhoneConfirmationStatus(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	var res responses.GenericResponse
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	var tmpUser models.User
+
+	if isLoggedIn {
+		err := DB.Collection("users").FindOne(context.Background(), bson.M{"_id": userData.ID}).Decode(&tmpUser)
+
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var phoneConfirm = struct {
+			PhoneConfirmed bool `json:"phone_confirmed"`
+		}{}
+		phoneConfirm.PhoneConfirmed = userData.PhoneConfirmed
+
+		res.Status = "Success"
+		res.Message = "Phone Confirmation Status Retrieved"
+		res.Data = phoneConfirm
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
