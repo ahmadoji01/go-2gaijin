@@ -18,7 +18,7 @@ func SendEmailConfirmation(token string, email string, source string) {
 
 	var confirmLink string
 	if source == "mobile_web_app" {
-		confirmLink = config.MobileWebAppLink + "confirm_email/token=" + token
+		confirmLink = config.MobileWebAppLink + "confirm_email/" + email + "/" + token
 	} else if source == "android_app" {
 		confirmLink = config.AndroidAppLink + "confirm_email/token=" + token
 	} else if source == "ios_app" {
