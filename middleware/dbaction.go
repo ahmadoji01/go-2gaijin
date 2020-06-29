@@ -490,8 +490,10 @@ func GetUserForNotification(id primitive.ObjectID) interface{} {
 		log.Fatal(err)
 	}
 
-	if !strings.HasPrefix(result.AvatarURL, "https://") {
-		result.AvatarURL = AvatarURLPrefix + result.ID.Hex() + "/" + result.AvatarURL
+	if result.AvatarURL != "" {
+		if !strings.HasPrefix(result.AvatarURL, "https://") {
+			result.AvatarURL = AvatarURLPrefix + result.ID.Hex() + "/" + result.AvatarURL
+		}
 	}
 
 	return result
