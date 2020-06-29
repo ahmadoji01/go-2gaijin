@@ -104,6 +104,8 @@ func GetProfileInfo(c *gin.Context) {
 		result.Role = claims["role"].(string)
 		result.DateOfBirth = tmpUser.DateOfBirth
 		result.ShortBio = tmpUser.ShortBio
+		result.EmailConfirmed = tmpUser.EmailConfirmed
+		result.PhoneConfirmed = tmpUser.PhoneConfirmed
 
 		var options = &options.FindOptions{}
 		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}, {"latitude", 1}, {"longitude", 1}, {"status_cd", 1}}
@@ -208,7 +210,7 @@ func GetEmailConfirmationStatus(c *gin.Context) {
 		var emailConfirm = struct {
 			EmailConfirmed bool `json:"email_confirmed"`
 		}{}
-		emailConfirm.EmailConfirmed = userData.EmailConfirmed
+		emailConfirm.EmailConfirmed = tmpUser.EmailConfirmed
 
 		res.Status = "Success"
 		res.Message = "Email Confirmation Status Retrieved"
@@ -245,7 +247,7 @@ func GetPhoneConfirmationStatus(c *gin.Context) {
 		var phoneConfirm = struct {
 			PhoneConfirmed bool `json:"phone_confirmed"`
 		}{}
-		phoneConfirm.PhoneConfirmed = userData.PhoneConfirmed
+		phoneConfirm.PhoneConfirmed = tmpUser.PhoneConfirmed
 
 		res.Status = "Success"
 		res.Message = "Phone Confirmation Status Retrieved"
