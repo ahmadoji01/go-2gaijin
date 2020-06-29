@@ -95,7 +95,12 @@ func FindUserAvatar(userID primitive.ObjectID, avatarName string) string {
 	if avatarName == "" {
 		return ""
 	} else {
-		var avatarURL = ImgURLPrefix + "uploads/user/avatar/" + userID.Hex() + "/" + avatarName
+		var avatarURL string
+		if !strings.HasPrefix(avatarName, "https://") {
+			avatarURL = ImgURLPrefix + "uploads/user/avatar/" + userID.Hex() + "/" + avatarName
+		} else {
+			avatarURL = avatarName
+		}
 		return avatarURL
 	}
 }

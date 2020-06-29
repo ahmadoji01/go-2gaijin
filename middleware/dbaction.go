@@ -254,8 +254,8 @@ func PopulateRoomsFromUserID(id primitive.ObjectID, start int64, limit int64) ([
 	options.SetSort(bson.D{{"last_active", -1}})
 
 	limit = limit - start
-	if limit > 16 {
-		limit = 16
+	if limit > 24 {
+		limit = 24
 	}
 
 	if start < 1 {

@@ -261,11 +261,11 @@ func GetChatLobby(c *gin.Context) {
 	}
 
 	if urlQuery.Get("limit") == "" {
-		limit = 8
+		limit = 24
 	} else {
 		limit, err = strconv.ParseInt(urlQuery.Get("limit"), 10, 64)
 		if limit <= 0 {
-			limit = 8
+			limit = 24
 		}
 	}
 
