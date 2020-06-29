@@ -89,10 +89,10 @@ func GetProfileInfo(c *gin.Context) {
 		wg.Wait()
 
 		result.ID = id
-		result.Email = claims["email"].(string)
-		result.Phone = claims["phone"].(string)
-		result.FirstName = claims["first_name"].(string)
-		result.LastName = claims["last_name"].(string)
+		result.Email = tmpUser.Email
+		result.Phone = tmpUser.Phone
+		result.FirstName = tmpUser.FirstName
+		result.LastName = tmpUser.LastName
 		result.AvatarURL = ""
 		if tmpUser.AvatarURL != "" {
 			if !strings.HasPrefix(tmpUser.AvatarURL, "https://") {
@@ -101,7 +101,7 @@ func GetProfileInfo(c *gin.Context) {
 				result.AvatarURL = tmpUser.AvatarURL
 			}
 		}
-		result.Role = claims["role"].(string)
+		result.Role = tmpUser.Role
 		result.DateOfBirth = tmpUser.DateOfBirth
 		result.ShortBio = tmpUser.ShortBio
 		result.EmailConfirmed = tmpUser.EmailConfirmed
