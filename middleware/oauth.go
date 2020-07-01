@@ -72,6 +72,7 @@ func init() {
 	facebookConf = &oauth2.Config{
 		ClientID:     "936813033337153",
 		ClientSecret: "d9a728bc5f435f41efd315948a45bd42",
+		Scopes:       []string{"name", "first_name", "last_name", "email", "picture"},
 	}
 }
 
