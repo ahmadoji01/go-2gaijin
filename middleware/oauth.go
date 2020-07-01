@@ -46,12 +46,23 @@ type googleUserInfo struct {
 }
 
 type facebookUserInfo struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Picture   string `json:"picture"`
-	Email     string `json:"email"`
+	ID        string          `json:"id"`
+	Name      string          `json:"name"`
+	FirstName string          `json:"first_name"`
+	LastName  string          `json:"last_name"`
+	Picture   facebookPicData `json:"picture"`
+	Email     string          `json:"email"`
+}
+
+type facebookPicData struct {
+	Data facebookPic `json:"data"`
+}
+
+type facebookPic struct {
+	Height       int    `json:"height"`
+	Width        int    `json:"width"`
+	IsSilhouette bool   `json:"is_silhouette"`
+	URL          string `json:"url"`
 }
 
 var cred Credentials
@@ -311,7 +322,7 @@ func registerFacebookUser(userInfo facebookUserInfo) (models.User, error) {
 
 	user.FirstName = userInfo.FirstName
 	user.LastName = userInfo.LastName
-	user.AvatarURL = userInfo.Picture
+	user.AvatarURL = userInfo.Picture.Data.URL
 	user.Email = userInfo.Email
 	user.EmailConfirmed = true
 	user.Password = uuid.NewV4().String()
