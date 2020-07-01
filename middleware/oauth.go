@@ -229,7 +229,7 @@ func OAuthFacebookCallback(c *gin.Context) {
 
 	var resp responses.GenericResponse
 
-	data, err := getUserDataFromFacebook(oAuthInfo.AccessToken)
+	data, err := getUserDataFromFacebook(oAuthInfo.UserID, oAuthInfo.AccessToken)
 	if err != nil {
 		resp.Status = "Error"
 		resp.Message = err.Error()
@@ -315,7 +315,7 @@ func registerFacebookUser(userInfo facebookUserInfo) (models.User, error) {
 	user.Email = userInfo.Email
 	user.EmailConfirmed = true
 	user.Password = uuid.NewV4().String()
-	user.FacebookID = userInfo.FacebookID
+	user.FacebookID = userInfo.ID
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 5)
 	if err != nil {
