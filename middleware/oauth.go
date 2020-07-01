@@ -29,7 +29,7 @@ type Credentials struct {
 }
 
 type oAuthCallback struct {
-	UserID      string `json:"user_id"`
+	UserID      string `json:"id"`
 	AccessToken string `json:"access_token"`
 }
 
