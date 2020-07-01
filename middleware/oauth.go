@@ -18,6 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/facebook"
 	"golang.org/x/oauth2/google"
 )
 
@@ -28,6 +29,7 @@ type Credentials struct {
 }
 
 type oAuthCallback struct {
+	UserID      string `json:"user_id"`
 	AccessToken string `json:"access_token"`
 }
 
@@ -44,7 +46,7 @@ type googleUserInfo struct {
 }
 
 type facebookUserInfo struct {
-	Sub       string `json:"sub"`
+	ID        string `json:"id"`
 	Name      string `json:"name"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -58,7 +60,7 @@ var facebookConf *oauth2.Config
 var state string
 
 const oauthGoogleUrlAPI = "https://www.googleapis.com/oauth2/v3/userinfo?access_token="
-const oauthFacebookUrlAPI = "https://graph.facebook.com/me?access_token="
+const oauthFacebookUrlAPI = "https://graph.facebook.com/"
 
 func init() {
 	conf = &oauth2.Config{
@@ -72,7 +74,8 @@ func init() {
 	facebookConf = &oauth2.Config{
 		ClientID:     "936813033337153",
 		ClientSecret: "d9a728bc5f435f41efd315948a45bd42",
-		Scopes:       []string{"name", "first_name", "last_name", "email", "picture"},
+		Scopes:       []string{"public_profile", "name", "first_name", "last_name", "email", "picture"},
+		Endpoint:     facebook.Endpoint,
 	}
 }
 
@@ -260,8 +263,8 @@ func OAuthFacebookCallback(c *gin.Context) {
 	json.NewEncoder(c.Writer).Encode(resp)
 }
 
-func getUserDataFromFacebook(accessToken string) ([]byte, error) {
-	response, err := http.Get(oauthFacebookUrlAPI + accessToken)
+func getUserDataFromFacebook(userID string, accessToken string) ([]byte, error) {
+	response, err := http.Get(oauthFacebookUrlAPI + "/" + userID + "?fields=id,name,first_name,last_name,email,picture&access_token=" + accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
 	}
@@ -312,6 +315,7 @@ func registerFacebookUser(userInfo facebookUserInfo) (models.User, error) {
 	user.Email = userInfo.Email
 	user.EmailConfirmed = true
 	user.Password = uuid.NewV4().String()
+	user.FacebookID = userInfo.FacebookID
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 5)
 	if err != nil {

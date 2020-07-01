@@ -60,7 +60,8 @@ type User struct {
 	AuthTokenExpiry    primitive.DateTime `json:"auth_token_expiry,omitempty"`
 	RefreshTokenExpiry primitive.DateTime `json:"refresh_token_expiry,omitempty"`
 
-	GoogleSub string `json:"google_sub,omitempty" bson:"google_sub,omitempty"`
+	GoogleSub  string `json:"google_sub,omitempty" bson:"google_sub,omitempty"`
+	FacebookID string `json:"facebook_id,omitempty" bson:"facebook_id,omitempty"`
 }
 
 type ResponseResult struct {
