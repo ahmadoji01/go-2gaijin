@@ -59,6 +59,8 @@ type User struct {
 
 	AuthTokenExpiry    primitive.DateTime `json:"auth_token_expiry,omitempty"`
 	RefreshTokenExpiry primitive.DateTime `json:"refresh_token_expiry,omitempty"`
+
+	GoogleSub string `json:"google_sub,omitempty" bson:"google_sub,omitempty"`
 }
 
 type ResponseResult struct {
@@ -68,17 +70,4 @@ type ResponseResult struct {
 
 type UploadAvatar struct {
 	Avatar string `json:"avatar"`
-}
-
-// User is a retrieved and authentiacted user.
-type OAuthUser struct {
-	Sub           string `json:"sub"`
-	Name          string `json:"name"`
-	GivenName     string `json:"given_name"`
-	FamilyName    string `json:"family_name"`
-	Profile       string `json:"profile"`
-	Picture       string `json:"picture"`
-	Email         string `json:"email"`
-	EmailVerified string `json:"email_verified"`
-	Gender        string `json:"gender"`
 }

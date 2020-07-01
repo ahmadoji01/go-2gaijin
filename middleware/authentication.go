@@ -75,7 +75,7 @@ func RegisterHandler(c *gin.Context) {
 				return
 			}
 
-			tokenString, err := generateNewToken(user)
+			tokenString, err := GenerateNewToken(user)
 			/*update := bson.M{"$set": bson.M{"token": tokenString}}
 			_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)*/
 			if err != nil {
@@ -162,7 +162,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	tokenString, err := generateNewToken(result)
+	tokenString, err := GenerateNewToken(result)
 	if err != nil {
 		res.Status = "Error"
 		res.Message = "Error while generating token, try again"
@@ -995,7 +995,7 @@ func GenerateConfirmToken(c *gin.Context) {
 	return
 }
 
-func generateNewToken(user models.User) (models.Token, error) {
+func GenerateNewToken(user models.User) (models.Token, error) {
 	authTokenUUID := uuid.NewV4().String()
 	refreshTokenUUID := uuid.NewV4().String()
 
