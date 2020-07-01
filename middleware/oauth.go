@@ -2,17 +2,16 @@ package middleware
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/twinj/uuid"
+	"gitlab.com/kitalabs/go-2gaijin/config"
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,6 +25,10 @@ import (
 type Credentials struct {
 	Cid     string `json:"cid"`
 	Csecret string `json:"csecret"`
+}
+
+type oAuthCallback struct {
+	AccessToken string `json:"access_token"`
 }
 
 type googleUserInfo struct {
@@ -56,45 +59,21 @@ func init() {
 	}
 }
 
-func OAuthGoogleLogin(c *gin.Context) {
-	w := c.Writer
-	r := c.Request
-
-	// Create oauthState cookie
-	oauthState := generateStateOauthCookie(w)
-	u := conf.AuthCodeURL(oauthState)
-	fmt.Println(u)
-	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
-}
-
-func generateStateOauthCookie(w http.ResponseWriter) string {
-	var expiration = time.Now().Add(365 * 24 * time.Hour)
-
-	b := make([]byte, 16)
-	rand.Read(b)
-	state := base64.URLEncoding.EncodeToString(b)
-	cookie := http.Cookie{Name: "oauthstate", Value: state, Expires: expiration}
-	http.SetCookie(w, &cookie)
-
-	return state
-}
-
 func OAuthGoogleCallback(c *gin.Context) {
-	w := c.Writer
-	r := c.Request
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Authorization")
+	c.Writer.Header().Set("Content-Type", "application/json")
+	var oAuthInfo oAuthCallback
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &oAuthInfo)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	var resp responses.GenericResponse
 
-	// Read oauthState from Cookie
-	oauthState, _ := r.Cookie("oauthstate")
-
-	if r.FormValue("state") != oauthState.Value {
-		log.Println("invalid oauth google state")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		return
-	}
-
-	data, err := getUserDataFromGoogle(r.FormValue("code"))
+	data, err := getUserDataFromGoogle(oAuthInfo.AccessToken)
 	if err != nil {
 		resp.Status = "Error"
 		resp.Message = err.Error()
@@ -128,14 +107,8 @@ func OAuthGoogleCallback(c *gin.Context) {
 	json.NewEncoder(c.Writer).Encode(resp)
 }
 
-func getUserDataFromGoogle(code string) ([]byte, error) {
-	// Use code to get token and get user info from Google.
-
-	token, err := conf.Exchange(context.Background(), code)
-	if err != nil {
-		return nil, fmt.Errorf("code exchange wrong: %s", err.Error())
-	}
-	response, err := http.Get(oauthGoogleUrlAPI + token.AccessToken)
+func getUserDataFromGoogle(accessToken string) ([]byte, error) {
+	response, err := http.Get(oauthGoogleUrlAPI + accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting user info: %s", err.Error())
 	}
