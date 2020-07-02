@@ -322,6 +322,10 @@ func EditProduct(c *gin.Context) {
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
+		res.Status = "Error"
+		res.Message = "Unsubscribed"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
 	}
 	res.Status = "Error"
 	res.Message = "Unauthorized"
@@ -663,6 +667,10 @@ func PostNewProduct(c *gin.Context) {
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
+		res.Status = "Error"
+		res.Message = "Unsubscribed"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
 	}
 	res.Status = "Error"
 	res.Message = "Unauthorized"

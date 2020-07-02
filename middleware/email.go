@@ -109,11 +109,24 @@ func SendPhoneConfirmation(token string, phone string, source string) {
 	}
 }
 
-func SendResetPasswordEmail(token string, email string) {
+func SendResetPasswordEmail(token string, email string, source string) {
+	var confirmLink string
+	if source == "mobile_web_app" {
+		confirmLink = config.MobileWebAppLink + "update_password/" + email + "/" + token
+	} else if source == "android_app" {
+		confirmLink = config.AndroidAppLink + "confirm_email/token=" + token
+	} else if source == "ios_app" {
+		confirmLink = config.IOSAppLink + "confirm_email/token=" + token
+	} else if source == "desktop_web_app" {
+		confirmLink = config.DesktopWebAppLink + "confirm_email/token=" + token
+	} else {
+		confirmLink = config.MobileWebAppLink + "update_password/" + email + "/" + token
+	}
+
 	from := "2gaijin@kitalabs.com"
 	pass := "4Managing2GaijinEmail2020!"
 	to := email
-	body := "You can reset the password Token using the information below:\n" + token
+	body := "You can reset the password Token using the information below:\n" + confirmLink
 
 	msg := "From: " + from + "\n" +
 		"To: " + to + "\n" +

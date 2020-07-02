@@ -41,6 +41,7 @@ func Router() *gin.Engine {
 	r.GET("/confirm_phone", middleware.PhoneConfirmation)
 	r.GET("/get_email_confirm_status", middleware.GetEmailConfirmationStatus)
 	r.GET("/get_phone_confirm_status", middleware.GetPhoneConfirmationStatus)
+	r.GET("/get_subscription_status", middleware.GetSubscriptionStatus)
 	r.POST("/auth/google/callback", middleware.OAuthGoogleCallback)
 	r.POST("/auth/facebook/callback", middleware.OAuthFacebookCallback)
 
@@ -114,6 +115,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/get_phone_confirm_status", middleware.HandlePreflight)
 	r.OPTIONS("/auth/google/callback", middleware.HandlePreflight)
 	r.OPTIONS("/auth/facebook/callback", middleware.HandlePreflight)
+	r.OPTIONS("/get_subscription_status", middleware.HandlePreflight)
 
 	return r
 }

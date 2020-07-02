@@ -270,6 +270,7 @@ func ProfileHandler(c *gin.Context) {
 		result.Role = tmpUser.Role
 		result.DateOfBirth = tmpUser.DateOfBirth
 		result.ShortBio = tmpUser.ShortBio
+		result.IsSubscribed = IsUserSubscribed(tmpUser.ID)
 
 		var options = &options.FindOptions{}
 		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}, {"latitude", 1}, {"longitude", 1}, {"status_cd", 1}}
@@ -627,9 +628,15 @@ func ResetPasswordHandler(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
+
 	var user models.User
+	resetInfo := struct {
+		Email  string `json:"email"`
+		Source string `json:"source"`
+	}{}
+
 	body, _ := ioutil.ReadAll(c.Request.Body)
-	err := json.Unmarshal(body, &user)
+	err := json.Unmarshal(body, &resetInfo)
 	var res responses.GenericResponse
 	if err != nil {
 		res.Status = "Error"
@@ -641,10 +648,10 @@ func ResetPasswordHandler(c *gin.Context) {
 	var collection = DB.Collection("users")
 
 	var result models.User
-	err = collection.FindOne(context.Background(), bson.D{{"email", user.Email}}).Decode(&result)
+	err = collection.FindOne(context.Background(), bson.D{{"email", resetInfo.Email}}).Decode(&result)
 	if err != nil {
 		res.Status = "Error"
-		res.Message = err.Error()
+		res.Message = "Email not found"
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -652,7 +659,7 @@ func ResetPasswordHandler(c *gin.Context) {
 	tokenString, err := generateResetToken(result)
 	if err != nil {
 		res.Status = "Error"
-		res.Message = err.Error()
+		res.Message = "Something went wrong. Try again"
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -660,7 +667,7 @@ func ResetPasswordHandler(c *gin.Context) {
 	tokenExpiry := primitive.NewDateTimeFromTime(time.Now().Add(time.Hour * 1))
 	update := bson.M{"$set": bson.M{"reset_password_token": tokenString, "reset_token_expiry": tokenExpiry}}
 
-	_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)
+	_, err = collection.UpdateOne(context.Background(), bson.D{{"email", resetInfo.Email}}, update)
 	if err != nil {
 		res.Status = "Error"
 		res.Message = err.Error()
@@ -670,7 +677,7 @@ func ResetPasswordHandler(c *gin.Context) {
 
 	res.Status = "Success"
 	res.Message = "Check your email to reset your password"
-	SendResetPasswordEmail(tokenString, user.Email)
+	SendResetPasswordEmail(tokenString, user.Email, resetInfo.Source)
 
 	json.NewEncoder(c.Writer).Encode(res)
 	return
@@ -774,6 +781,36 @@ func IsUserSubscribed(id primitive.ObjectID) bool {
 		return true
 	}
 	return false
+}
+
+func GetSubscriptionStatus(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var res responses.GenericResponse
+	subscriptionStatus := struct {
+		IsSubscribed bool `json:"is_subscribed"`
+	}{}
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		var subsStatus bool
+		subsStatus = IsUserSubscribed(userData.ID)
+		subscriptionStatus.IsSubscribed = subsStatus
+
+		res.Status = "Success"
+		res.Message = "Subscription Status Retrieved"
+		res.Data = subscriptionStatus
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
 }
 
 func EmailConfirmation(c *gin.Context) {

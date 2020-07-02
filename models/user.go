@@ -39,6 +39,7 @@ type User struct {
 
 	Subscription   string             `json:"subscribed,omitempty" bson:"subscribed,omitempty"`
 	SubsExpiryDate primitive.DateTime `json:"subs_expiry_date,omitempty" bson:"subs_expiry_date,omitempty"`
+	IsSubscribed   bool               `json:"is_subscribed"`
 
 	FollowedProducts []primitive.ObjectID `json:"followed_product_ids,omitempty" bson:"followed_product_ids,omitempty"`
 	Notifications    []primitive.ObjectID `json:"notification_ids,omitempty" bson:"notification_ids,omitempty"`
