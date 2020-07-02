@@ -51,6 +51,7 @@ func Router() *gin.Engine {
 	r.GET("/chat_messages", middleware.GetChatRoomMsg)
 	r.GET("/chat_users", middleware.GetChatRoomUser)
 	r.GET("/initiate_chat", middleware.ChatUser)
+	r.POST("/add_message_reader", middleware.AddMsgReader)
 	r.POST("/insert_message", middleware.InsertMessage)
 	r.POST("/insert_image_message", middleware.InsertImageMessage)
 
@@ -116,6 +117,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/auth/google/callback", middleware.HandlePreflight)
 	r.OPTIONS("/auth/facebook/callback", middleware.HandlePreflight)
 	r.OPTIONS("/get_subscription_status", middleware.HandlePreflight)
+	r.OPTIONS("/add_message_reader", middleware.HandlePreflight)
 
 	return r
 }

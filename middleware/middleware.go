@@ -10,6 +10,7 @@ import (
 	"gitlab.com/kitalabs/go-2gaijin/config"
 	"gitlab.com/kitalabs/go-2gaijin/pkg/websocket"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -66,4 +67,13 @@ func HandlePreflight(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET")
 	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Authorization")
 	return
+}
+
+func IDExistsInSlice(slice []primitive.ObjectID, val primitive.ObjectID) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
 }

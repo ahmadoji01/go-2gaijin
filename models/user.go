@@ -37,7 +37,7 @@ type User struct {
 	ConfirmTokenExpiry primitive.DateTime `json:"confirm_token_expiry,omitempty" bson:"confirm_token_expiry,omitempty"`
 	ConfirmSource      string             `json:"confirm_source"`
 
-	Subscription   string             `json:"subscribed,omitempty" bson:"subscribed,omitempty"`
+	Subscription   string             `json:"subscription" bson:"subscription"`
 	SubsExpiryDate primitive.DateTime `json:"subs_expiry_date,omitempty" bson:"subs_expiry_date,omitempty"`
 	IsSubscribed   bool               `json:"is_subscribed"`
 

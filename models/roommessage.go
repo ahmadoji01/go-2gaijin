@@ -11,5 +11,5 @@ type RoomMessage struct {
 	CreatedAt primitive.DateTime   `json:"created_at" bson:"created_at"`
 	UserID    primitive.ObjectID   `json:"user_id" bson:"user_id"`
 	RoomID    primitive.ObjectID   `json:"room_id" bson:"room_id"`
-	ReaderIDs []primitive.ObjectID `json:"reader_ids,omitempty" bson:"reader_ids,omitempty"`
+	ReaderIDs []primitive.ObjectID `json:"reader_ids" bson:"reader_ids"`
 }
