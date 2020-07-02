@@ -199,6 +199,7 @@ func InsertMessage(c *gin.Context) {
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
+	roomMsg.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 	roomMsg.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	var collection = DB.Collection("room_messages")
@@ -250,6 +251,7 @@ func InsertImageMessage(c *gin.Context) {
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
+	roomMsg.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 	roomMsg.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 
 	var collection = DB.Collection("room_messages")
