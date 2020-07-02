@@ -550,10 +550,10 @@ func IsLastMessageRead(id primitive.ObjectID, userID primitive.ObjectID) bool {
 	readerIDs := roomMsg.ReaderIDs
 	for _, readerID := range readerIDs {
 		if readerID == userID {
-			return false
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 func PopulateRoomMsgFromRoomID(id primitive.ObjectID, start int64, limit int64) []models.RoomMessage {
