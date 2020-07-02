@@ -330,7 +330,7 @@ func setIsRead(roomID primitive.ObjectID) {
 }
 
 func setRoomMsgReader(roomID primitive.ObjectID, userID primitive.ObjectID) {
-	var collection = DB.Collection("rooms")
+	var collection = DB.Collection("room_messages")
 
 	roomMsg := GetLastRoomMsg(roomID)
 
