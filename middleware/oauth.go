@@ -120,6 +120,13 @@ func OAuthGoogleCallback(c *gin.Context) {
 		return
 	}
 
+	if result.Email == "" {
+		resp.Status = "Error"
+		resp.Message = "Error Signing In with Google. Try again"
+		json.NewEncoder(c.Writer).Encode(resp)
+		return
+	}
+
 	var userData responses.UserData
 	var user models.User
 
@@ -252,6 +259,13 @@ func OAuthFacebookCallback(c *gin.Context) {
 	if err := json.Unmarshal(data, &result); err != nil {
 		resp.Status = "Error"
 		resp.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(resp)
+		return
+	}
+
+	if result.Email == "" {
+		resp.Status = "Error"
+		resp.Message = "Error Signing In with Facebook. Try again"
 		json.NewEncoder(c.Writer).Encode(resp)
 		return
 	}
