@@ -352,6 +352,13 @@ func UpdateProfile(c *gin.Context) {
 			return
 		}
 
+		if user.Email == "" || user.FirstName == "" {
+			res.Status = "Error"
+			res.Message = "Email/First Name Info Should not be Empty"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
 		var filter = bson.M{"_id": id}
 		var update = bson.M{}
 		if user.Email != claims["email"].(string) && user.Phone != claims["phone"].(string) {
