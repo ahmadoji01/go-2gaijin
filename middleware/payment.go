@@ -55,7 +55,8 @@ func CreditCardPayment(c *gin.Context) {
 		}
 
 		monthsSubscribed := token.MonthsSubscribed
-		subsExpiry := time.Now().AddDate(0, monthsSubscribed, 0)
+		now := time.Now()
+		subsExpiry := now.AddDate(0, monthsSubscribed, 0)
 		update := bson.M{"$set": bson.M{"subscription": "basic", "subs_expiry_date": primitive.NewDateTimeFromTime(subsExpiry)}}
 
 		collection := DB.Collection("users")

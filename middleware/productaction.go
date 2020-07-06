@@ -249,8 +249,6 @@ func EditProduct(c *gin.Context) {
 
 	if isLoggedIn {
 		isSubscribed := IsUserSubscribed(userData.ID)
-		// TEMP: To check if it is functioning
-		isSubscribed = true
 
 		if isSubscribed {
 			var productInsert models.ProductInsert
@@ -607,8 +605,6 @@ func PostNewProduct(c *gin.Context) {
 
 	if isLoggedIn {
 		isSubscribed := IsUserSubscribed(userData.ID)
-		// TEMP: To check if it is functioning
-		isSubscribed = true
 
 		if isSubscribed {
 			var productInsert models.ProductInsert
