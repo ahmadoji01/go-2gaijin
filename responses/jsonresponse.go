@@ -167,16 +167,18 @@ type InsertRoomMsg struct {
 }
 
 type OmisePaymentToken struct {
-	Amount   int64  `json:"amount"`
-	Currency string `json:"currency"`
-	Token    string `json:"token"`
+	Amount           int64  `json:"amount"`
+	Currency         string `json:"currency"`
+	Token            string `json:"token"`
+	MonthsSubscribed int    `json:"months_subscribed"`
 }
 
 type OmisePaymentSource struct {
-	SourceID string `json:"source_id"`
-	Amount   int64  `json:"amount"`
-	Currency string `json:"currency"`
-	Token    string `json:"token"`
+	SourceID         string `json:"source_id"`
+	Amount           int64  `json:"amount"`
+	Currency         string `json:"currency"`
+	Token            string `json:"token"`
+	MonthsSubscribed int    `json:"months_subscribed"`
 }
 
 type GenericResponse struct {
