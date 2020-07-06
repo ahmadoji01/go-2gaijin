@@ -38,8 +38,6 @@ func CreditCardPayment(c *gin.Context) {
 			log.Fatal(e)
 		}
 
-		fmt.Println(token.Amount)
-
 		// Creates a charge from the token
 		charge, createCharge := &omise.Charge{}, &operations.CreateCharge{
 			Amount:   token.Amount,
@@ -91,8 +89,6 @@ func KonbiniPayment(c *gin.Context) {
 		if e != nil {
 			log.Fatal(e)
 		}
-
-		fmt.Println(token.Amount)
 
 		// Creates a charge from the token
 		charge, createCharge := &omise.Charge{}, &operations.CreateCharge{
