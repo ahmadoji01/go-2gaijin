@@ -172,6 +172,13 @@ type OmisePaymentToken struct {
 	Token    string `json:"token"`
 }
 
+type OmisePaymentSource struct {
+	SourceID string `json:"source_id"`
+	Amount   int64  `json:"amount"`
+	Currency string `json:"currency"`
+	Token    string `json:"token"`
+}
+
 type GenericResponse struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`

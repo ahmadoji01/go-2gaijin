@@ -69,6 +69,7 @@ func Router() *gin.Engine {
 	r.GET("/get_buyer_appointments", middleware.GetBuyerAppointmentPage)
 	r.GET("/get_notifications", middleware.GetNotificationPage)
 	r.POST("/credit_card_payment", middleware.CreditCardPayment)
+	r.POST("/konbini_payment", middleware.KonbiniPayment)
 
 	// Preflight Response
 	r.OPTIONS("/", middleware.HandlePreflight)
@@ -120,6 +121,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/get_subscription_status", middleware.HandlePreflight)
 	r.OPTIONS("/add_message_reader", middleware.HandlePreflight)
 	r.OPTIONS("/credit_card_payment", middleware.HandlePreflight)
+	r.OPTIONS("/konbini_payment", middleware.HandlePreflight)
 
 	return r
 }
