@@ -106,6 +106,8 @@ func GetProfileInfo(c *gin.Context) {
 		result.ShortBio = tmpUser.ShortBio
 		result.EmailConfirmed = tmpUser.EmailConfirmed
 		result.PhoneConfirmed = tmpUser.PhoneConfirmed
+		result.Subscription = tmpUser.Subscription
+		result.SubsExpiryDate = tmpUser.SubsExpiryDate
 		result.IsSubscribed = IsUserSubscribed(tmpUser.ID)
 
 		var options = &options.FindOptions{}
