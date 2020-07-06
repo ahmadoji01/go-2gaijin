@@ -167,7 +167,7 @@ type InsertRoomMsg struct {
 }
 
 type OmisePaymentToken struct {
-	Amount   int64  `json:"payment"`
+	Amount   int64  `json:"amount"`
 	Currency string `json:"currency"`
 	Token    string `json:"token"`
 }

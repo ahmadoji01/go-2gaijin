@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 
@@ -36,6 +37,8 @@ func CreditCardPayment(c *gin.Context) {
 		if e != nil {
 			log.Fatal(e)
 		}
+
+		fmt.Println(token.Amount)
 
 		// Creates a charge from the token
 		charge, createCharge := &omise.Charge{}, &operations.CreateCharge{
