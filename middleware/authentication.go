@@ -270,6 +270,8 @@ func ProfileHandler(c *gin.Context) {
 		result.Role = tmpUser.Role
 		result.DateOfBirth = tmpUser.DateOfBirth
 		result.ShortBio = tmpUser.ShortBio
+		result.Subscription = tmpUser.Subscription
+		result.SubsExpiryDate = tmpUser.SubsExpiryDate
 		result.IsSubscribed = IsUserSubscribed(tmpUser.ID)
 
 		var options = &options.FindOptions{}
