@@ -166,6 +166,12 @@ type InsertRoomMsg struct {
 	RoomMsg models.RoomMessage `json:"room_message"`
 }
 
+type OmisePaymentToken struct {
+	Amount   int64  `json:"payment"`
+	Currency string `json:"currency"`
+	Token    string `json:"token"`
+}
+
 type GenericResponse struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`

@@ -16,6 +16,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/graphql-go/graphql v0.7.9
 	github.com/klauspost/compress v1.10.4 // indirect
+	github.com/omise/omise-go v1.0.4
 	github.com/pjebs/jsonerror v0.0.0-20190614034432-63ef9a8df848 // indirect
 	github.com/pjebs/restgate v0.0.0-20170705024428-23fa04ff258d // indirect
 	github.com/pkg/errors v0.9.1 // indirect

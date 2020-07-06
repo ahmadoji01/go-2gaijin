@@ -68,6 +68,7 @@ func Router() *gin.Engine {
 	r.GET("/get_seller_appointments", middleware.GetSellerAppointmentPage)
 	r.GET("/get_buyer_appointments", middleware.GetBuyerAppointmentPage)
 	r.GET("/get_notifications", middleware.GetNotificationPage)
+	r.POST("/credit_card_payment", middleware.CreditCardPayment)
 
 	// Preflight Response
 	r.OPTIONS("/", middleware.HandlePreflight)
@@ -118,6 +119,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/auth/facebook/callback", middleware.HandlePreflight)
 	r.OPTIONS("/get_subscription_status", middleware.HandlePreflight)
 	r.OPTIONS("/add_message_reader", middleware.HandlePreflight)
+	r.OPTIONS("/credit_card_payment", middleware.HandlePreflight)
 
 	return r
 }
