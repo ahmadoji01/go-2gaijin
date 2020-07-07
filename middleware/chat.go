@@ -55,8 +55,8 @@ func GetChatRoomMsg(c *gin.Context) {
 
 		if urlQuery.Get("start") == "" {
 			start = limit - 24
-			if start < 1 {
-				start = 1
+			if start <= 0 {
+				start = 0
 			}
 		} else {
 			start, err = strconv.ParseInt(urlQuery.Get("start"), 10, 64)
@@ -563,9 +563,8 @@ func PopulateRoomMsgFromRoomID(id primitive.ObjectID, start int64, limit int64) 
 
 	limit = limit - start
 
-	if start <= 1 {
+	if start <= 0 {
 		start = 0
-		limit = 1
 	}
 
 	options := options.Find()
