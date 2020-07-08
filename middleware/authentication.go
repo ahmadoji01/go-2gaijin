@@ -39,6 +39,13 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
+	if user.Email == "" || user.Password == "" {
+		res.Status = "Error"
+		res.Message = "Invalid credentials"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
 	collection := DB.Collection("users")
 
 	if err != nil {
@@ -143,6 +150,13 @@ func LoginHandler(c *gin.Context) {
 		"avatar":     1,
 		"token":      1,
 	})
+
+	if user.Email == "" || user.Password == "" {
+		res.Status = "Error"
+		res.Message = "Invalid credentials"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
 
 	err = collection.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
 
