@@ -12,7 +12,10 @@ import (
 	"time"
 
 	"gitlab.com/kitalabs/go-2gaijin/config"
+	"gitlab.com/kitalabs/go-2gaijin/templates"
 )
+
+var htmlMIME = "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 
 func SendEmailConfirmation(token string, email string, source string) {
 
@@ -32,16 +35,13 @@ func SendEmailConfirmation(token string, email string, source string) {
 	from := "2gaijin@kitalabs.com"
 	pass := "4Managing2GaijinEmail2020!"
 	to := email
-	body := "To confirm your email, click the link below:\n" + confirmLink
+	body := templates.EmailConfirmation(confirmLink)
 
-	msg := "From: " + from + "\n" +
-		"To: " + to + "\n" +
-		"Subject: 2Gaijin.com - Email Confirmation\n\n" +
-		body
+	msg := []byte("Subject: 2Gaijin.com - Email Confirmation\n" + htmlMIME + body)
 
 	err := smtp.SendMail("smtp.gmail.com:587",
 		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
-		from, []string{to}, []byte(msg))
+		from, []string{to}, msg)
 
 	if err != nil {
 		log.Printf("smtp error: %s", err)
@@ -126,11 +126,69 @@ func SendResetPasswordEmail(token string, email string, source string) {
 	from := "2gaijin@kitalabs.com"
 	pass := "4Managing2GaijinEmail2020!"
 	to := email
-	body := "You can reset the password using the information below:\n" + confirmLink + "\nIf you don't request this, you can ignore this email"
+	body := templates.ResetPassword(confirmLink)
 
-	msg := "From: " + from + "\n" +
+	msg := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n" +
+		"From: " + from + "\n" +
 		"To: " + to + "\n" +
-		"Subject: Reset Password Request\n\n" +
+		"Subject: 2Gaijin.com - Reset Password Request\n\n" +
+		body
+
+	err := smtp.SendMail("smtp.gmail.com:587",
+		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
+		from, []string{to}, []byte(msg))
+
+	if err != nil {
+		log.Printf("smtp error: %s", err)
+		return
+	}
+}
+
+func SendBuyingRequestEmail(email string, source string, itemName string) {
+	var redirectLink string
+	if source == "mobile_web_app" {
+		redirectLink = config.MobileWebAppLink + "notifications/"
+	} else if source == "android_app" {
+		redirectLink = config.AndroidAppLink + "notifications/"
+	} else if source == "ios_app" {
+		redirectLink = config.IOSAppLink + "notifications/"
+	} else if source == "desktop_web_app" {
+		redirectLink = config.DesktopWebAppLink + "notifications/"
+	} else {
+		redirectLink = config.MobileWebAppLink + "notifications/"
+	}
+
+	from := "2gaijin@kitalabs.com"
+	pass := "4Managing2GaijinEmail2020!"
+	to := email
+	body := templates.OrderNotificationEmail(redirectLink, itemName)
+
+	msg := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n" +
+		"From: " + from + "\n" +
+		"To: " + to + "\n" +
+		"Subject: Someone requested to buy your items!\n\n" +
+		body
+
+	err := smtp.SendMail("smtp.gmail.com:587",
+		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
+		from, []string{to}, []byte(msg))
+
+	if err != nil {
+		log.Printf("smtp error: %s", err)
+		return
+	}
+}
+
+func SendDeliveryRequestEmail(itemName string, name string, email string, phone string, wechat string, facebook string, destination string, deliveryTime string, notes string) {
+	from := "2gaijin@kitalabs.com"
+	pass := "4Managing2GaijinEmail2020!"
+	to := "info@kitalabs.com"
+	body := templates.DeliveryEmail(itemName, name, email, phone, wechat, facebook, destination, deliveryTime, notes)
+
+	msg := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n" +
+		"From: " + from + "\n" +
+		"To: " + to + "\n" +
+		"Subject: Someone requested for delivery!\n\n" +
 		body
 
 	err := smtp.SendMail("smtp.gmail.com:587",

@@ -62,6 +62,92 @@ func InsertNotification(c *gin.Context) {
 	return
 }
 
+func InsertAppointmentWithDelivery(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var appointment models.Appointment
+	var delivery models.Delivery
+	var deliveryOrder models.DeliveryOrder
+	var res responses.GenericResponse
+
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &deliveryOrder)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	var collection = DB.Collection("appointments")
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		appointment = deliveryOrder.Appointment
+		delivery = deliveryOrder.Delivery
+
+		appointment.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+		appointment.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+		appointment.ExpiresAt = primitive.NewDateTimeFromTime(time.Now().Add(time.Hour * 24))
+		appointment.Status = "pending"
+
+		delivery.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+		delivery.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+		delivery.DeliveryTime = appointment.MeetingTime
+		delivery.AppointmentID = appointment.ID
+
+		appointment.RequesterID = userData.ID
+		notifID := primitive.NewObjectIDFromTimestamp(time.Now())
+		appointment.NotificationID = notifID
+		newApp, err := collection.InsertOne(context.TODO(), appointment)
+
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var product models.Product
+		collection = DB.Collection("products")
+		err = collection.FindOne(context.Background(), bson.M{"_id": appointment.ProductID}).Decode(&product)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		notifName := userData.FirstName + " wants to meet you at " + appointment.MeetingTime.Time().String() + " for your " + product.Name
+		addNotification(notifID, notifName, "order_incoming", "", "pending", appointment.SellerID, userData.ID, newApp.InsertedID.(primitive.ObjectID), product.ID)
+
+		var user models.User
+		err = DB.Collection("users").FindOne(context.Background(), bson.M{"_id": appointment.SellerID}).Decode(&user)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		SendDeliveryRequestEmail(product.Name, delivery.Name, delivery.Email, delivery.Phone, delivery.WeChat, delivery.Facebook, delivery.Destination, delivery.DeliveryTime.Time().String(), delivery.Notes)
+		SendBuyingRequestEmail(user.Email, appointment.Source, product.Name)
+
+		res.Status = "Success"
+		res.Message = "Appointment successfully saved"
+		res.Data = newApp
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
 func InsertAppointment(c *gin.Context) {
 	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
@@ -111,6 +197,16 @@ func InsertAppointment(c *gin.Context) {
 
 		notifName := userData.FirstName + " wants to meet you at " + appointment.MeetingTime.Time().String() + " for your " + product.Name
 		addNotification(notifID, notifName, "order_incoming", "", "pending", appointment.SellerID, userData.ID, newApp.InsertedID.(primitive.ObjectID), product.ID)
+
+		var user models.User
+		err = DB.Collection("users").FindOne(context.Background(), bson.M{"_id": appointment.SellerID}).Decode(&user)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+		SendBuyingRequestEmail(user.Email, appointment.Source, product.Name)
 
 		res.Status = "Success"
 		res.Message = "Appointment successfully saved"
