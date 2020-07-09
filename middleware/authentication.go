@@ -652,7 +652,6 @@ func ResetPasswordHandler(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
 
-	var user models.User
 	resetInfo := struct {
 		Email  string `json:"email"`
 		Source string `json:"source"`
@@ -700,7 +699,7 @@ func ResetPasswordHandler(c *gin.Context) {
 
 	res.Status = "Success"
 	res.Message = "Check your email to reset your password"
-	SendResetPasswordEmail(tokenString, user.Email, resetInfo.Source)
+	SendResetPasswordEmail(tokenString, resetInfo.Email, resetInfo.Source)
 
 	json.NewEncoder(c.Writer).Encode(res)
 	return
