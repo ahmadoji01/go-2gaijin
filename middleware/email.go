@@ -147,15 +147,15 @@ func SendResetPasswordEmail(token string, email string, source string) {
 func SendBuyingRequestEmail(email string, source string, itemName string) {
 	var redirectLink string
 	if source == "mobile_web_app" {
-		redirectLink = config.MobileWebAppLink + "notifications/"
+		redirectLink = config.MobileWebAppLink + "notification/"
 	} else if source == "android_app" {
-		redirectLink = config.AndroidAppLink + "notifications/"
+		redirectLink = config.AndroidAppLink + "notification/"
 	} else if source == "ios_app" {
-		redirectLink = config.IOSAppLink + "notifications/"
+		redirectLink = config.IOSAppLink + "notification/"
 	} else if source == "desktop_web_app" {
-		redirectLink = config.DesktopWebAppLink + "notifications/"
+		redirectLink = config.DesktopWebAppLink + "notification/"
 	} else {
-		redirectLink = config.MobileWebAppLink + "notifications/"
+		redirectLink = config.MobileWebAppLink + "notification/"
 	}
 
 	from := "2gaijin@kitalabs.com"
