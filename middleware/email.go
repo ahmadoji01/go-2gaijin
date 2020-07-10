@@ -37,11 +37,15 @@ func SendEmailConfirmation(token string, email string, source string) {
 	to := email
 	body := templates.EmailConfirmation(confirmLink)
 
-	msg := []byte("Subject: 2Gaijin.com - Email Confirmation\n" + htmlMIME + body)
+	msg := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n" +
+		"From: " + from + "\n" +
+		"To: " + to + "\n" +
+		"Subject: 2Gaijin.com - Email Confirmation Request\n\n" +
+		body
 
 	err := smtp.SendMail("smtp.gmail.com:587",
 		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
-		from, []string{to}, msg)
+		from, []string{to}, []byte(msg))
 
 	if err != nil {
 		log.Printf("smtp error: %s", err)
