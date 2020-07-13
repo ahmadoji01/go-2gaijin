@@ -103,6 +103,16 @@ func RegisterHandler(c *gin.Context) {
 
 			var res responses.GenericResponse
 
+			var paymentMethod models.PaymentMethod
+			paymentMethod.UserID = user.ID
+			_, err = DB.Collection("payment_methods").InsertOne(context.Background(), paymentMethod)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = "Error while inserting payment methods, try again"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+
 			res.Status = "Success"
 			res.Message = "Registration successful"
 			res.Data = userData
