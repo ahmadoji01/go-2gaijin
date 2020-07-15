@@ -197,8 +197,8 @@ func searchOptions(start int64, limit int64, sort string) *options.FindOptions {
 	findOptions := options.Find()
 
 	limit = limit - start
-	if limit > 16 {
-		limit = 16
+	if limit > 40 {
+		limit = 40
 	}
 
 	if start < 1 {
