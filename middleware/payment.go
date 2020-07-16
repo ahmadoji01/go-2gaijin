@@ -159,10 +159,11 @@ func UpdatePaymentMethod(c *gin.Context) {
 		}
 
 		update := bson.M{"$set": bson.M{"wechat": paymentMethod.WeChat,
-			"cod":          paymentMethod.COD,
-			"paypal":       paymentMethod.PayPal,
-			"bank_account": paymentMethod.BankAccount,
-			"bank_branch":  paymentMethod.BankBranch,
+			"cod":                 paymentMethod.COD,
+			"paypal":              paymentMethod.PayPal,
+			"bank_account_number": paymentMethod.BankAccountNumber,
+			"bank_account_name":   paymentMethod.BankAccountName,
+			"bank_name":           paymentMethod.BankName,
 		}}
 
 		collection := DB.Collection("payment_methods")
@@ -185,49 +186,25 @@ func UpdatePaymentMethod(c *gin.Context) {
 	return
 }
 
-func GetPaymentMethod(c *gin.Context) {
-	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
-	c.Writer.Header().Set("Access-Control-Allow-Methods", "GET")
-	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Authorization")
-	c.Writer.Header().Set("Content-Type", "application/json")
-
-	userID, err := primitive.ObjectIDFromHex(c.Param("id"))
-
-	var res responses.GenericResponse
-	if err != nil {
-		res.Status = "Error"
-		res.Message = "Error while converting ID, try again"
-		json.NewEncoder(c.Writer).Encode(res)
-		return
-	}
+func GetPaymentMethod(userid string) (models.PaymentMethod, error) {
 
 	var paymentMethod models.PaymentMethod
+
+	userID, err := primitive.ObjectIDFromHex(userid)
+	if err != nil {
+		return paymentMethod, err
+	}
+
 	paymentMethod.UserID = userID
-	payment := struct {
-		Method models.PaymentMethod `json:"payment_method"`
-	}{}
 
 	err = DB.Collection("payment_methods").FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&paymentMethod)
 	if err != nil {
+		paymentMethod.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 		_, err = DB.Collection("payment_methods").InsertOne(context.Background(), paymentMethod)
 		if err != nil {
-			res.Status = "Error"
-			res.Message = "Error while retrieving payment methods, try again"
-			json.NewEncoder(c.Writer).Encode(res)
-			return
+			return paymentMethod, err
 		}
-		payment.Method = paymentMethod
-		res.Status = "Success"
-		res.Message = "Payment method has successfully been retrieved"
-		res.Data = payment
-		json.NewEncoder(c.Writer).Encode(res)
-		return
+		return paymentMethod, nil
 	}
-	payment.Method = paymentMethod
-
-	res.Status = "Success"
-	res.Message = "Payment method has successfully been retrieved"
-	res.Data = payment
-	json.NewEncoder(c.Writer).Encode(res)
-	return
+	return paymentMethod, nil
 }

@@ -309,6 +309,15 @@ func ProfileHandler(c *gin.Context) {
 		profileData.PostedItems = PopulateProductsWithAnImage(filter, options)
 
 		var resp responses.GenericResponse
+		paymentMethod, err := GetPaymentMethod(profileData.Profile.ID.Hex())
+		if err != nil {
+			resp.Status = "Error"
+			resp.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(resp)
+			return
+		}
+		profileData.PaymentMethod = paymentMethod
+
 		resp.Status = "Success"
 		resp.Message = "Profile Successfully Retrieved"
 		resp.Data = profileData

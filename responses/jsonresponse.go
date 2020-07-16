@@ -87,11 +87,12 @@ type ProductDetailItem struct {
 }
 
 type ProductDetails struct {
-	Item         ProductDetailItem    `json:"item"`
-	Detail       models.ProductDetail `json:"details"`
-	Seller       interface{}          `json:"seller"`
-	RelatedItems []interface{}        `json:"relateditems"`
-	SellerItems  []interface{}        `json:"selleritems"`
+	Item          ProductDetailItem    `json:"item"`
+	Detail        models.ProductDetail `json:"details"`
+	Seller        interface{}          `json:"seller"`
+	PaymentMethod models.PaymentMethod `json:"payment_method"`
+	RelatedItems  []interface{}        `json:"relateditems"`
+	SellerItems   []interface{}        `json:"selleritems"`
 }
 
 type ProductDetailPage struct {
@@ -101,12 +102,14 @@ type ProductDetailPage struct {
 }
 
 type ProfileData struct {
-	Profile     models.User `json:"profile"`
-	PostedItems interface{} `json:"posted_items"`
+	Profile       models.User          `json:"profile"`
+	PaymentMethod models.PaymentMethod `json:"payment_method"`
+	PostedItems   interface{}          `json:"posted_items"`
 }
 
 type ProfileInfoData struct {
-	Profile models.User `json:"profile"`
+	Profile       models.User          `json:"profile"`
+	PaymentMethod models.PaymentMethod `json:"payment_method"`
 }
 
 type SearchData struct {

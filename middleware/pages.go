@@ -209,6 +209,8 @@ func GetProductDetail(c *gin.Context) {
 	wg.Add(1)
 	go func() {
 		payload.Seller = GetSellerInfo(item.User)
+		paymentMethod, _ := GetPaymentMethod(item.User.Hex())
+		payload.PaymentMethod = paymentMethod
 		wg.Done()
 	}()
 
