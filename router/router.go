@@ -36,9 +36,11 @@ func Router() *gin.Engine {
 	r.POST("/update_profile", middleware.UpdateProfile)
 	r.POST("/upload_avatar", middleware.UploadProfilePhoto)
 	r.POST("/confirm_identity", middleware.GenerateConfirmToken)
+	r.POST("/generate_phone_confirm_code", middleware.GeneratePhoneCode)
 	r.GET("/check_notif_read", middleware.CheckNotifRead)
 	r.GET("/confirm_email", middleware.EmailConfirmation)
-	r.GET("/confirm_phone", middleware.PhoneConfirmation)
+	//r.GET("/confirm_phone", middleware.PhoneConfirmation)
+	r.POST("/confirm_phone", middleware.ConfirmPhone)
 	r.GET("/get_email_confirm_status", middleware.GetEmailConfirmationStatus)
 	r.GET("/get_phone_confirm_status", middleware.GetPhoneConfirmationStatus)
 	r.GET("/get_subscription_status", middleware.GetSubscriptionStatus)
@@ -127,6 +129,8 @@ func Router() *gin.Engine {
 	r.OPTIONS("/insert_appointment_with_delivery", middleware.HandlePreflight)
 	r.OPTIONS("/update_payment_method", middleware.HandlePreflight)
 	r.OPTIONS("/get_payment_method", middleware.HandlePreflight)
+	r.OPTIONS("/confirm_phone", middleware.HandlePreflight)
+	r.OPTIONS("/generate_phone_confirm_code", middleware.HandlePreflight)
 
 	return r
 }

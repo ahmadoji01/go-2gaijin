@@ -113,6 +113,53 @@ func SendPhoneConfirmation(token string, phone string, source string) {
 	}
 }
 
+func SendPhoneConfirmationCode(code string, phone string) {
+	accountSid := "ACd93fe1eee224f1fcddd98f1149190302"
+	authToken := "e79c7cd73ca3706771c74ff720db10ef"
+	urlStr := "https://api.twilio.com/2010-04-01/Accounts/" + accountSid + "/Messages.json"
+	phoneNumber := phone
+	if strings.HasPrefix(phone, "0") {
+		phoneNumber = strings.TrimPrefix(phoneNumber, "0")
+		phoneNumber = "+81" + phoneNumber
+	}
+
+	// Create possible message bodies
+	body := "2Gaijin.com - To confirm your phone, enter the following code:\n" + code
+
+	// Set up rand
+	rand.Seed(time.Now().Unix())
+
+	msgData := url.Values{}
+	msgData.Set("To", phoneNumber)
+	msgData.Set("From", "+12513579601")
+	msgData.Set("Body", body)
+	msgDataReader := *strings.NewReader(msgData.Encode())
+
+	client := &http.Client{}
+	req, _ := http.NewRequest("POST", urlStr, &msgDataReader)
+	req.SetBasicAuth(accountSid, authToken)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	// Make HTTP POST request and return message SID
+	resp, _ := client.Do(req)
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		var data map[string]interface{}
+		decoder := json.NewDecoder(resp.Body)
+		err := decoder.Decode(&data)
+		if err == nil {
+			fmt.Println(data["sid"])
+		}
+	} else {
+		var data map[string]interface{}
+		decoder := json.NewDecoder(resp.Body)
+		err := decoder.Decode(&data)
+		if err == nil {
+			fmt.Println(data)
+		}
+	}
+}
+
 func SendResetPasswordEmail(token string, email string, source string) {
 	var confirmLink string
 	if source == "mobile_web_app" {

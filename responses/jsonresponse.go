@@ -189,3 +189,7 @@ type GenericResponse struct {
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
 }
+
+type PhoneConfirmation struct {
+	PhoneConfirmCode string `json:"phone_confirm_code"`
+}

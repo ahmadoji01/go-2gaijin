@@ -2,8 +2,10 @@ package middleware
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -1069,6 +1071,125 @@ func GenerateConfirmToken(c *gin.Context) {
 
 	res.Status = "Success"
 	res.Message = message
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func GeneratePhoneCode(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var res responses.GenericResponse
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		var user models.User
+		body, _ := ioutil.ReadAll(c.Request.Body)
+		err := json.Unmarshal(body, &user)
+		var res responses.ResponseMessage
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var table = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
+		b := make([]byte, 6)
+		n, err := io.ReadAtLeast(rand.Reader, b, 6)
+		if n != 6 {
+			panic(err)
+		}
+		for i := 0; i < len(b); i++ {
+			b[i] = table[int(b[i])%len(table)]
+		}
+
+		update := bson.M{"$set": bson.M{"phone_confirm_code": string(b), "phone_confirm_expiry": primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 15))}}
+		_, err = DB.Collection("users").UpdateOne(context.Background(), bson.M{"_id": userData.ID}, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		SendPhoneConfirmationCode(string(b), user.Phone)
+		res.Status = "Success"
+		res.Message = "Phone Confirmation Code Generated"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func ConfirmPhone(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var res responses.GenericResponse
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		var phoneConfirm responses.PhoneConfirmation
+		body, _ := ioutil.ReadAll(c.Request.Body)
+		err := json.Unmarshal(body, &phoneConfirm)
+		var res responses.ResponseMessage
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var collection = DB.Collection("users")
+		var user models.User
+		err = collection.FindOne(context.Background(), bson.M{"_id": userData.ID}).Decode(&user)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if time.Now().After(user.PhoneConfirmExpiry.Time()) {
+			res.Status = "Error"
+			res.Message = "Session has expired. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if user.PhoneConfirmCode == phoneConfirm.PhoneConfirmCode {
+			update := bson.M{"$set": bson.M{"phone_confirmed": true, "phone_confirm_code": "", "phone_confirm_expiry": primitive.NewDateTimeFromTime(time.Now())}}
+			_, err = collection.UpdateOne(context.Background(), bson.M{"_id": userData.ID}, update)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = err.Error()
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+
+			res.Status = "Success"
+			res.Message = "Phone Has Successfully been Confirmed"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		res.Status = "Error"
+		res.Message = "Phone Confirmation Code Does not Match"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Status = "Error"
+	res.Message = "Unauthorized"
 	json.NewEncoder(c.Writer).Encode(res)
 	return
 }
