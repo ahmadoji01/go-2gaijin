@@ -168,6 +168,10 @@ func GetProductDetail(c *gin.Context) {
 		var findOneOpt = &options.FindOneOptions{}
 		findOneOpt.SetProjection(bson.D{{"_id", 1}, {"name", 1}, {"icon_url", 1}})
 		err = collection.FindOne(context.Background(), bson.M{"_id": item.CategoryIDs[0]}, findOneOpt).Decode(&cat)
+		if err != nil {
+			err = nil
+		}
+
 		item.Category = cat
 		wg.Done()
 	}()
@@ -182,7 +186,6 @@ func GetProductDetail(c *gin.Context) {
 	}()
 
 	wg.Wait()
-
 	if err != nil {
 		res.Status = "Error"
 		res.Message = err.Error()
@@ -241,8 +244,8 @@ func GetProductDetail(c *gin.Context) {
 	output.Status = "Success"
 	output.Message = "Product Detail Successfully Loaded"
 	output.Data = payload
-
 	json.NewEncoder(c.Writer).Encode(output)
+	return
 }
 
 func GetSellerAppointmentPage(c *gin.Context) {
