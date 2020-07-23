@@ -130,7 +130,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/update_payment_method", middleware.HandlePreflight)
 	r.OPTIONS("/get_payment_method", middleware.HandlePreflight)
 	r.OPTIONS("/generate_phone_confirm_code", middleware.HandlePreflight)
-	r.OPTIONS("/insert_delivery", middleware.InsertDelivery)
+	r.OPTIONS("/insert_delivery", middleware.HandlePreflight)
 
 	return r
 }
