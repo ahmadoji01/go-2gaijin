@@ -14,6 +14,7 @@ type Delivery struct {
 	DeliveryTime  primitive.DateTime `json:"delivery_time" bson:"delivery_time"`
 	CreatedAt     primitive.DateTime `json:"created_at" bson:"created_at"`
 	AppointmentID primitive.ObjectID `json:"appointment_id" bson:"appointment_id"`
+	RequesterID   primitive.ObjectID `json:"requester_id" bson:"requester_id"`
 }
 
 type DeliveryOrder struct {

@@ -65,6 +65,7 @@ func Router() *gin.Engine {
 	r.POST("/insert_trust_coin", middleware.InsertTrustCoin)
 	r.POST("/insert_appointment_with_delivery", middleware.InsertAppointmentWithDelivery)
 	r.POST("/confirm_appointment", middleware.AppointmentConfirmation)
+	r.POST("/insert_delivery", middleware.InsertDelivery)
 	r.POST("/reschedule_appointment", middleware.RescheduleAppointment)
 	r.POST("/finish_appointment", middleware.FinishAppointment)
 	r.GET("/get_seller_appointments", middleware.GetSellerAppointmentPage)
@@ -129,6 +130,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/update_payment_method", middleware.HandlePreflight)
 	r.OPTIONS("/get_payment_method", middleware.HandlePreflight)
 	r.OPTIONS("/generate_phone_confirm_code", middleware.HandlePreflight)
+	r.OPTIONS("/insert_delivery", middleware.InsertDelivery)
 
 	return r
 }
