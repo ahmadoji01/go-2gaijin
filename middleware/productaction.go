@@ -375,7 +375,13 @@ func GetProductInfoForEdit(c *gin.Context) {
 		if err != nil {
 			productDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 			productDetail.ProductID = product.ID
-			collection.InsertOne(context.Background(), productDetail)
+			_, err = collection.InsertOne(context.Background(), productDetail)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = err.Error()
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
 		}
 
 		var productEditInfo responses.ProductEditInfo
