@@ -373,10 +373,9 @@ func GetProductInfoForEdit(c *gin.Context) {
 		collection = DB.Collection("product_details")
 		err = collection.FindOne(context.Background(), bson.M{"product_id": product.ID}).Decode(&productDetail)
 		if err != nil {
-			res.Status = "Error"
-			res.Message = err.Error()
-			json.NewEncoder(c.Writer).Encode(res)
-			return
+			productDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+			productDetail.ProductID = product.ID
+			collection.InsertOne(context.Background(), productDetail)
 		}
 
 		var productEditInfo responses.ProductEditInfo
