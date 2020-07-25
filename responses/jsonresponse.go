@@ -87,11 +87,12 @@ type ProductDetailItem struct {
 }
 
 type ProductDetails struct {
-	Item         ProductDetailItem    `json:"item"`
-	Detail       models.ProductDetail `json:"details"`
-	Seller       interface{}          `json:"seller"`
-	RelatedItems []interface{}        `json:"relateditems"`
-	SellerItems  []interface{}        `json:"selleritems"`
+	Item          ProductDetailItem    `json:"item"`
+	Detail        models.ProductDetail `json:"details"`
+	Seller        interface{}          `json:"seller"`
+	PaymentMethod models.PaymentMethod `json:"payment_method"`
+	RelatedItems  []interface{}        `json:"relateditems"`
+	SellerItems   []interface{}        `json:"selleritems"`
 }
 
 type ProductDetailPage struct {
@@ -101,8 +102,14 @@ type ProductDetailPage struct {
 }
 
 type ProfileData struct {
-	Profile     models.User `json:"profile"`
-	PostedItems interface{} `json:"posted_items"`
+	Profile       models.User          `json:"profile"`
+	PaymentMethod models.PaymentMethod `json:"payment_method"`
+	PostedItems   interface{}          `json:"posted_items"`
+}
+
+type ProfileInfoData struct {
+	Profile       models.User          `json:"profile"`
+	PaymentMethod models.PaymentMethod `json:"payment_method"`
 }
 
 type SearchData struct {
@@ -143,6 +150,11 @@ type RoomData struct {
 	Room models.Room `json:"room"`
 }
 
+type ProductEditInfo struct {
+	Product       models.Product       `json:"product"`
+	ProductDetail models.ProductDetail `json:"product_detail"`
+}
+
 type ProfileForVisitorData struct {
 	UserInfo    interface{} `json:"user_info"`
 	Collections interface{} `json:"collections"`
@@ -153,8 +165,31 @@ type CheckNotifData struct {
 	MessageRead bool `json:"message_read" bson:"message_read"`
 }
 
+type InsertRoomMsg struct {
+	RoomMsg models.RoomMessage `json:"room_message"`
+}
+
+type OmisePaymentToken struct {
+	Amount           int64  `json:"amount"`
+	Currency         string `json:"currency"`
+	Token            string `json:"token"`
+	MonthsSubscribed int    `json:"months_subscribed"`
+}
+
+type OmisePaymentSource struct {
+	SourceID         string `json:"source_id"`
+	Amount           int64  `json:"amount"`
+	Currency         string `json:"currency"`
+	Token            string `json:"token"`
+	MonthsSubscribed int    `json:"months_subscribed"`
+}
+
 type GenericResponse struct {
 	Status  string      `json:"status"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
+}
+
+type PhoneConfirmation struct {
+	PhoneConfirmCode string `json:"phone_confirm_code"`
 }

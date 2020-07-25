@@ -169,11 +169,9 @@ func GetProductDetail(c *gin.Context) {
 		findOneOpt.SetProjection(bson.D{{"_id", 1}, {"name", 1}, {"icon_url", 1}})
 		err = collection.FindOne(context.Background(), bson.M{"_id": item.CategoryIDs[0]}, findOneOpt).Decode(&cat)
 		if err != nil {
-			res.Status = "Error"
-			res.Message = "Error while retrieving product info, try again"
-			json.NewEncoder(c.Writer).Encode(res)
-			return
+			err = nil
 		}
+
 		item.Category = cat
 		wg.Done()
 	}()
@@ -188,6 +186,12 @@ func GetProductDetail(c *gin.Context) {
 	}()
 
 	wg.Wait()
+	if err != nil {
+		res.Status = "Error"
+		res.Message = err.Error()
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
 
 	if item.Availability == "" {
 		item.Availability = ProductStatusEnum(item.StatusEnum)
@@ -208,6 +212,8 @@ func GetProductDetail(c *gin.Context) {
 	wg.Add(1)
 	go func() {
 		payload.Seller = GetSellerInfo(item.User)
+		paymentMethod, _ := GetPaymentMethod(item.User.Hex())
+		payload.PaymentMethod = paymentMethod
 		wg.Done()
 	}()
 
@@ -238,69 +244,7 @@ func GetProductDetail(c *gin.Context) {
 	output.Status = "Success"
 	output.Message = "Product Detail Successfully Loaded"
 	output.Data = payload
-
 	json.NewEncoder(c.Writer).Encode(output)
-}
-
-func GetChatLobby(c *gin.Context) {
-	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-	c.Writer.Header().Set("Content-Type", "application/json")
-
-	var res responses.GenericResponse
-	var err error
-
-	urlQuery := c.Request.URL.Query()
-	var start int64
-	var limit int64
-	if urlQuery.Get("start") == "" {
-		start = 0
-	} else {
-		start, err = strconv.ParseInt(urlQuery.Get("start"), 10, 64)
-	}
-
-	if urlQuery.Get("limit") == "" {
-		limit = 8
-	} else {
-		limit, err = strconv.ParseInt(urlQuery.Get("limit"), 10, 64)
-		if limit <= 0 {
-			limit = 8
-		}
-	}
-
-	if err != nil {
-		res.Status = "Error"
-		res.Message = err.Error()
-		json.NewEncoder(c.Writer).Encode(res)
-		return
-	}
-
-	var roomsData []models.Room
-	var lobbyData responses.ChatLobbyData
-
-	tokenString := c.Request.Header.Get("Authorization")
-	userData, isLoggedIn := LoggedInUser(tokenString)
-	if isLoggedIn {
-		_, err = DB.Collection("users").UpdateOne(context.Background(), bson.M{"_id": userData.ID}, bson.M{"$set": bson.M{"message_read": true}})
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		roomsData, _ = PopulateRoomsFromUserID(userData.ID, start, limit)
-		res.Message = "Chat Lobby Retrieved!"
-		res.Status = "Success"
-		if roomsData == nil {
-			roomsData = make([]models.Room, 0)
-		}
-
-		lobbyData.ChatLobby = roomsData
-		res.Data = lobbyData
-		json.NewEncoder(c.Writer).Encode(res)
-		return
-	}
-	res.Status = "Error"
-	res.Message = "Unauthorized"
-	json.NewEncoder(c.Writer).Encode(res)
 	return
 }
 

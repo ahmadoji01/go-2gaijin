@@ -212,7 +212,7 @@ func DeleteProduct(c *gin.Context) {
 
 		if product.User != userData.ID {
 			res.Status = "Error"
-			res.Message = "You are not authorized to mark this product as sold"
+			res.Message = "You are not authorized to delete this product"
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
@@ -249,11 +249,10 @@ func EditProduct(c *gin.Context) {
 
 	if isLoggedIn {
 		isSubscribed := IsUserSubscribed(userData.ID)
-		isSubscribed = true
 
 		if isSubscribed {
 			var productInsert models.ProductInsert
-			var productData = productInsert.Product
+			var productData models.Product
 
 			body, _ := ioutil.ReadAll(c.Request.Body)
 			err := json.Unmarshal(body, &productInsert)
@@ -264,25 +263,37 @@ func EditProduct(c *gin.Context) {
 				return
 			}
 
-			productInsert.ProductDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
-			productInsert.Product.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+			err = DB.Collection("products").FindOne(context.Background(), bson.M{"_id": productInsert.Product.ID}).Decode(&productData)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = "Product not found!"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
 
-			productInsert.Product.User = userData.ID
-			productInsert.Product.DateCreated = primitive.NewDateTimeFromTime(time.Now())
-			productInsert.Product.DateUpdated = primitive.NewDateTimeFromTime(time.Now())
-			productInsert.Product.ProductDetails = productInsert.ProductDetail.ID
+			if productData.User != userData.ID {
+				res.Status = "Error"
+				res.Message = "You are not authorized to edit this product"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+
+			var geoLoc models.GeoJson
+			geoLoc.Type = "Point"
+			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Longitude)
+			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Latitude)
 
 			var collection = DB.Collection("products")
-			update := bson.M{"$set": bson.D{
-				{"name", productData.Name},
-				{"price", productData.Price},
-				{"description", productData.Description},
-				{"category_ids", productData.Category},
-				{"latitude", productData.Latitude},
-				{"longitude", productData.Longitude},
-			},
-			}
-			_, err = collection.UpdateOne(context.Background(), bson.M{"_id": productData.ID}, update)
+			update := bson.M{"$set": bson.M{
+				"name":         productInsert.Product.Name,
+				"price":        productInsert.Product.Price,
+				"description":  productInsert.Product.Description,
+				"category_ids": productInsert.Product.Category,
+				"latitude":     productInsert.Product.Latitude,
+				"longitude":    productInsert.Product.Longitude,
+				"geoloc":       geoLoc,
+			}}
+			_, err = collection.UpdateOne(context.Background(), bson.M{"_id": productInsert.Product.ID}, update)
 			if err != nil {
 				res.Status = "Error"
 				res.Message = "Something went wrong"
@@ -316,7 +327,80 @@ func EditProduct(c *gin.Context) {
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
+		res.Status = "Error"
+		res.Message = "Unsubscribed"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
 	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func GetProductInfoForEdit(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+	var res responses.GenericResponse
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+
+	var product models.Product
+	var productDetail models.ProductDetail
+
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &product)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Something wrong happened. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	if isLoggedIn {
+		var collection = DB.Collection("products")
+		err := collection.FindOne(context.Background(), bson.M{"_id": product.ID}).Decode(&product)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if product.User != userData.ID {
+			res.Status = "Error"
+			res.Message = "You are not authorized to get the product information"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		collection = DB.Collection("product_details")
+		err = collection.FindOne(context.Background(), bson.M{"product_id": product.ID}).Decode(&productDetail)
+		if err != nil {
+			productDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+			productDetail.ProductID = product.ID
+			_, err = collection.InsertOne(context.Background(), productDetail)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = err.Error()
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+		}
+
+		var productEditInfo responses.ProductEditInfo
+		productEditInfo.Product = product
+		productEditInfo.ProductDetail = productDetail
+
+		res.Status = "Success"
+		res.Message = "Product Information for Editing Successfully Retrieved"
+		res.Data = productEditInfo
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
 	res.Status = "Error"
 	res.Message = "Unauthorized"
 	json.NewEncoder(c.Writer).Encode(res)
@@ -411,7 +495,16 @@ func MarkAsSold(c *gin.Context) {
 		}
 
 		collection = DB.Collection("products")
-		update := bson.M{"$set": bson.M{"availability": "sold", "status_cd": 2}}
+
+		var update bson.M
+		if product.Availability == "available" {
+			update = bson.M{"$set": bson.M{"availability": "sold", "status_cd": 2}}
+			res.Message = "You have marked this product as sold"
+		} else {
+			update = bson.M{"$set": bson.M{"availability": "available", "status_cd": 1}}
+			res.Message = "You have marked this product as available"
+		}
+
 		_, err = collection.UpdateOne(context.Background(), bson.D{{"_id", product.ID}}, update)
 		if err != nil {
 			res.Status = "Error"
@@ -421,7 +514,67 @@ func MarkAsSold(c *gin.Context) {
 		}
 
 		res.Status = "Success"
-		res.Message = "You have marked this product as sold"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func EditPricing(c *gin.Context) {
+	c.Writer.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var product models.Product
+	var res responses.GenericResponse
+
+	body, _ := ioutil.ReadAll(c.Request.Body)
+	err := json.Unmarshal(body, &product)
+	if err != nil {
+		res.Status = "Error"
+		res.Message = "Something wrong happened. Try again"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+
+	if isLoggedIn {
+		price := product.Price
+		var collection = DB.Collection("products")
+		err := collection.FindOne(context.Background(), bson.M{"_id": product.ID}).Decode(&product)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if product.User != userData.ID {
+			res.Status = "Error"
+			res.Message = "You are not authorized to edit the price for this product"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		collection = DB.Collection("products")
+		update := bson.M{"$set": bson.M{"price": price}}
+
+		_, err = collection.UpdateOne(context.Background(), bson.D{{"_id", product.ID}}, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		res.Status = "Success"
+		res.Message = "Price has successfully been changed"
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -463,7 +616,6 @@ func PostNewProduct(c *gin.Context) {
 
 	if isLoggedIn {
 		isSubscribed := IsUserSubscribed(userData.ID)
-		isSubscribed = true
 
 		if isSubscribed {
 			var productInsert models.ProductInsert
@@ -477,6 +629,11 @@ func PostNewProduct(c *gin.Context) {
 				return
 			}
 
+			var geoLoc models.GeoJson
+			geoLoc.Type = "Point"
+			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Longitude)
+			geoLoc.Coordinates = append(geoLoc.Coordinates, productInsert.Product.Latitude)
+
 			productInsert.ProductDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 			productInsert.Product.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 			productInsert.Product.StatusEnum = 1
@@ -486,6 +643,7 @@ func PostNewProduct(c *gin.Context) {
 			productInsert.Product.DateCreated = primitive.NewDateTimeFromTime(time.Now())
 			productInsert.Product.DateUpdated = primitive.NewDateTimeFromTime(time.Now())
 			productInsert.Product.ProductDetails = productInsert.ProductDetail.ID
+			productInsert.Product.GeoLoc = geoLoc
 
 			var collection = DB.Collection("products")
 			productData, err := collection.InsertOne(context.Background(), productInsert.Product)
@@ -518,6 +676,10 @@ func PostNewProduct(c *gin.Context) {
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
+		res.Status = "Error"
+		res.Message = "Unsubscribed"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
 	}
 	res.Status = "Error"
 	res.Message = "Unauthorized"

@@ -41,6 +41,7 @@ type Product struct {
 	Location  []float64 `json:"location" bson:"location"`
 	Latitude  float64   `json:"latitude" bson:"latitude"`
 	Longitude float64   `json:"longitude" bson:"longitude"`
+	GeoLoc    GeoJson   `json:"geoloc" bson:"geoloc"`
 
 	PageViews int `json:"page_views"`
 
@@ -50,6 +51,10 @@ type Product struct {
 	Relevance    float64
 }
 
+type GeoJson struct {
+	Type        string    `json:"-" bson:"type"`
+	Coordinates []float64 `json:"coordinates" bson:"coordinates"`
+}
 type ProductInsert struct {
 	Product       Product        `json:"product"`
 	ProductImages []ProductImage `json:"product_images"`

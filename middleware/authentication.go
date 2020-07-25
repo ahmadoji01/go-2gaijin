@@ -2,11 +2,15 @@ package middleware
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -37,6 +41,13 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
+	if user.Email == "" || user.Password == "" {
+		res.Status = "Error"
+		res.Message = "Invalid credentials"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
 	collection := DB.Collection("users")
 
 	if err != nil {
@@ -58,9 +69,12 @@ func RegisterHandler(c *gin.Context) {
 				json.NewEncoder(c.Writer).Encode(res)
 				return
 			}
+			user.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 			user.Password = string(hash)
 			user.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
 			user.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
+			user.NotifRead = true
+			user.MessageRead = true
 
 			_, err = collection.InsertOne(context.TODO(), user)
 			if err != nil {
@@ -70,7 +84,7 @@ func RegisterHandler(c *gin.Context) {
 				return
 			}
 
-			tokenString, err := generateNewToken(user)
+			tokenString, err := GenerateNewToken(user)
 			/*update := bson.M{"$set": bson.M{"token": tokenString}}
 			_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)*/
 			if err != nil {
@@ -82,6 +96,8 @@ func RegisterHandler(c *gin.Context) {
 
 			user.Token = tokenString.AuthToken
 			user.RefreshToken = tokenString.RefreshToken
+			user.AuthTokenExpiry = tokenString.AuthTokenExpiry
+			user.RefreshTokenExpiry = tokenString.RefreshTokenExpiry
 			user.Password = ""
 
 			var userData responses.UserData
@@ -89,8 +105,18 @@ func RegisterHandler(c *gin.Context) {
 
 			var res responses.GenericResponse
 
+			var paymentMethod models.PaymentMethod
+			paymentMethod.UserID = user.ID
+			_, err = DB.Collection("payment_methods").InsertOne(context.Background(), paymentMethod)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = "Error while inserting payment methods, try again"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+
 			res.Status = "Success"
-			res.Message = "Registration Successful"
+			res.Message = "Registration successful"
 			res.Data = userData
 
 			json.NewEncoder(c.Writer).Encode(res)
@@ -104,7 +130,7 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	res.Status = "Error"
-	res.Message = "Email already Exists!!"
+	res.Message = "Email already exists"
 	json.NewEncoder(c.Writer).Encode(res)
 	return
 }
@@ -137,6 +163,13 @@ func LoginHandler(c *gin.Context) {
 		"token":      1,
 	})
 
+	if user.Email == "" || user.Password == "" {
+		res.Status = "Error"
+		res.Message = "Invalid credentials"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
 	err = collection.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
 
 	if err != nil {
@@ -155,9 +188,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	tokenString, err := generateNewToken(result)
-	/*update := bson.M{"$set": bson.M{"token": tokenString}}
-	_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)*/
+	tokenString, err := GenerateNewToken(result)
 	if err != nil {
 		res.Status = "Error"
 		res.Message = "Error while generating token, try again"
@@ -167,6 +198,8 @@ func LoginHandler(c *gin.Context) {
 
 	result.Token = tokenString.AuthToken
 	result.RefreshToken = tokenString.RefreshToken
+	result.AuthTokenExpiry = tokenString.AuthTokenExpiry
+	result.RefreshTokenExpiry = tokenString.RefreshTokenExpiry
 	result.Password = ""
 
 	var userData responses.UserData
@@ -194,12 +227,14 @@ func ProfileHandler(c *gin.Context) {
 		return []byte(os.Getenv("MY_JWT_TOKEN")), nil
 	})
 	var result models.User
+	var tmpUser models.User
 	var res responses.ResponseMessage
 	var profileData responses.ProfileData
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		id, err := primitive.ObjectIDFromHex(claims["_id"].(string))
 
+		err = DB.Collection("users").FindOne(context.Background(), bson.M{"_id": id}).Decode(&tmpUser)
 		if err != nil {
 			res.Status = "Error"
 			res.Message = "Something went wrong. Please try again"
@@ -226,16 +261,44 @@ func ProfileHandler(c *gin.Context) {
 			return
 		}
 
+		var wg sync.WaitGroup
+
+		// Search Gold Trust Coins
+		wg.Add(1)
+		go func() {
+			filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "gold"}}
+			result.GoldCoin, err = DB.Collection("trust_coins").CountDocuments(context.Background(), filter)
+			wg.Done()
+		}()
+
+		// Search Silver Trust Coins
+		wg.Add(1)
+		go func() {
+			filter := bson.D{bson.E{"receiver_id", id}, bson.E{"type", "silver"}}
+			result.SilverCoin, err = DB.Collection("trust_coins").CountDocuments(context.Background(), filter)
+			wg.Done()
+		}()
+		wg.Wait()
+
 		result.ID = id
-		result.Email = claims["email"].(string)
-		result.Phone = claims["phone"].(string)
-		result.FirstName = claims["first_name"].(string)
-		result.LastName = claims["last_name"].(string)
+		result.Email = tmpUser.Email
+		result.Phone = tmpUser.Phone
+		result.FirstName = tmpUser.FirstName
+		result.LastName = tmpUser.LastName
 		result.AvatarURL = ""
-		if claims["avatar"].(string) != "" {
-			result.AvatarURL = AvatarURLPrefix + claims["_id"].(string) + "/" + claims["avatar"].(string)
+		if tmpUser.AvatarURL != "" {
+			if !strings.HasPrefix(tmpUser.AvatarURL, "https://") {
+				result.AvatarURL = AvatarURLPrefix + claims["_id"].(string) + "/" + tmpUser.AvatarURL
+			} else {
+				result.AvatarURL = tmpUser.AvatarURL
+			}
 		}
-		result.Role = claims["role"].(string)
+		result.Role = tmpUser.Role
+		result.DateOfBirth = tmpUser.DateOfBirth
+		result.ShortBio = tmpUser.ShortBio
+		result.Subscription = tmpUser.Subscription
+		result.SubsExpiryDate = tmpUser.SubsExpiryDate
+		result.IsSubscribed = IsUserSubscribed(tmpUser.ID)
 
 		var options = &options.FindOptions{}
 		projection := bson.D{{"_id", 1}, {"name", 1}, {"price", 1}, {"img_url", 1}, {"user_id", 1}, {"seller_name", 1}, {"latitude", 1}, {"longitude", 1}, {"status_cd", 1}}
@@ -248,6 +311,15 @@ func ProfileHandler(c *gin.Context) {
 		profileData.PostedItems = PopulateProductsWithAnImage(filter, options)
 
 		var resp responses.GenericResponse
+		paymentMethod, err := GetPaymentMethod(profileData.Profile.ID.Hex())
+		if err != nil {
+			resp.Status = "Error"
+			resp.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(resp)
+			return
+		}
+		profileData.PaymentMethod = paymentMethod
+
 		resp.Status = "Success"
 		resp.Message = "Profile Successfully Retrieved"
 		resp.Data = profileData
@@ -313,6 +385,13 @@ func UpdateProfile(c *gin.Context) {
 		if err != nil {
 			res.Status = "Error"
 			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if user.Email == "" || user.FirstName == "" {
+			res.Status = "Error"
+			res.Message = "Email/First Name Info Should not be Empty"
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
@@ -593,9 +672,14 @@ func ResetPasswordHandler(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	c.Writer.Header().Set("Content-Type", "application/json")
-	var user models.User
+
+	resetInfo := struct {
+		Email  string `json:"email"`
+		Source string `json:"source"`
+	}{}
+
 	body, _ := ioutil.ReadAll(c.Request.Body)
-	err := json.Unmarshal(body, &user)
+	err := json.Unmarshal(body, &resetInfo)
 	var res responses.GenericResponse
 	if err != nil {
 		res.Status = "Error"
@@ -607,10 +691,10 @@ func ResetPasswordHandler(c *gin.Context) {
 	var collection = DB.Collection("users")
 
 	var result models.User
-	err = collection.FindOne(context.Background(), bson.D{{"email", user.Email}}).Decode(&result)
+	err = collection.FindOne(context.Background(), bson.D{{"email", resetInfo.Email}}).Decode(&result)
 	if err != nil {
 		res.Status = "Error"
-		res.Message = err.Error()
+		res.Message = "Email not found"
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -618,7 +702,7 @@ func ResetPasswordHandler(c *gin.Context) {
 	tokenString, err := generateResetToken(result)
 	if err != nil {
 		res.Status = "Error"
-		res.Message = err.Error()
+		res.Message = "Something went wrong. Try again"
 		json.NewEncoder(c.Writer).Encode(res)
 		return
 	}
@@ -626,7 +710,7 @@ func ResetPasswordHandler(c *gin.Context) {
 	tokenExpiry := primitive.NewDateTimeFromTime(time.Now().Add(time.Hour * 1))
 	update := bson.M{"$set": bson.M{"reset_password_token": tokenString, "reset_token_expiry": tokenExpiry}}
 
-	_, err = collection.UpdateOne(context.Background(), bson.D{{"email", user.Email}}, update)
+	_, err = collection.UpdateOne(context.Background(), bson.D{{"email", resetInfo.Email}}, update)
 	if err != nil {
 		res.Status = "Error"
 		res.Message = err.Error()
@@ -636,7 +720,7 @@ func ResetPasswordHandler(c *gin.Context) {
 
 	res.Status = "Success"
 	res.Message = "Check your email to reset your password"
-	SendResetPasswordEmail(tokenString, user.Email)
+	SendResetPasswordEmail(tokenString, resetInfo.Email, resetInfo.Source)
 
 	json.NewEncoder(c.Writer).Encode(res)
 	return
@@ -740,6 +824,36 @@ func IsUserSubscribed(id primitive.ObjectID) bool {
 		return true
 	}
 	return false
+}
+
+func GetSubscriptionStatus(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var res responses.GenericResponse
+	subscriptionStatus := struct {
+		IsSubscribed bool `json:"is_subscribed"`
+	}{}
+
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		var subsStatus bool
+		subsStatus = IsUserSubscribed(userData.ID)
+		subscriptionStatus.IsSubscribed = subsStatus
+
+		res.Status = "Success"
+		res.Message = "Subscription Status Retrieved"
+		res.Data = subscriptionStatus
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
 }
 
 func EmailConfirmation(c *gin.Context) {
@@ -949,10 +1063,10 @@ func GenerateConfirmToken(c *gin.Context) {
 	}
 
 	if user.Email != "" {
-		SendEmailConfirmation(tokenString, user.Email)
+		SendEmailConfirmation(tokenString, user.Email, user.ConfirmSource)
 	}
 	if user.Phone != "" {
-		SendPhoneConfirmation(tokenString, user.Phone)
+		SendPhoneConfirmation(tokenString, user.Phone, user.ConfirmSource)
 	}
 
 	res.Status = "Success"
@@ -961,7 +1075,126 @@ func GenerateConfirmToken(c *gin.Context) {
 	return
 }
 
-func generateNewToken(user models.User) (models.Token, error) {
+func GeneratePhoneCode(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var res responses.GenericResponse
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		var user models.User
+		body, _ := ioutil.ReadAll(c.Request.Body)
+		err := json.Unmarshal(body, &user)
+		var res responses.ResponseMessage
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var table = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
+		b := make([]byte, 6)
+		n, err := io.ReadAtLeast(rand.Reader, b, 6)
+		if n != 6 {
+			panic(err)
+		}
+		for i := 0; i < len(b); i++ {
+			b[i] = table[int(b[i])%len(table)]
+		}
+
+		update := bson.M{"$set": bson.M{"phone_confirm_code": string(b), "phone_confirm_expiry": primitive.NewDateTimeFromTime(time.Now().Add(time.Minute * 15))}}
+		_, err = DB.Collection("users").UpdateOne(context.Background(), bson.M{"_id": userData.ID}, update)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		SendPhoneConfirmationCode(string(b), user.Phone)
+		res.Status = "Success"
+		res.Message = "Phone Confirmation Code Generated"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func ConfirmPhone(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", config.CORS)
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	var res responses.GenericResponse
+	tokenString := c.Request.Header.Get("Authorization")
+	userData, isLoggedIn := LoggedInUser(tokenString)
+	if isLoggedIn {
+		var phoneConfirm responses.PhoneConfirmation
+		body, _ := ioutil.ReadAll(c.Request.Body)
+		err := json.Unmarshal(body, &phoneConfirm)
+		var res responses.ResponseMessage
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		var collection = DB.Collection("users")
+		var user models.User
+		err = collection.FindOne(context.Background(), bson.M{"_id": userData.ID}).Decode(&user)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = err.Error()
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if time.Now().After(user.PhoneConfirmExpiry.Time()) {
+			res.Status = "Error"
+			res.Message = "Session has expired. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		if user.PhoneConfirmCode == phoneConfirm.PhoneConfirmCode {
+			update := bson.M{"$set": bson.M{"phone_confirmed": true, "phone_confirm_code": "", "phone_confirm_expiry": primitive.NewDateTimeFromTime(time.Now())}}
+			_, err = collection.UpdateOne(context.Background(), bson.M{"_id": userData.ID}, update)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = err.Error()
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
+
+			res.Status = "Success"
+			res.Message = "Phone Has Successfully been Confirmed"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
+		res.Status = "Error"
+		res.Message = "Phone Confirmation Code Does not Match"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
+	res.Status = "Error"
+	res.Message = "Unauthorized"
+	json.NewEncoder(c.Writer).Encode(res)
+	return
+}
+
+func GenerateNewToken(user models.User) (models.Token, error) {
 	authTokenUUID := uuid.NewV4().String()
 	refreshTokenUUID := uuid.NewV4().String()
 

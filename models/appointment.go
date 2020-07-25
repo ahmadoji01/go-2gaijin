@@ -19,4 +19,6 @@ type Appointment struct {
 	AppointmentUser interface{}        `json:"appointment_user,omitempty"`
 	RequesterID     primitive.ObjectID `json:"requester_id" bson:"requester_id"`
 	NotificationID  primitive.ObjectID `json:"notification_id" bson:"notification_id"`
+
+	Source string `json:"source,omitempty"`
 }
