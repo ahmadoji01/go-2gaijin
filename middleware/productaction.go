@@ -298,12 +298,17 @@ func EditProduct(c *gin.Context) {
 				{"model_name", productInsert.ProductDetail.ModelName},
 			},
 			}
+
 			_, err = collection.UpdateOne(context.Background(), bson.M{"product_id": productInsert.Product.ID}, update)
 			if err != nil {
-				res.Status = "Error"
-				res.Message = "Something went wrong"
-				json.NewEncoder(c.Writer).Encode(res)
-				return
+				productInsert.ProductDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+				_, err = collection.InsertOne(context.Background(), productInsert.ProductDetail)
+				if err != nil {
+					res.Status = "Error"
+					res.Message = "Something went wrong"
+					json.NewEncoder(c.Writer).Encode(res)
+					return
+				}
 			}
 
 			res.Status = "Success"
