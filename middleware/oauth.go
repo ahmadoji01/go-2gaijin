@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -184,6 +185,11 @@ func registerOrLoginGoogle(userInfo googleUserInfo) (models.User, error) {
 	result.AuthTokenExpiry = tokenString.AuthTokenExpiry
 	result.RefreshTokenExpiry = tokenString.RefreshTokenExpiry
 	result.Password = ""
+	if result.AvatarURL != "" {
+		if !strings.HasPrefix(result.AvatarURL, "https://") {
+			result.AvatarURL = AvatarURLPrefix + result.ID.Hex() + "/" + result.AvatarURL
+		}
+	}
 	return result, nil
 }
 
@@ -327,6 +333,11 @@ func registerOrLoginFacebook(userInfo facebookUserInfo) (models.User, error) {
 	result.AuthTokenExpiry = tokenString.AuthTokenExpiry
 	result.RefreshTokenExpiry = tokenString.RefreshTokenExpiry
 	result.Password = ""
+	if result.AvatarURL != "" {
+		if !strings.HasPrefix(result.AvatarURL, "https://") {
+			result.AvatarURL = AvatarURLPrefix + result.ID.Hex() + "/" + result.AvatarURL
+		}
+	}
 	return result, nil
 }
 
