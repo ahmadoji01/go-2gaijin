@@ -202,6 +202,12 @@ func LoginHandler(c *gin.Context) {
 	result.RefreshTokenExpiry = tokenString.RefreshTokenExpiry
 	result.Password = ""
 
+	if result.AvatarURL != "" {
+		if !strings.HasPrefix(result.AvatarURL, "https://") {
+			result.AvatarURL = AvatarURLPrefix + result.ID.Hex() + "/" + result.AvatarURL
+		}
+	}
+
 	var userData responses.UserData
 	userData.User = result
 
