@@ -302,18 +302,24 @@ func EditProduct(c *gin.Context) {
 			}
 
 			collection = DB.Collection("product_details")
-			update = bson.M{"$set": bson.M{
-				"brand":       productInsert.ProductDetail.Brand,
-				"condition":   productInsert.ProductDetail.Condition,
-				"years_owned": productInsert.ProductDetail.YearsOwned,
-				"model_name":  productInsert.ProductDetail.ModelName,
-			}}
+			update = bson.M{"$set": bson.D{
+				{"brand", productInsert.ProductDetail.Brand},
+				{"condition", productInsert.ProductDetail.Condition},
+				{"years_owned", productInsert.ProductDetail.YearsOwned},
+				{"model_name", productInsert.ProductDetail.ModelName},
+			},
+			}
+
 			_, err = collection.UpdateOne(context.Background(), bson.M{"product_id": productInsert.Product.ID}, update)
 			if err != nil {
-				res.Status = "Error"
-				res.Message = "Something went wrong"
-				json.NewEncoder(c.Writer).Encode(res)
-				return
+				productInsert.ProductDetail.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+				_, err = collection.InsertOne(context.Background(), productInsert.ProductDetail)
+				if err != nil {
+					res.Status = "Error"
+					res.Message = "Something went wrong"
+					json.NewEncoder(c.Writer).Encode(res)
+					return
+				}
 			}
 
 			res.Status = "Success"
