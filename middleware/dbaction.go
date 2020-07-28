@@ -417,6 +417,7 @@ func PopulateCategoriesWithChildren() []interface{} {
 		Name     string             `json:"name" bson:"name"`
 		IconURL  string             `json:"icon_url" bson:"icon_url"`
 		Depth    int64              `json:"depth" bson:"depth"`
+		ParentID primitive.ObjectID `json:"parent_id" bson:"parent_id"`
 		Children []interface{}      `json:"children"`
 	}{}
 
@@ -430,6 +431,7 @@ func PopulateCategoriesWithChildren() []interface{} {
 		appResult.ID = result.ID
 		appResult.Name = result.Name
 		appResult.IconURL = result.IconURL
+		appResult.ParentID = result.ParentID
 		appResult.Children = getCategoriesChildrenWithRecursion(1, result.ID, 2)
 
 		results = append(results, appResult)
@@ -450,6 +452,7 @@ func getCategoriesChildrenWithRecursion(depth int, parentID primitive.ObjectID, 
 		Name     string             `json:"name" bson:"name"`
 		IconURL  string             `json:"icon_url" bson:"icon_url"`
 		Depth    int64              `json:"depth" bson:"depth"`
+		ParentID primitive.ObjectID `json:"parent_id" bson:"parent_id"`
 		Children []interface{}      `json:"children"`
 	}{}
 
@@ -473,6 +476,7 @@ func getCategoriesChildrenWithRecursion(depth int, parentID primitive.ObjectID, 
 			childTemp.Name = result.Name
 			childTemp.IconURL = result.IconURL
 			childTemp.Depth = result.Depth
+			childTemp.ParentID = result.ParentID
 			childTemp.Children = getCategoriesChildrenWithRecursion(depth+1, result.ID, limit)
 			children = append(children, childTemp)
 		}
