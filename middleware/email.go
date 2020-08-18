@@ -169,7 +169,7 @@ func SendResetPasswordEmail(token string, email string, source string) {
 	} else if source == "ios_app" {
 		confirmLink = config.IOSAppLink + "confirm_email/token=" + token
 	} else if source == "desktop_web_app" {
-		confirmLink = config.DesktopWebAppLink + "confirm_email/token=" + token
+		confirmLink = config.DesktopWebAppLink + "?email=" + email + "&reset_password_token=" + token
 	} else {
 		confirmLink = config.MobileWebAppLink + "update-password/" + email + "/" + token
 	}
