@@ -27,7 +27,7 @@ func SendEmailConfirmation(token string, email string, source string) {
 	} else if source == "ios_app" {
 		confirmLink = config.IOSAppLink + "confirm_email/token=" + token
 	} else if source == "desktop_web_app" {
-		confirmLink = config.DesktopWebAppLink + "confirm_email/token=" + token
+		confirmLink = config.DesktopWebAppLink + "confirm_email?token=" + token
 	} else {
 		confirmLink = config.MobileWebAppLink + "confirm_email/" + email + "/" + token
 	}
@@ -71,7 +71,7 @@ func SendPhoneConfirmation(token string, phone string, source string) {
 	} else if source == "ios_app" {
 		confirmLink = config.IOSAppLink + "confirm_phone/token=" + token
 	} else if source == "desktop_web_app" {
-		confirmLink = config.DesktopWebAppLink + "confirm_phone/token=" + token
+		confirmLink = config.DesktopWebAppLink + "confirm_phone?token=" + token
 	} else {
 		confirmLink = config.MobileWebAppLink + "confirm_phone/token=" + token
 	}
