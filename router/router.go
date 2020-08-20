@@ -74,6 +74,7 @@ func Router() *gin.Engine {
 	r.POST("/credit_card_payment", middleware.CreditCardPayment)
 	r.POST("/konbini_payment", middleware.KonbiniPayment)
 	r.POST("/update_payment_method", middleware.UpdatePaymentMethod)
+	r.POST("/send_ticket", middleware.InsertTicket)
 
 	// Preflight Response
 	r.OPTIONS("/", middleware.HandlePreflight)
@@ -131,6 +132,7 @@ func Router() *gin.Engine {
 	r.OPTIONS("/get_payment_method", middleware.HandlePreflight)
 	r.OPTIONS("/generate_phone_confirm_code", middleware.HandlePreflight)
 	r.OPTIONS("/insert_delivery", middleware.HandlePreflight)
+	r.OPTIONS("/send_ticket", middleware.HandlePreflight)
 
 	return r
 }
