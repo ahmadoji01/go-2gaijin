@@ -94,7 +94,9 @@ func InsertDelivery(c *gin.Context) {
 			return
 		}
 
-		SendDeliveryRequestEmail("", delivery.Name, delivery.Email, delivery.Phone, delivery.WeChat, delivery.Facebook, delivery.Destination, delivery.DeliveryTime.Time().String(), delivery.Notes)
+		localTime, _ := time.LoadLocation("Asia/Tokyo")
+		localDeliveryTime := delivery.DeliveryTime.Time().In(localTime).String()
+		SendDeliveryRequestEmail("", delivery.Name, delivery.Email, delivery.Phone, delivery.WeChat, delivery.Facebook, delivery.Destination, localDeliveryTime, delivery.Notes)
 
 		res.Status = "Success"
 		res.Message = "Delivery successfully saved"
@@ -187,7 +189,9 @@ func InsertAppointmentWithDelivery(c *gin.Context) {
 			return
 		}
 
-		SendDeliveryRequestEmail(product.Name, delivery.Name, delivery.Email, delivery.Phone, delivery.WeChat, delivery.Facebook, delivery.Destination, delivery.DeliveryTime.Time().String(), delivery.Notes)
+		localTime, _ := time.LoadLocation("Asia/Tokyo")
+		localDeliveryTime := delivery.DeliveryTime.Time().In(localTime).String()
+		SendDeliveryRequestEmail(product.Name, delivery.Name, delivery.Email, delivery.Phone, delivery.WeChat, delivery.Facebook, delivery.Destination, localDeliveryTime, delivery.Notes)
 		SendBuyingRequestEmail(user.Email, appointment.Source, product.Name)
 
 		res.Status = "Success"
