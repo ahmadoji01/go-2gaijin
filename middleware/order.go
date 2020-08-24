@@ -189,6 +189,7 @@ func InsertAppointmentWithDelivery(c *gin.Context) {
 			return
 		}
 
+		GetRoomFromUserIDs(appointment.RequesterID, appointment.SellerID)
 		localTime, _ := time.LoadLocation("Asia/Tokyo")
 		localDeliveryTime := delivery.DeliveryTime.Time().In(localTime).String()
 		SendDeliveryRequestEmail(product.Name, delivery.Name, delivery.Email, delivery.Phone, delivery.WeChat, delivery.Facebook, delivery.Destination, localDeliveryTime, delivery.Notes)
@@ -254,6 +255,7 @@ func InsertAppointment(c *gin.Context) {
 			return
 		}
 
+		GetRoomFromUserIDs(appointment.RequesterID, appointment.SellerID)
 		notifName := userData.FirstName + " wants to meet you at " + appointment.MeetingTime.Time().String() + " for your " + product.Name
 		addNotification(notifID, notifName, "order_incoming", "", "pending", appointment.SellerID, userData.ID, newApp.InsertedID.(primitive.ObjectID), product.ID)
 

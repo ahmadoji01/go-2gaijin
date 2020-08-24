@@ -594,3 +594,31 @@ func PopulateRoomMsgFromRoomID(id primitive.ObjectID, start int64, limit int64) 
 	}
 	return results
 }
+
+func GetRoomFromUserIDs(firstUserID primitive.ObjectID, secondUserID primitive.ObjectID) (primitive.ObjectID, error) {
+	var room models.Room
+	collection := DB.Collection("rooms")
+
+	query := bson.D{{"user_ids", bson.D{{"$all", bson.A{firstUserID, secondUserID}}}}}
+	roomNotFound := collection.FindOne(context.Background(), query).Decode(&room)
+	if roomNotFound != nil {
+		room.LastActive = primitive.NewDateTimeFromTime(time.Now())
+		room.UserIDs = []primitive.ObjectID{firstUserID, secondUserID}
+		result, err := collection.InsertOne(context.TODO(), room)
+		if err != nil {
+			return primitive.NilObjectID, err
+		}
+
+		_, err = DB.Collection("users").UpdateOne(context.Background(), bson.M{"_id": firstUserID}, bson.M{"$set": bson.M{"message_read": false}})
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = DB.Collection("users").UpdateOne(context.Background(), bson.M{"_id": secondUserID}, bson.M{"$set": bson.M{"message_read": false}})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return result.InsertedID.(primitive.ObjectID), nil
+	}
+	return room.ID, nil
+}
