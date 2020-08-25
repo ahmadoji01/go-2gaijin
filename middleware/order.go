@@ -432,11 +432,23 @@ func AppointmentConfirmation(c *gin.Context) {
 			return
 		}
 
+		var requester models.User
+		collection = DB.Collection("users")
+		err = collection.FindOne(context.Background(), bson.M{"_id": appointment.RequesterID}).Decode(&requester)
+		if err != nil {
+			res.Status = "Error"
+			res.Message = "Something wrong happened. Try again"
+			json.NewEncoder(c.Writer).Encode(res)
+			return
+		}
+
 		if status == "accepted" {
 			setNotifsToRejectOrder(appointment.NotificationID, appointment.ProductID)
+			SendAcceptedOrderEmail(product.Name, requester.Email)
 		} else if status == "rejected" {
 			notifName := "Appointment Rejected"
 			addNotification(primitive.NewObjectIDFromTimestamp(time.Now()), notifName, "appointment_confirmation", "", "rejected", appointment.RequesterID, userData.ID, appointment.ID, appointment.ProductID)
+			SendAcceptedOrderEmail(product.Name, requester.Email)
 		}
 
 		res.Status = "Success"

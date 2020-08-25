@@ -273,3 +273,47 @@ func SendTicketEmail(name string, email string, message string) {
 		return
 	}
 }
+
+func SendAcceptedOrderEmail(itemName string, email string) {
+	from := "2gaijin@kitalabs.com"
+	pass := "4Managing2GaijinEmail2020!"
+	to := "2gaijin@kitalabs.com"
+	body := templates.OrderAcceptedEmail(itemName)
+
+	msg := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n" +
+		"From: " + from + "\n" +
+		"To: " + to + "\n" +
+		"Subject: Your order for " + itemName + " is accepted!\n\n" +
+		body
+
+	err := smtp.SendMail("smtp.gmail.com:587",
+		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
+		from, []string{to}, []byte(msg))
+
+	if err != nil {
+		log.Printf("smtp error: %s", err)
+		return
+	}
+}
+
+func SendRejectedOrderEmail(itemName string, email string) {
+	from := "2gaijin@kitalabs.com"
+	pass := "4Managing2GaijinEmail2020!"
+	to := "2gaijin@kitalabs.com"
+	body := templates.OrderRejectedEmail(itemName)
+
+	msg := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n" +
+		"From: " + from + "\n" +
+		"To: " + to + "\n" +
+		"Subject: Your order for " + itemName + " is rejected\n\n" +
+		body
+
+	err := smtp.SendMail("smtp.gmail.com:587",
+		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
+		from, []string{to}, []byte(msg))
+
+	if err != nil {
+		log.Printf("smtp error: %s", err)
+		return
+	}
+}

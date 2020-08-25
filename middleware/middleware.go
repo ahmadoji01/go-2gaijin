@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	ga "github.com/jpillora/go-ogle-analytics"
 	"gitlab.com/kitalabs/go-2gaijin/channels"
 	"gitlab.com/kitalabs/go-2gaijin/config"
 	"gitlab.com/kitalabs/go-2gaijin/pkg/websocket"
@@ -29,6 +30,8 @@ var Pool *websocket.Pool
 
 var IsProduction = false
 
+var GAClient *ga.Client
+
 // create connection with mongo DB
 func init() {
 
@@ -48,6 +51,18 @@ func init() {
 
 	fmt.Println("Connected to MongoDB!")
 	DB = client.Database(dbName)
+
+	GAClient, err = ga.NewClient("UA-150396711-1")
+	if err != nil {
+		panic(err)
+	}
+
+	err = GAClient.Send(ga.NewEvent("Page Initialization", "").Label("Bazz"))
+	if err != nil {
+		panic(err)
+	}
+
+	println("Event fired!")
 
 	// Index product
 	productIndex()

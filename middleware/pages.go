@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	ga "github.com/jpillora/go-ogle-analytics"
 	"gitlab.com/kitalabs/go-2gaijin/models"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
@@ -161,9 +162,9 @@ func GetProductDetail(c *gin.Context) {
 		item.Comments = make([]interface{}, 0)
 	}
 
+	var cat models.Category
 	wg.Add(1)
 	go func() {
-		var cat models.Category
 		collection = DB.Collection("categories")
 		var findOneOpt = &options.FindOneOptions{}
 		findOneOpt.SetProjection(bson.D{{"_id", 1}, {"name", 1}, {"icon_url", 1}})
@@ -239,6 +240,11 @@ func GetProductDetail(c *gin.Context) {
 		res.Message = "Error while searching for product, try again"
 		json.NewEncoder(c.Writer).Encode(res)
 		return
+	}
+
+	err = GAClient.Send(ga.NewEvent("Product Page Opened", "Product Name: "+item.Name+"\nCategory: "+cat.Name).Label("Bazz"))
+	if err != nil {
+		panic(err)
 	}
 
 	output.Status = "Success"

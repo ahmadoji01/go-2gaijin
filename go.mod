@@ -15,6 +15,7 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/graphql-go/graphql v0.7.9
+	github.com/jpillora/go-ogle-analytics v0.0.0-20161213085824-14b04e0594ef
 	github.com/klauspost/compress v1.10.4 // indirect
 	github.com/omise/omise-go v1.0.4
 	github.com/pjebs/jsonerror v0.0.0-20190614034432-63ef9a8df848 // indirect

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	ga "github.com/jpillora/go-ogle-analytics"
 	"gitlab.com/kitalabs/go-2gaijin/responses"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -87,6 +88,11 @@ func GetSearch(c *gin.Context) {
 		res.Message = err.Error()
 		json.NewEncoder(c.Writer).Encode(res)
 		return
+	}
+
+	err = GAClient.Send(ga.NewEvent("Search", "Query: "+query+"\nCategory: "+category+"\nSort By: "+sort+"\nPrice Range: "+string(priceMin)+" - "+string(priceMax)).Label("Bazz"))
+	if err != nil {
+		panic(err)
 	}
 
 	userid := urlQuery.Get("userid")
