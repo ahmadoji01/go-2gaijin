@@ -128,6 +128,8 @@ func OAuthGoogleCallback(c *gin.Context) {
 		return
 	}
 
+	result.Email = strings.ToLower(result.Email)
+
 	var userData responses.UserData
 	var user models.User
 
@@ -275,6 +277,7 @@ func OAuthFacebookCallback(c *gin.Context) {
 		json.NewEncoder(c.Writer).Encode(resp)
 		return
 	}
+	result.Email = strings.ToLower(result.Email)
 
 	var userData responses.UserData
 	var user models.User

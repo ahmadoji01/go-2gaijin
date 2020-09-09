@@ -4,6 +4,7 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Delivery struct {
 	ID            primitive.ObjectID `json:"_id" bson:"_id"`
+	Origin        string             `json:"origin" bson:"origin"`
 	Destination   string             `json:"destination" bson:"destination"`
 	Notes         string             `json:"notes" bson:"notes"`
 	Name          string             `json:"name" bson:"name"`
