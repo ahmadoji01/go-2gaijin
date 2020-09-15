@@ -622,3 +622,19 @@ func GetRoomFromUserIDs(firstUserID primitive.ObjectID, secondUserID primitive.O
 	}
 	return room.ID, nil
 }
+
+func AddMessage(msg models.RoomMessage) (primitive.ObjectID, error) {
+	var collection = DB.Collection("room_messages")
+	msg.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+	msg.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+
+	inserted, err := collection.InsertOne(context.TODO(), msg)
+
+	collection = DB.Collection("rooms")
+	_, err = collection.UpdateOne(context.Background(), bson.M{"_id": msg.RoomID}, bson.D{{"$set", bson.D{{"last_active", msg.CreatedAt}}}})
+	if err != nil {
+		return primitive.NilObjectID, err
+	}
+	notifyUnreadMessage(msg.UserID)
+	return inserted.InsertedID.(primitive.ObjectID), nil
+}

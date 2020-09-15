@@ -189,7 +189,27 @@ func InsertAppointmentWithDelivery(c *gin.Context) {
 			return
 		}
 
-		GetRoomFromUserIDs(appointment.RequesterID, appointment.SellerID)
+		roomID, _ := GetRoomFromUserIDs(appointment.RequesterID, appointment.SellerID)
+
+		//Add Order Message
+		var initMsg models.RoomMessage
+		initMsg.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+		initMsg.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+		initMsg.UserID = userData.ID
+		initMsg.RoomID = roomID
+		initMsg.Message = "Hi, I am interested in your " + product.Name
+		initMsg.Image = ""
+		AddMessage(initMsg)
+
+		//Add Product's Image Message
+		initMsg.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+		initMsg.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+		initMsg.UserID = userData.ID
+		initMsg.RoomID = roomID
+		initMsg.Message = ""
+		initMsg.Image = FindAProductImage(product.ID)
+		AddMessage(initMsg)
+
 		localTime, _ := time.LoadLocation("Asia/Tokyo")
 		localDeliveryTime := delivery.DeliveryTime.Time().In(localTime).String()
 		SendDeliveryRequestEmail(product.Name, delivery.Name, delivery.Email, delivery.Phone, delivery.WeChat, delivery.Facebook, delivery.Destination, localDeliveryTime, delivery.Notes)
@@ -255,7 +275,27 @@ func InsertAppointment(c *gin.Context) {
 			return
 		}
 
-		GetRoomFromUserIDs(appointment.RequesterID, appointment.SellerID)
+		roomID, _ := GetRoomFromUserIDs(appointment.RequesterID, appointment.SellerID)
+
+		//Add Order Message
+		var initMsg models.RoomMessage
+		initMsg.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+		initMsg.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+		initMsg.UserID = userData.ID
+		initMsg.RoomID = roomID
+		initMsg.Message = "Hi, I am interested in your " + product.Name
+		initMsg.Image = ""
+		AddMessage(initMsg)
+
+		//Add Product's Image Message
+		initMsg.ID = primitive.NewObjectIDFromTimestamp(time.Now())
+		initMsg.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+		initMsg.UserID = userData.ID
+		initMsg.RoomID = roomID
+		initMsg.Message = ""
+		initMsg.Image = FindAProductImage(product.ID)
+		AddMessage(initMsg)
+
 		notifName := userData.FirstName + " wants to meet you at " + appointment.MeetingTime.Time().String() + " for your " + product.Name
 		addNotification(notifID, notifName, "order_incoming", "", "pending", appointment.SellerID, userData.ID, newApp.InsertedID.(primitive.ObjectID), product.ID)
 
