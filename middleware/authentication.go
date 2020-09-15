@@ -48,6 +48,13 @@ func RegisterHandler(c *gin.Context) {
 		return
 	}
 
+	if user.FirstName == "" {
+		res.Status = "Error"
+		res.Message = "First name must not be empty"
+		json.NewEncoder(c.Writer).Encode(res)
+		return
+	}
+
 	collection := DB.Collection("users")
 
 	if err != nil {
