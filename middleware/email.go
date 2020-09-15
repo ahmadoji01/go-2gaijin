@@ -252,6 +252,28 @@ func SendDeliveryRequestEmail(itemName string, name string, email string, phone 
 	}
 }
 
+func SendDeliverySummaryEmail(itemName string, name string, email string, phone string, wechat string, facebook string, destination string, deliveryTime string, notes string) {
+	from := "2gaijin@kitalabs.com"
+	pass := "4Managing2GaijinEmail2020!"
+	to := email
+	body := templates.DeliveryEmail(itemName, name, email, phone, wechat, facebook, destination, deliveryTime, notes)
+
+	msg := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n" +
+		"From: " + from + "\n" +
+		"To: " + to + "\n" +
+		"Subject: Here is the summary for your delivery order!\n\n" +
+		body
+
+	err := smtp.SendMail("smtp.gmail.com:587",
+		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
+		from, []string{to}, []byte(msg))
+
+	if err != nil {
+		log.Printf("smtp error: %s", err)
+		return
+	}
+}
+
 func SendTicketEmail(name string, email string, message string) {
 	from := "2gaijin@kitalabs.com"
 	pass := "4Managing2GaijinEmail2020!"

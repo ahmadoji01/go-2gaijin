@@ -97,6 +97,7 @@ func InsertDelivery(c *gin.Context) {
 		localTime, _ := time.LoadLocation("Asia/Tokyo")
 		localDeliveryTime := delivery.DeliveryTime.Time().In(localTime).String()
 		SendDeliveryRequestEmail("", delivery.Name, delivery.Email, delivery.Phone, delivery.WeChat, delivery.Facebook, delivery.Destination, localDeliveryTime, delivery.Notes)
+		SendDeliverySummaryEmail("", delivery.Name, delivery.Email, delivery.Phone, delivery.WeChat, delivery.Facebook, delivery.Destination, localDeliveryTime, delivery.Notes)
 
 		res.Status = "Success"
 		res.Message = "Delivery successfully saved"

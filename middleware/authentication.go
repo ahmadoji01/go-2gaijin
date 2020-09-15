@@ -106,7 +106,7 @@ func RegisterHandler(c *gin.Context) {
 			var res responses.GenericResponse
 
 			var paymentMethod models.PaymentMethod
-			paymentMethod.UserID = user.ID
+			paymentMethod.ID = primitive.NewObjectIDFromTimestamp(time.Now())
 			_, err = DB.Collection("payment_methods").InsertOne(context.Background(), paymentMethod)
 			if err != nil {
 				res.Status = "Error"
