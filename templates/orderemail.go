@@ -261,18 +261,18 @@ func DeliveryEmail(itemName string, name string, email string, phone string, wec
 				  <![endif]-->
 				  <div style="display: inline-block; width: 100%; max-width: 50%; min-width: 240px; vertical-align: top;">
 					<table align="left" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 300px;">
-					  <tr>
-						<td align="left" valign="top" style="padding-bottom: 36px; padding-left: 36px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
-						  <p><strong>Destination</strong></p>
-						  <p>` + destination + `</p>
-						</td>
-					  </tr>
-					  <tr>
-						<td align="left" valign="top" style="padding-bottom: 36px; padding-left: 36px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
-						  <p><strong>Origin</strong></p>
-						  <p>` + origin + `</p>
-						</td>
-					  </tr>
+						<tr>
+							<td align="left" valign="top" style="padding-bottom: 36px; padding-left: 36px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
+							<p><strong>Origin</strong></p>
+							<p>` + origin + `</p>
+							</td>
+						</tr>  
+						<tr>
+							<td align="left" valign="top" style="padding-bottom: 36px; padding-left: 36px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
+							<p><strong>Destination</strong></p>
+							<p>` + destination + `</p>
+							</td>
+						</tr>
 					</table>
 				  </div>
 				  <div style="display: inline-block; width: 100%; max-width: 50%; min-width: 240px; vertical-align: top;">
