@@ -1,6 +1,6 @@
 package templates
 
-func DeliveryEmail(itemName string, name string, email string, phone string, wechat string, facebook string, destination string, deliveryTime string, notes string) string {
+func DeliveryEmail(itemName string, name string, email string, phone string, wechat string, facebook string, origin string, destination string, deliveryTime string, notes string) string {
 	template := `<!DOCTYPE html>
 	<html>
 	<head>
@@ -79,7 +79,7 @@ func DeliveryEmail(itemName string, name string, email string, phone string, wec
 	
 	  <!-- start preheader -->
 	  <div class="preheader" style="display: none; max-width: 0; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #fff; opacity: 0;">
-		Someone just requested a delivery. Below are the request details
+		Below are the request details
 	  </div>
 	  <!-- end preheader -->
 	
@@ -265,6 +265,12 @@ func DeliveryEmail(itemName string, name string, email string, phone string, wec
 						<td align="left" valign="top" style="padding-bottom: 36px; padding-left: 36px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
 						  <p><strong>Destination</strong></p>
 						  <p>` + destination + `</p>
+						</td>
+					  </tr>
+					  <tr>
+						<td align="left" valign="top" style="padding-bottom: 36px; padding-left: 36px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 24px;">
+						  <p><strong>Origin</strong></p>
+						  <p>` + origin + `</p>
 						</td>
 					  </tr>
 					</table>
