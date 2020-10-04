@@ -12,6 +12,7 @@ require (
 	github.com/go-redis/redis v6.15.7+incompatible
 	github.com/go-redis/redis/v7 v7.2.0
 	github.com/gobeam/mongo-go-pagination v0.0.0-20200406035710-0bea09c4930d
+	github.com/gomodule/redigo v1.8.2 // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/graphql-go/graphql v0.7.9
@@ -29,4 +30,5 @@ require (
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a // indirect
 	google.golang.org/api v0.25.0
 	gopkg.in/unrolled/render.v1 v1.0.0 // indirect
+	vitess.io/vitess v0.7.0 // indirect
 )

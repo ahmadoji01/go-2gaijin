@@ -308,7 +308,8 @@ func InsertAppointment(c *gin.Context) {
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
-		SendBuyingRequestEmail(user.Email, appointment.Source, product.Name)
+		//TODO: Worker Request
+		//SendBuyingRequestEmail(user.Email, appointment.Source, product.Name)
 
 		res.Status = "Success"
 		res.Message = "Appointment successfully saved"
