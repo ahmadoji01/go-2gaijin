@@ -308,7 +308,7 @@ func InsertAppointment(c *gin.Context) {
 			json.NewEncoder(c.Writer).Encode(res)
 			return
 		}
-		//TODO: Worker Request
+		//TODO: Worker for Email
 		//SendBuyingRequestEmail(user.Email, appointment.Source, product.Name)
 
 		res.Status = "Success"
@@ -487,6 +487,16 @@ func AppointmentConfirmation(c *gin.Context) {
 		if status == "accepted" {
 			setNotifsToRejectOrder(appointment.NotificationID, appointment.ProductID)
 			SendAcceptedOrderEmail(product.Name, requester.Email)
+
+			//Mark Product as Sold
+			update = bson.M{"$set": bson.M{"availability": "sold", "status_cd": 2}}
+			_, err = collection.UpdateOne(context.Background(), bson.D{{"_id", appointment.ProductID}}, update)
+			if err != nil {
+				res.Status = "Error"
+				res.Message = "Something wrong happened. Try again"
+				json.NewEncoder(c.Writer).Encode(res)
+				return
+			}
 		} else if status == "rejected" {
 			notifName := "Appointment Rejected"
 			addNotification(primitive.NewObjectIDFromTimestamp(time.Now()), notifName, "appointment_confirmation", "", "rejected", appointment.RequesterID, userData.ID, appointment.ID, appointment.ProductID)
